@@ -16,7 +16,7 @@ class AvaliacaoController extends Avaliacao {
         .json({ mensagem: "Não foi possivel acessar a lista de avaliacoes." });
     }
   }
-  static async cadastro(req: Request, res: Response): Promise<Response> {
+  static async avaliar(req: Request, res: Response): Promise<Response> {
     try {
       const dadosAvaliacao = req.body;
 

@@ -16,7 +16,7 @@ class CorridaController extends Corrida {
         .json({ mensagem: "Não foi possivel acessar a lista de corridas." });
     }
   }
-  static async cadastro(req: Request, res: Response): Promise<Response> {
+  static async solicitar(req: Request, res: Response): Promise<Response> {
     try {
       const dadosCorrida = req.body;
 
