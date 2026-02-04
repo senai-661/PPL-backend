@@ -89,6 +89,57 @@ class Motorista {
   public setAntecedentesCriminais(antecedentesCriminais: string): void {
     this.antecedentesCriminais = antecedentesCriminais;
   }
+
+  static async listarMotoristas(): Promise<Array<Motorista> | null> {
+    try {
+      let listaDeMotoristas: Array<Motorista> = [];
+      const querySelectMotoristas = `SELECT * FROM motorista;`;
+      const respostaBD = await database.query(querySelectMotoristas);
+      respostaBD.rows.forEach((motoristaBD) => {
+        const novoMotorista: Motorista = new Motorista(
+          motoristaBD.id_motorista,
+          motoristaBD.nome_motorista,
+          motoristaBD.sobrenome_motorista,
+          motoristaBD.cpf,
+          motoristaBD.cnh,
+          motoristaBD.data_nascimento,
+          motoristaBD.celular,
+          motoristaBD.endereco,
+          motoristaBD.antecedentes_criminais,
+        );
+        novoMotorista.setIdMotorista(motoristaBD.id_motorista);
+        listaDeMotoristas.push(novoMotorista);
+      });
+      return listaDeMotoristas;
+    } catch (error) {
+      console.error(`Erro ao consultar motoristas. ${error}`);
+      return null;
+    }
+  }
+  static async cadastrarMotorista(motorista: MotoristaDTO): Promise<boolean> {
+    try {
+      const queryInsertMotorista = `INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, endereco, antecedentes_criminais)
+                                      VALUES
+                                      ($1, $2, $3, $4, $5, $6, $7, $8)
+                                      RETURNING id_motorista;`;
+
+      const respostaBD = await database.query(queryInsertMotorista, [
+        motorista.cpf,
+        motorista.cnh,
+        motorista.nomeMotorista.toUpperCase(),
+        motorista.sobrenomeMotorista.toUpperCase(),
+        motorista.dataNascimento,
+        motorista.celular,
+        motorista.endereco,
+        motorista.antecedentesCriminais.toUpperCase(),
+      ]);
+
+      return respostaBD.rows.length > 0;
+    } catch (error) {
+      console.error(`Erro ao cadastrar motorista. ${error}`);
+      return false;
+    }
+  }
 }
 
 export { Motorista };

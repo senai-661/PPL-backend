@@ -44,6 +44,33 @@ class Veiculo {
   public setTipoVeiculo(tipoVeiculo: string): void {
     this.tipoVeiculo = tipoVeiculo;
   }
+
+  static async listarVeiculos(): Promise<Array<Veiculo> | null> {
+    try {
+      let listaDeVeiculos: Array<Veiculo> = [];
+      const querySelectVeiculos = `SELECT * FROM veiculos;`;
+
+      const respostaBD = await database.query(querySelectVeiculos);
+
+      respostaBD.rows.forEach((veiculoBD) => {
+        const novoVeiculo: Veiculo = new Veiculo(
+          veiculoBD.id_veiculo,
+          veiculoBD.id_motorista,
+          veiculoBD.placa,
+          veiculoBD.tipo_veiculo,
+        );
+
+        novoVeiculo.setIdVeiculo(veiculoBD.id_veiculo);
+
+        listaDeVeiculos.push(novoVeiculo);
+      });
+
+      return listaDeVeiculos;
+    } catch (error) {
+      console.error(`Erro ao listar veículos: ${error}`);
+      return null;
+    }
+  }
 }
 
 export { Veiculo };

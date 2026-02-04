@@ -4,10 +4,10 @@
 CREATE TABLE passageiro (
     id_passageiro INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpf VARCHAR (15) UNIQUE NOT NULL,
-    nome VARCHAR (80) NOT NULL,
-    sobrenome VARCHAR (80) NOT NULL,
+    nome_passageiro VARCHAR (80) NOT NULL,
+    sobrenome_passageiro VARCHAR (80) NOT NULL,
     data_nascimento DATE NOT NULL,
-    endereco VARCHAR NOT NULL (200),
+    endereco VARCHAR (200) NOT NULL,
     email VARCHAR (80),
     celular VARCHAR (20) NOT NULL
 );
@@ -17,12 +17,12 @@ CREATE TABLE motorista (
     id_motorista INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cpf VARCHAR (15) UNIQUE NOT NULL,
     cnh VARCHAR (11) UNIQUE NOT NULL,
-    nome VARCHAR (150) NOT NULL,
-    sobrenome VARCHAR (100) NOT NULL,
+    nome_motorista VARCHAR (150) NOT NULL,
+    sobrenome_motorista VARCHAR (100) NOT NULL,
     data_nascimento DATE NOT NULL,
     celular VARCHAR (20) NOT NULL,
     endereco VARCHAR (200) NOT NULL,
-    antecedentes_criminais VARCHAR (40) NOT NULL,
+    antecedentes_criminais VARCHAR (40) NOT NULL
 );
 
 -- Create Veículo
@@ -48,6 +48,15 @@ CREATE TABLE corrida (
     status_corrida VARCHAR (20) NOT NULL
 );
 
+CREATE TABLE avaliacao_motorista (
+    id_avaliacao INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_motorista INT REFERENCES motorista(id_motorista),
+    id_passageiro INT REFERENCES passageiro(id_passageiro),
+    nome_motorista REFERENCES motorista(nome_motorista),
+    nome_passageiro REFERENCES passageiro(nome_passageiro),
+    nota INT NOT NULL,
+    comentario VARCHAR (500)
+);
 
 
 
@@ -70,5 +79,7 @@ VALUES
 INSERT INTO veiculo (id_veiculo, id_motorista, placa) 
 VALUES 
 
+INSERT INTO avaliacao_motorista (id_motorista, id_passageiro, nota, comentario) 
+VALUES
 
 

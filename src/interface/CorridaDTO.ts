@@ -9,5 +9,5 @@ export interface CorridaDTO {
   avaliacao: string;
   dataCorrida: Date;
   duracaoCorrida: number;
-  status_corrida: string;
+  statusCorrida: string;
 }

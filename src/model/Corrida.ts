@@ -107,6 +107,61 @@ class Corrida {
   public setStatusCorrida(statusCorrida: string): void {
     this.statusCorrida = statusCorrida;
   }
+
+  static async listarCorridas(): Promise<Array<Corrida> | null> {
+    try {
+      let listaDeCorridas: Array<Corrida> = [];
+      const querySelectCorridas = `SELECT * FROM corrida;`;
+      const respostaBD = await database.query(querySelectCorridas);
+
+      respostaBD.rows.forEach((corridaBD) => {
+        const novaCorrida: Corrida = new Corrida(
+          corridaBD.id_corrida,
+          corridaBD.id_passageiro,
+          corridaBD.id_motorista,
+          corridaBD.id_veiculo,
+          corridaBD.origem_corrida,
+          corridaBD.destino_corrida,
+          corridaBD.preco,
+          corridaBD.avaliacao,
+          corridaBD.data_corrida,
+          corridaBD.duracao_corrida,
+          corridaBD.status_corrida,
+        );
+        listaDeCorridas.push(novaCorrida);
+      });
+      return listaDeCorridas;
+    } catch (error) {
+      console.error(`Erro ao consultar corridas. ${error}`);
+      return null;
+    }
+  }
+
+  static async criarCorrida(corrida: CorridaDTO): Promise<boolean> {
+    try {
+      const queryInsertCorrida = `
+        INSERT INTO corrida 
+        (id_passageiro, id_motorista, id_veiculo, origem_corrida, destino_corrida, preco, avaliacao, data_corrida, duracao_corrida, status_corrida) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_corrida;
+      `;
+      await database.query(queryInsertCorrida, [
+        corrida.idPassageiro,
+        corrida.idMotorista,
+        corrida.idVeiculo,
+        corrida.origemCorrida,
+        corrida.destinoCorrida,
+        corrida.preco,
+        corrida.avaliacao,
+        corrida.dataCorrida,
+        corrida.duracaoCorrida,
+        corrida.statusCorrida,
+      ]);
+      return true;
+    } catch (error) {
+      console.error(`Erro ao criar corrida: ${error}`);
+      return false;
+    }
+  }
 }
 
 export { Corrida };
