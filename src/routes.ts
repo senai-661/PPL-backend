@@ -5,6 +5,7 @@ import { PassageiroController } from "./controller/PassageiroController.js";
 import { CorridaController } from "./controller/CorridaController.js";
 import { MotoristaController } from "./controller/MotoristaController.js";
 import { AvaliacaoController } from "./controller/AvaliacaoController.js";
+import { VeiculoController } from "./controller/VeiculoController.js";
 
 const router = Router();
 
@@ -27,5 +28,9 @@ router.post("/api/cadastro/corridas", CorridaController.solicitar);
 // Avaliacoes
 router.get("/api/avaliacoes", AvaliacaoController.listar);
 router.post("/api/cadastro/avaliacoes", AvaliacaoController.avaliar);
+
+// Veiculos
+router.get("/api/veiculos", VeiculoController.listar);
+router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
 
 export { router };

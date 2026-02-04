@@ -84,10 +84,8 @@ class Passageiro {
   static async listarPassageiros(): Promise<Array<Passageiro> | null> {
     try {
       let listaDePassageiros: Array<Passageiro> = [];
-      const querySelectPassageiros = `SELECT * FROM passageiros;`;
-
+      const querySelectPassageiros = `SELECT * FROM passageiro;`;
       const respostaBD = await database.query(querySelectPassageiros);
-
       respostaBD.rows.forEach((passageiroBD) => {
         const novoPassageiro: Passageiro = new Passageiro(
           passageiroBD.id_passageiro,
@@ -99,16 +97,12 @@ class Passageiro {
           passageiroBD.email,
           passageiroBD.celular,
         );
-
         novoPassageiro.setIdPassageiro(passageiroBD.id_passageiro);
-
         listaDePassageiros.push(novoPassageiro);
       });
-
       return listaDePassageiros;
     } catch (error) {
-      console.error(`Erro na consulta ao banco de dados. ${error}`);
-
+      console.error(`Erro ao consultar passageiros. ${error}`);
       return null;
     }
   }
@@ -117,12 +111,13 @@ class Passageiro {
     passageiro: PassageiroDTO,
   ): Promise<boolean> {
     try {
-      const queryInsertPassageiro = `INSERT INTO passageiros (nome_passageiro, sobrenome_passageiro, data_nascimento, endereco, email, celular)
+      const queryInsertPassageiro = `INSERT INTO passageiro (cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, endereco, email, celular)
                                 VALUES
-                                ($1, $2, $3, $4, $5, $6)
+                                ($1, $2, $3, $4, $5, $6, $7)
                                 RETURNING id_passageiro;`;
 
       const respostaBD = await database.query(queryInsertPassageiro, [
+        passageiro.cpf,
         passageiro.nomePassageiro.toUpperCase(),
         passageiro.sobrenomePassageiro.toUpperCase(),
         passageiro.dataNascimento,

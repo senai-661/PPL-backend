@@ -15,6 +15,26 @@ class VeiculoController extends Veiculo {
         .json({ mensagem: "Não foi possivel acessar a lista de veículos." });
     }
   }
+  static async cadastro(req: Request, res: Response): Promise<Response> {
+    try {
+      const dadosVeiculo = req.body;
+
+      const respostaModelo = await Veiculo.cadastrarVeiculo(dadosVeiculo);
+      if (respostaModelo) {
+        return res
+          .status(201)
+          .json({ mensagem: "Veículo cadastrado com sucesso." });
+      } else {
+        return res.status(400).json({ mensagem: "Erro ao cadastrar veículo." });
+      }
+    } catch (error) {
+      console.error(`Erro no modelo. ${error}`);
+
+      return res
+        .status(500)
+        .json({ mensagem: "Não foi possível inserir o veículo" });
+    }
+  }
 }
 
 export { VeiculoController };

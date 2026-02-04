@@ -7,24 +7,18 @@ class Avaliacao {
   private idAvaliacao: number = 0;
   private idMotorista: number;
   private idPassageiro: number;
-  private nomeMotorista: string;
-  private nomePassageiro: string;
   private nota: number;
   private comentario: string;
   constructor(
     _idAvaliacao: number = 0,
     _idMotorista: number,
     _idPassageiro: number,
-    _nomeMotorista: string,
-    _nomePassageiro: string,
     _nota: number,
     _comentario: string,
   ) {
     this.idAvaliacao = _idAvaliacao;
     this.idMotorista = _idMotorista;
     this.idPassageiro = _idPassageiro;
-    this.nomeMotorista = _nomeMotorista;
-    this.nomePassageiro = _nomePassageiro;
     this.nota = _nota;
     this.comentario = _comentario;
   }
@@ -46,18 +40,6 @@ class Avaliacao {
   public setIdPassageiro(idPassageiro: number): void {
     this.idPassageiro = idPassageiro;
   }
-  public getNomeMotorista(): string {
-    return this.nomeMotorista;
-  }
-  public setNomeMotorista(nomeMotorista: string): void {
-    this.nomeMotorista = nomeMotorista;
-  }
-  public getNomePassageiro(): string {
-    return this.nomePassageiro;
-  }
-  public setNomePassageiro(nomePassageiro: string): void {
-    this.nomePassageiro = nomePassageiro;
-  }
   public getNota(): number {
     return this.nota;
   }
@@ -74,28 +56,22 @@ class Avaliacao {
   static async listarAvaliacoes(): Promise<Array<Avaliacao> | null> {
     try {
       let listaDeAvaliacoes: Array<Avaliacao> = [];
-      const querySelectAvaliacoes = `SELECT * FROM avaliacoes;`;
-
+      const querySelectAvaliacoes = `SELECT * FROM avaliacao_motorista;`;
       const respostaBD = await database.query(querySelectAvaliacoes);
-
       respostaBD.rows.forEach((avaliacaoBD) => {
         const novaAvaliacao: Avaliacao = new Avaliacao(
           avaliacaoBD.id_avaliacao,
           avaliacaoBD.id_motorista,
           avaliacaoBD.id_passageiro,
-          avaliacaoBD.nome_motorista,
-          avaliacaoBD.nome_passageiro,
           avaliacaoBD.nota,
           avaliacaoBD.comentario,
         );
-
+        novaAvaliacao.setIdAvaliacao(avaliacaoBD.id_avaliacao);
         listaDeAvaliacoes.push(novaAvaliacao);
       });
-
       return listaDeAvaliacoes;
     } catch (error) {
-      console.error(`Erro na consulta ao banco de dados. ${error}`);
-
+      console.error(`Erro ao consultar avaliações. ${error}`);
       return null;
     }
   }
@@ -104,16 +80,14 @@ class Avaliacao {
     try {
       const queryInsertAvaliacao = `
         INSERT INTO avaliacao_motorista 
-        (id_motorista, id_passageiro, nome_motorista, nome_passageiro, nota, comentario) 
-        VALUES ($1, $2, $3, $4, $5, $6);
+        (id_motorista, id_passageiro, nota, comentario) 
+        VALUES ($1, $2, $3, $4);
       `;
       await database.query(queryInsertAvaliacao, [
         avaliacao.idMotorista,
         avaliacao.idPassageiro,
-        avaliacao.nomeMotorista.toUpperCase(),
-        avaliacao.nomePassageiro.toUpperCase(),
         avaliacao.nota,
-        avaliacao.comentario.toUpperCase(),
+        avaliacao.comentario,
       ]);
       return true;
     } catch (error) {

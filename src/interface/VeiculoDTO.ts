@@ -3,4 +3,5 @@ export interface VeiculoDTO {
   idMotorista: number;
   placa: string;
   tipoVeiculo: string;
+  modeloVeiculo: string;
 }
