@@ -7,4 +7,5 @@ export interface PassageiroDTO {
   endereco: string;
   email: string;
   celular: number;
+  senha: string; // Adicionando a senha ao DTO
 }

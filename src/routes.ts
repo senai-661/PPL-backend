@@ -1,36 +1,43 @@
-import { Router } from "express";
-import type { Request, Response } from "express";
+  import { Router } from "express";
+  import type { Request, Response } from "express";
 
-import { PassageiroController } from "./controller/PassageiroController.js";
-import { CorridaController } from "./controller/CorridaController.js";
-import { MotoristaController } from "./controller/MotoristaController.js";
-import { AvaliacaoController } from "./controller/AvaliacaoController.js";
-import { VeiculoController } from "./controller/VeiculoController.js";
+  import { PassageiroController } from "./controller/PassageiroController.js";
+  import { CorridaController } from "./controller/CorridaController.js";
+  import { MotoristaController } from "./controller/MotoristaController.js";
+  import { AvaliacaoController } from "./controller/AvaliacaoController.js";
+  import { VeiculoController } from "./controller/VeiculoController.js";
+  import { AuthController } from "./controller/AuthController.js";
 
-const router = Router();
 
-router.get("/api", (req: Request, res: Response) => {
-  res.status(200).json({ mensagem: "Olá, boas-vindas a API do PPT." });
-});
+  const router = Router();
 
-// Passageiros
-router.get("/api/passageiros", PassageiroController.listar);
-router.post("/api/cadastro/passageiros", PassageiroController.cadastro);
+  router.get("/api", (req: Request, res: Response) => {
+    res.status(200).json({ mensagem: "Olá, boas-vindas a API do PPT." });
+  });
 
-// Motoristas
-router.get("/api/motoristas", MotoristaController.listar);
-router.post("/api/cadastro/motoristas", MotoristaController.cadastro);
+  // Passageiros
+  router.get("/api/passageiros", PassageiroController.listar);
+  router.post("/api/cadastro/passageiros", PassageiroController.cadastro);
 
-// Corridas
-router.get("/api/corridas", CorridaController.listar);
-router.post("/api/cadastro/corridas", CorridaController.solicitar);
+  // Motoristas
+  router.get("/api/motoristas", MotoristaController.listar);
+  router.post("/api/cadastro/motoristas", MotoristaController.cadastro);
 
-// Avaliacoes
-router.get("/api/avaliacoes", AvaliacaoController.listar);
-router.post("/api/cadastro/avaliacoes", AvaliacaoController.avaliar);
+  // Corridas
+  router.get("/api/corridas", CorridaController.listar);
+  router.post("/api/cadastro/corridas", CorridaController.solicitar);
 
-// Veiculos
-router.get("/api/veiculos", VeiculoController.listar);
-router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
+  // Avaliacoes
+  router.get("/api/avaliacoes", AvaliacaoController.listar);
+  router.post("/api/cadastro/avaliacoes", AvaliacaoController.avaliar);
 
-export { router };
+  // Veiculos
+  router.get("/api/veiculos", VeiculoController.listar);
+  router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
+
+  // Login
+  router.post("/api/register", AuthController.register);
+  router.post("/api/login", AuthController.login);
+
+
+  export { router };

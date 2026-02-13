@@ -47,7 +47,7 @@ class Avaliacao {
   static async listarAvaliacoes(): Promise<Array<Avaliacao> | null> {
     try {
       let listaDeAvaliacoes: Array<Avaliacao> = [];
-      const querySelectAvaliacoes = `SELECT * FROM avaliacao_motorista;`;
+      const querySelectAvaliacoes = `SELECT * FROM avaliacao_corrida;`;
       const respostaBD = await database.query(querySelectAvaliacoes);
       respostaBD.rows.forEach((avaliacaoBD) => {
         const novaAvaliacao: Avaliacao = new Avaliacao(
@@ -69,7 +69,7 @@ class Avaliacao {
   static async criarAvaliacao(avaliacao: AvaliacaoDTO): Promise<boolean> {
     try {
       const queryInsertAvaliacao = `
-        INSERT INTO avaliacao_motorista 
+        INSERT INTO avaliacao_corrida
         (id_corrida, nota, comentario) 
         VALUES ($1, $2, $3);
       `;

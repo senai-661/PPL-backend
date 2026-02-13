@@ -60,12 +60,11 @@ CREATE TABLE corrida (
 );
 
 -- ============================
--- AVALIACAO MOTORISTA
+-- AVALIACAO CORRIDA
 -- ============================
-CREATE TABLE avaliacao_motorista (
+CREATE TABLE avaliacao_corrida (
     id_avaliacao INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_motorista INT NOT NULL REFERENCES motorista(id_motorista) ON DELETE CASCADE,
-    id_passageiro INT NOT NULL REFERENCES passageiro(id_passageiro) ON DELETE CASCADE,
+    id_corrida INT NOT NULL REFERENCES corrida(id_corrida) ON DELETE CASCADE,
     nota INT NOT NULL CHECK (nota BETWEEN 1 AND 5),
     comentario VARCHAR(500),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
