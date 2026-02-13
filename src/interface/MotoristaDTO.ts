@@ -7,5 +7,6 @@ export interface MotoristaDTO {
   dataNascimento: Date;
   celular: number;
   endereco: string;
+  email: string;  
   antecedentesCriminais: string;
 }

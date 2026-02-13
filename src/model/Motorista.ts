@@ -12,6 +12,7 @@ class Motorista {
   private dataNascimento: Date;
   private celular: number;
   private endereco: string;
+  private email: string;
   private antecedentesCriminais: string;
 
   constructor(
@@ -23,6 +24,7 @@ class Motorista {
     _dataNascimento: Date,
     _celular: number,
     _endereco: string,
+    _email: string, 
     _antecedentesCriminais: string,
   ) {
     this.idMotorista = _idMotorista;
@@ -33,6 +35,7 @@ class Motorista {
     this.dataNascimento = _dataNascimento;
     this.celular = _celular;
     this.endereco = _endereco;
+    this.email = _email;
     this.antecedentesCriminais = _antecedentesCriminais;
   }
   public getIdMotorista(): number {
@@ -83,6 +86,12 @@ class Motorista {
   public setEndereco(endereco: string): void {
     this.endereco = endereco;
   }
+  public getEmail(): string {
+    return this.email;
+  }
+  public setEmail(email: string): void {
+    this.email = email;
+  }
   public getAntecedentesCriminais(): string {
     return this.antecedentesCriminais;
   }
@@ -105,6 +114,7 @@ class Motorista {
           motoristaBD.data_nascimento,
           motoristaBD.celular,
           motoristaBD.endereco,
+          motoristaBD.email,
           motoristaBD.antecedentes_criminais,
         );
         novoMotorista.setIdMotorista(motoristaBD.id_motorista);
@@ -118,7 +128,7 @@ class Motorista {
   }
   static async cadastrarMotorista(motorista: MotoristaDTO): Promise<boolean> {
     try {
-      const queryInsertMotorista = `INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, endereco, antecedentes_criminais)
+      const queryInsertMotorista = `INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, endereco, email, antecedentes_criminais)
                                       VALUES
                                       ($1, $2, $3, $4, $5, $6, $7, $8)
                                       RETURNING id_motorista;`;
@@ -131,6 +141,7 @@ class Motorista {
         motorista.dataNascimento,
         motorista.celular,
         motorista.endereco,
+        motorista.email,
         motorista.antecedentesCriminais.toUpperCase(),
       ]);
 

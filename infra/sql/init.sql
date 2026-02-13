@@ -22,6 +22,7 @@ CREATE TABLE motorista (
     data_nascimento DATE NOT NULL,
     celular VARCHAR (20) NOT NULL,
     endereco VARCHAR (200) NOT NULL,
+    email VARCHAR (80) NOT NULL,
     antecedentes_criminais VARCHAR (40) NOT NULL
 );
 
