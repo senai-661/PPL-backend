@@ -1,7 +1,6 @@
 export interface AvaliacaoDTO {
   idAvaliacao?: number;
-  idMotorista: number;
-  idPassageiro: number;
+  idCorrida: number;
   nota: number;
   comentario: string;
 }

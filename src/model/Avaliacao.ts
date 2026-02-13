@@ -5,20 +5,17 @@ const database = new DatabaseModel().pool;
 
 class Avaliacao {
   private idAvaliacao: number = 0;
-  private idMotorista: number;
-  private idPassageiro: number;
+  private idCorrida: number;
   private nota: number;
   private comentario: string;
   constructor(
     _idAvaliacao: number = 0,
-    _idMotorista: number,
-    _idPassageiro: number,
+    _idCorrida: number,
     _nota: number,
     _comentario: string,
   ) {
     this.idAvaliacao = _idAvaliacao;
-    this.idMotorista = _idMotorista;
-    this.idPassageiro = _idPassageiro;
+    this.idCorrida = _idCorrida;
     this.nota = _nota;
     this.comentario = _comentario;
   }
@@ -28,17 +25,11 @@ class Avaliacao {
   public setIdAvaliacao(idAvaliacao: number): void {
     this.idAvaliacao = idAvaliacao;
   }
-  public getIdMotorista(): number {
-    return this.idMotorista;
+  public getIdCorrida(): number {
+    return this.idCorrida;
   }
-  public setIdMotorista(idMotorista: number): void {
-    this.idMotorista = idMotorista;
-  }
-  public getIdPassageiro(): number {
-    return this.idPassageiro;
-  }
-  public setIdPassageiro(idPassageiro: number): void {
-    this.idPassageiro = idPassageiro;
+  public setIdCorrida(idCorrida: number): void {
+    this.idCorrida = idCorrida;
   }
   public getNota(): number {
     return this.nota;
@@ -61,8 +52,7 @@ class Avaliacao {
       respostaBD.rows.forEach((avaliacaoBD) => {
         const novaAvaliacao: Avaliacao = new Avaliacao(
           avaliacaoBD.id_avaliacao,
-          avaliacaoBD.id_motorista,
-          avaliacaoBD.id_passageiro,
+          avaliacaoBD.id_corrida,
           avaliacaoBD.nota,
           avaliacaoBD.comentario,
         );
@@ -80,12 +70,11 @@ class Avaliacao {
     try {
       const queryInsertAvaliacao = `
         INSERT INTO avaliacao_motorista 
-        (id_motorista, id_passageiro, nota, comentario) 
-        VALUES ($1, $2, $3, $4);
+        (id_corrida, nota, comentario) 
+        VALUES ($1, $2, $3);
       `;
       await database.query(queryInsertAvaliacao, [
-        avaliacao.idMotorista,
-        avaliacao.idPassageiro,
+        avaliacao.idCorrida,
         avaliacao.nota,
         avaliacao.comentario,
       ]);
