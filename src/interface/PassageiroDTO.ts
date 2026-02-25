@@ -1,11 +1,12 @@
 export interface PassageiroDTO {
   idPassageiro?: number;
-  cpf: number;
+  cpf: string;
   nomePassageiro: string;
   sobrenomePassageiro: string;
   dataNascimento: Date;
   endereco: string;
   email: string;
-  celular: number;
-  senha: string; // Adicionando a senha ao DTO
+  celular: string;
+  senha: string;
+  criadoEm?: Date;
 }

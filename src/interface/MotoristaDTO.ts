@@ -1,12 +1,14 @@
 export interface MotoristaDTO {
   idMotorista?: number;
-  cpf: number;
-  cnh: number;
+  cpf: string;
+  cnh: string;
   nomeMotorista: string;
   sobrenomeMotorista: string;
   dataNascimento: Date;
-  celular: number;
+  celular: string;
   endereco: string;
-  email: string;  
+  email: string;
   antecedentesCriminais: string;
+  senha: string;
+  criadoEm?: Date;
 }

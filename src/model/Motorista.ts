@@ -32,7 +32,7 @@ class Motorista {
     this.sobrenomeMotorista = _sobrenomeMotorista;
     this.cpf = _cpf;
     this.cnh = _cnh;
-    this.dataNascimento = _dataNascimento;
+    this.dataNascimento = _dataNascimento || new Date("1900-01-01");
     this.celular = _celular;
     this.endereco = _endereco;
     this.email = _email;
@@ -138,7 +138,7 @@ class Motorista {
         motorista.cnh,
         motorista.nomeMotorista.toUpperCase(),
         motorista.sobrenomeMotorista.toUpperCase(),
-        motorista.dataNascimento,
+        motorista.dataNascimento? motorista.dataNascimento.toString().split("T")[0] : null, // Formata a data para o formato 'YYYY-MM-DD'
         motorista.celular,
         motorista.endereco,
         motorista.email,

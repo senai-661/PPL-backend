@@ -31,7 +31,7 @@ class Passageiro {
     this.sobrenomePassageiro = _sobrenomePassageiro;
     this.cpf = _cpf;
     this.cnh = _cnh;
-    this.dataNascimento = _dataNascimento;
+    this.dataNascimento = _dataNascimento || new Date("1900-01-01");
     this.celular = _celular;
     this.endereco = _endereco;
     this.email = _email;
@@ -128,7 +128,7 @@ class Passageiro {
         passageiro.cpf,
         passageiro.nomePassageiro.toUpperCase(),
         passageiro.sobrenomePassageiro.toUpperCase(),
-        passageiro.dataNascimento,
+        passageiro.dataNascimento? passageiro.dataNascimento.toString().split("T")[0] : null, // Formata a data para o formato 'YYYY-MM-DD'
         passageiro.celular,
         passageiro.endereco,
         passageiro.email,
