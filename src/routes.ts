@@ -6,7 +6,7 @@
   import { MotoristaController } from "./controller/MotoristaController.js";
   import { AvaliacaoController } from "./controller/AvaliacaoController.js";
   import { VeiculoController } from "./controller/VeiculoController.js";
-  import { AuthController } from "./controller/AuthController.js";
+  // import { AuthController } from "./controller/AuthController.js";
 
 
   const router = Router();
@@ -36,8 +36,8 @@
   router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
 
   // Login
-  router.post("/api/register", AuthController.register);
-  router.post("/api/login", AuthController.login);
+  // router.post("/api/register", AuthController.register);
+  // router.post("/api/login", AuthController.login);
 
 
   export { router };
