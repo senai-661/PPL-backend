@@ -1,44 +1,77 @@
 import { Passageiro } from "../model/Passageiro.js";
-import type { PassageiroDTO } from "../interface/PassageiroDTO.js";
+import { EnderecoController } from "./EnderecoController.js";
 import type { Request, Response } from "express";
+import bcrypt from "bcrypt";
 
 class PassageiroController extends Passageiro {
-  static async listar(req: Request, res: Response): Promise<Response> {
-    try {
-      const listarPassageiros: Array<Passageiro> | null =
-        await Passageiro.listarPassageiros();
+    
+    // LISTAR: Usa os getters para retornar um JSON limpo
+    static async listar(req: Request, res: Response): Promise<Response> {
+        try {
+            const passageiros = await Passageiro.listarPassageiros();
 
-      return res.status(200).json(listarPassageiros);
-    } catch (error) {
-      console.error(`Erro ao consultar modelo. ${error}`);
+            if (!passageiros || passageiros.length === 0) {
+                return res.status(200).json([]);
+            }
 
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possivel acessar a lista de passageiros." });
+            // Mapeamos para não expor a senha e usar nomes bonitos no JSON
+            const dadosTratados = passageiros.map(p => ({
+                id: p.getIdPassageiro(),
+                nome: p.getNomePassageiro(),
+                sobrenome: p.getSobrenomePassageiro(),
+                cpf: p.getCpf(),
+                dataNascimento: p.getDataNascimento(),
+                celular: p.getCelular(),
+                email: p.getEmail()
+            }));
+
+            return res.status(200).json(dadosTratados);
+        } catch (error) {
+            console.error(`Erro ao consultar modelo: ${error}`);
+            return res.status(500).json({ mensagem: "Não foi possível acessar a lista de passageiros." });
+        }
     }
-  }
-  static async cadastro(req: Request, res: Response): Promise<Response> {
-    try {
-      const dadosPassageiro = req.body;
 
-      const respostaModelo =
-        await Passageiro.cadastrarPassageiro(dadosPassageiro);
-      if (respostaModelo) {
-        return res
-          .status(201)
-          .json({ mensagem: "Passageiro cadastrado com sucesso." });
-      } else {
-        return res
-          .status(400)
-          .json({ mensagem: "Erro ao cadastrar passageiro." });
-      }
-    } catch (error) {
-      console.error(`Erro no modelo. ${error}`);
+    // CADASTRO: Criptografa senha e salva endereço "casado"
+    static async cadastro(req: Request, res: Response): Promise<Response> {
+        try {
+            // Desestruturamos para separar o endereço do resto dos dados
+            const { endereco, ...dadosPassageiro } = req.body;
 
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possível inserir o passageiro" });
+            // 1. Criptografia da senha
+            const salt = await bcrypt.genSalt(10);
+            dadosPassageiro.senha = await bcrypt.hash(dadosPassageiro.senha, salt);
+
+            // 2. Salva o passageiro e recupera o ID gerado (RETURNING id_passageiro)
+            const idGerado = await Passageiro.cadastrarPassageiro(dadosPassageiro);
+
+            if (idGerado) {
+                // 3. Salva o endereço vinculado ao ID do passageiro
+                const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
+                    idGerado, 
+                    'passageiro', 
+                    endereco
+                );
+
+                if (enderecoSucesso) {
+                    return res.status(201).json({ 
+                        mensagem: "Passageiro e endereço cadastrados com sucesso!" 
+                    });
+                }
+
+                // Caso o passageiro grave mas o endereço falhe (raro, mas possível)
+                return res.status(201).json({ 
+                    mensagem: "Passageiro cadastrado, mas houve um erro ao salvar o endereço." 
+                });
+            }
+
+            return res.status(400).json({ mensagem: "Erro ao cadastrar passageiro no banco." });
+
+        } catch (error) {
+            console.error(`Erro no processo de cadastro: ${error}`);
+            return res.status(500).json({ mensagem: "Não foi possível inserir o passageiro." });
+        }
     }
-  }
 }
+
 export { PassageiroController };

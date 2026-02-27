@@ -1,5 +1,4 @@
 import { Avaliacao } from "../model/Avaliacao.js";
-import type { AvaliacaoDTO } from "../interface/AvaliacaoDTO.js";
 import type { Request, Response } from "express";
 
 class AvaliacaoController extends Avaliacao {

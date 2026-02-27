@@ -4,7 +4,7 @@ export interface PassageiroDTO {
   nomePassageiro: string;
   sobrenomePassageiro: string;
   dataNascimento: Date;
-  endereco: string;
+  // endereco foi removido daqui!
   email: string;
   celular: string;
   senha: string;

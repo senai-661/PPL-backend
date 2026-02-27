@@ -1,5 +1,4 @@
 import { Corrida } from "../model/Corrida.js";
-import type { CorridaDTO } from "../interface/CorridaDTO.js";
 import type { Request, Response } from "express";
 
 class CorridaController extends Corrida {

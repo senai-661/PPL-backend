@@ -1,4 +1,3 @@
-import type { VeiculoDTO } from "../interface/VeiculoDTO.js";
 import type { Request, Response } from "express";
 import { Veiculo } from "../model/Veiculo.js";
 

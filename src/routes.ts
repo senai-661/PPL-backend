@@ -1,47 +1,74 @@
-  import { Router } from "express";
-  import type { Request, Response } from "express";
+import { Router } from "express";
+import type { Request, Response } from "express";
 
-  import { PassageiroController } from "./controller/PassageiroController.js";
-  import { CorridaController } from "./controller/CorridaController.js";
-  import { MotoristaController } from "./controller/MotoristaController.js";
-  import { AvaliacaoController } from "./controller/AvaliacaoController.js";
-  import { VeiculoController } from "./controller/VeiculoController.js";
- 
-  
+import { PassageiroController } from "./controller/PassageiroController.js";
+import { CorridaController } from "./controller/CorridaController.js";
+import { MotoristaController } from "./controller/MotoristaController.js";
+import { AvaliacaoController } from "./controller/AvaliacaoController.js";
+import { VeiculoController } from "./controller/VeiculoController.js";
+import { AdminController } from "./controller/AdminController.js";
+import { EnderecoController } from "./controller/EnderecoController.js";
 
-  const router = Router();
+// Importando o segurança da API
+import { AuthMiddleware } from "./middlewares/AuthMiddleware.js";
 
-  router.get("/api", (req: Request, res: Response) => {
-    res.status(200).json({ mensagem: "Olá, boas-vindas a API do PPT." });
-  });
+const router = Router();
 
-  // Passageiros
-  router.get("/api/passageiros", PassageiroController.listar);
-  router.post("/api/cadastro/passageiros", PassageiroController.cadastro);
+// --- Rota Inicial ---
+router.get("/api", (req: Request, res: Response) => {
+  res.status(200).json({ mensagem: "Olá, boas-vindas a API do PPT." });
+});
 
-  // Motoristas
-  router.get("/api/motoristas", MotoristaController.listar);
-  router.post("/api/cadastro/motoristas", MotoristaController.cadastro);
+// ============================================
+// ROTAS PÚBLICAS (Ninguém precisa de Token)
+// ============================================
 
-  // Corridas
-  router.get("/api/corridas", CorridaController.listar);
-  router.post("/api/cadastro/corridas", CorridaController.solicitar);
+// Motorista
+router.post("/api/motorista/cadastro", MotoristaController.cadastro);
+router.post("/api/motorista/login", MotoristaController.login);
 
-  // Avaliacoes
-  router.get("/api/avaliacoes", AvaliacaoController.listar);
-  router.post("/api/cadastro/avaliacoes", AvaliacaoController.avaliar);
+// Passageiro
+router.post("/api/passageiro/cadastro", PassageiroController.cadastro);
+// router.post("/api/passageiro/login", PassageiroController.login); // Descomente quando criar o login de passageiro
 
-  // Veiculos
-  router.get("/api/veiculos", VeiculoController.listar);
-  router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
-
-  // Login e Registro Motorista
-
-  router.post("/api/motorista/register", MotoristaController.cadastro);
-  router.post("/api/motorista/login", MotoristaController.login);
-
-  // Login e Registro Passageiro
+// Admin
+router.post("/api/admin/login", AdminController.login);
 
 
+// ============================================
+// ROTAS RESTRITAS (Precisa de Token JWT)
+// ============================================
 
-  export { router };
+// --- Listagens (GET) ---
+// O 'verificarToken' garante que o usuário está logado
+router.get("/api/motoristas", AuthMiddleware.verificarToken, MotoristaController.listar);
+router.get("/api/passageiros", AuthMiddleware.verificarToken, PassageiroController.listar);
+router.get("/api/corridas", AuthMiddleware.verificarToken, CorridaController.listar);
+router.get("/api/veiculos", AuthMiddleware.verificarToken, VeiculoController.listar);
+router.get("/api/avaliacoes", AuthMiddleware.verificarToken, AvaliacaoController.listar);
+
+// --- Cadastros (POST) ---
+router.post("/api/corridas", AuthMiddleware.verificarToken, CorridaController.solicitar);
+router.post("/api/avaliacoes", AuthMiddleware.verificarToken, AvaliacaoController.avaliar);
+router.post("/api/veiculos", AuthMiddleware.verificarToken, VeiculoController.cadastro);
+
+
+// ============================================
+// ROTAS EXCLUSIVAS PARA ADMINS
+// ============================================
+
+// Listar Admins
+router.get("/api/admin/listar", 
+    AuthMiddleware.verificarToken, 
+    AuthMiddleware.somenteAdmin, 
+    AdminController.listar
+);
+
+// Listar todos os Endereços (com o JOIN que fizemos)
+router.get("/api/enderecos", 
+    AuthMiddleware.verificarToken, 
+    AuthMiddleware.somenteAdmin, 
+    EnderecoController.listar
+);
+
+export { router };  

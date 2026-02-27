@@ -3,143 +3,85 @@ import { DatabaseModel } from "./DatabaseModel.js";
 
 const database = new DatabaseModel().pool;
 
-class Passageiro {
-  private idPassageiro: number = 0;
-  private cpf: number;
-  private nomePassageiro: string;
-  private sobrenomePassageiro: string;
-  private cnh: number;
-  private dataNascimento: Date;
-  private endereco: string;
-  private email: string;
-  private celular: number;
- 
+export class Passageiro {
+    private idPassageiro: number;
+    private cpf: string;
+    private nomePassageiro: string;
+    private sobrenomePassageiro: string;
+    private dataNascimento: Date;
+    private email: string;
+    private celular: string;
+    private senha: string;
 
-  constructor(
-    _idPassageiro: number = 0,
-    _nomePassageiro: string,
-    _sobrenomePassageiro: string,
-    _cpf: number,
-    _cnh: number,
-    _dataNascimento: Date,
-    _celular: number,
-    _endereco: string,
-    _email: string, 
-  ) {
-    this.idPassageiro = _idPassageiro;
-    this.nomePassageiro = _nomePassageiro;
-    this.sobrenomePassageiro = _sobrenomePassageiro;
-    this.cpf = _cpf;
-    this.cnh = _cnh;
-    this.dataNascimento = _dataNascimento || new Date("1900-01-01");
-    this.celular = _celular;
-    this.endereco = _endereco;
-    this.email = _email;
-  }
-  public getIdPassageiro(): number {
-    return this.idPassageiro;
-  }
-  public setIdPassageiro(idPassageiro: number): void {
-    this.idPassageiro = idPassageiro;
-  }
-  public getNomePassageiro(): string {
-    return this.nomePassageiro;
-  }
-  public setNomePassageiro(nomePassageiro: string): void {
-    this.nomePassageiro = nomePassageiro;
-  }
-  public getSobrenomePassageiro(): string {
-    return this.sobrenomePassageiro;
-  }
-  public setSobrenomePassageiro(sobrenomePassageiro: string): void {
-    this.sobrenomePassageiro = sobrenomePassageiro;
-  }
-  public getCpf(): number {
-    return this.cpf;
-  }
-  public setCpf(cpf: number): void {
-    this.cpf = cpf;
-  }
-  public getCnh(): number {
-    return this.cnh;
-  }
-  public setCnh(cnh: number): void {
-    this.cnh = cnh;
-  }
-  public getDataNascimento(): Date {
-    return this.dataNascimento;
-  }
-  public setDataNascimento(dataNascimento: Date): void {
-    this.dataNascimento = dataNascimento;
-  }
-  public getCelular(): number {
-    return this.celular;
-  }
-  public setCelular(celular: number): void {
-    this.celular = celular;
-  }
-  public getEndereco(): string {
-    return this.endereco;
-  }
-  public setEndereco(endereco: string): void {
-    this.endereco = endereco;
-  }
-  public getEmail(): string {
-    return this.email;
-  }
-  public setEmail(email: string): void {
-    this.email = email;
-  }
-
-  static async listarPassageiros(): Promise<Array<Passageiro> | null> {
-    try {
-      let listaDePassageiros: Array<Passageiro> = [];
-      const querySelectPassageiros = `SELECT * FROM passageiro;`;
-      const respostaBD = await database.query(querySelectPassageiros);
-      respostaBD.rows.forEach((passageiroBD) => {
-        const novoPassageiro: Passageiro = new Passageiro(
-          passageiroBD.id_passageiro,
-          passageiroBD.nome_passageiro,
-          passageiroBD.sobrenome_passageiro,
-          passageiroBD.cpf,
-          passageiroBD.cnh,
-          passageiroBD.data_nascimento,
-          passageiroBD.celular,
-          passageiroBD.endereco,
-          passageiroBD.email,
-        );
-        novoPassageiro.setIdPassageiro(passageiroBD.id_passageiro);
-        listaDePassageiros.push(novoPassageiro);
-      });
-      return listaDePassageiros;
-    } catch (error) {
-      console.error(`Erro ao consultar passageiros. ${error}`);
-      return null;
+    constructor(
+        id: number = 0, 
+        nome: string = "", 
+        sobrenome: string = "", 
+        cpf: string = "", 
+        dataNasc: Date = new Date(), 
+        celular: string = "", 
+        email: string = "", 
+        senha: string = ""
+    ) {
+        this.idPassageiro = id;
+        this.nomePassageiro = nome;
+        this.sobrenomePassageiro = sobrenome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNasc;
+        this.celular = celular;
+        this.email = email;
+        this.senha = senha;
     }
-  }
-  static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<boolean> {
-    try {
-      const queryInsertPassageiro = `INSERT INTO passageiro (cpf, cnh, nome_passageiro, sobrenome_passageiro, data_nascimento, celular, endereco, email)
-                                      VALUES
-                                      ($1, $2, $3, $4, $5, $6, $7, $8)
-                                      RETURNING id_passageiro;`;
 
-      const respostaBD = await database.query(queryInsertPassageiro, [
-        passageiro.cpf,
-        passageiro.nomePassageiro.toUpperCase(),
-        passageiro.sobrenomePassageiro.toUpperCase(),
-        passageiro.dataNascimento? passageiro.dataNascimento.toString().split("T")[0] : null, // Formata a data para o formato 'YYYY-MM-DD'
-        passageiro.celular,
-        passageiro.endereco,
-        passageiro.email,
-      ]);
+    // --- Getters completos para o Controller conseguir ler tudo ---
+    public getIdPassageiro(): number { return this.idPassageiro; }
+    public getNomePassageiro(): string { return this.nomePassageiro; }
+    public getSobrenomePassageiro(): string { return this.sobrenomePassageiro; }
+    public getCpf(): string { return this.cpf; }
+    public getDataNascimento(): Date { return this.dataNascimento; }
+    public getCelular(): string { return this.celular; }
+    public getEmail(): string { return this.email; }
+    public getSenha(): string { return this.senha; }
 
-      return respostaBD.rows.length > 0;
-    } catch (error) {
-      console.error(`Erro ao cadastrar passageiro. ${error}`);
-      return false;
+    static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
+        try {
+            const query = `
+                INSERT INTO passageiro (cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, email, celular, senha)
+                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_passageiro;
+            `;
+            const res = await database.query(query, [
+                passageiro.cpf, 
+                passageiro.nomePassageiro.toUpperCase(), 
+                passageiro.sobrenomePassageiro.toUpperCase(),
+                passageiro.dataNascimento, 
+                passageiro.email, 
+                passageiro.celular, 
+                passageiro.senha
+            ]);
+            return res.rows[0].id_passageiro;
+        } catch (error) {
+            console.error("Erro no Model Passageiro:", error);
+            return null;
+        }
     }
-  }
+
+    static async listarPassageiros(): Promise<Array<Passageiro> | null> {
+        try {
+            const res = await database.query(`SELECT * FROM passageiro;`);
+            // MAPEAMENTO CORRETO: Pegando do banco (snake_case) e jogando no construtor
+            return res.rows.map(p => new Passageiro(
+                p.id_passageiro, 
+                p.nome_passageiro, 
+                p.sobrenome_passageiro, 
+                p.cpf, 
+                p.data_nascimento, 
+                p.celular, 
+                p.email, 
+                p.senha
+            ));
+        } catch (error) {
+            console.error("Erro ao listar passageiros:", error);
+            return null;
+        }
+    }
 }
-
-export { Passageiro };

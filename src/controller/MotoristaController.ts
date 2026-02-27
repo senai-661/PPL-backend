@@ -1,6 +1,8 @@
 import { Motorista } from "../model/Motorista.js";
+import { EnderecoController } from "./EnderecoController.js";
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt"; 
+import jwt from "jsonwebtoken";
 
 class MotoristaController extends Motorista {
     
@@ -32,62 +34,72 @@ class MotoristaController extends Motorista {
     }
 
     // LOGIN: Verifica email e senha (bcrypt)
-    static async login(req: Request, res: Response): Promise<Response> {
-        try {
-            const { email, senha } = req.body;
+  static async login(req: Request, res: Response): Promise<Response> {
+    try {
+        const { email, senha } = req.body;
+        const motorista = await Motorista.buscarPorEmail(email);
 
-            const motorista = await Motorista.buscarPorEmail(email);
-
-            if (!motorista) {
-                return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
-            }
-
-            const senhaValida = await bcrypt.compare(senha, motorista.getSenha());
-
-            if (!senhaValida) {
-                return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
-            }
-
-            return res.status(200).json({
-                mensagem: "Login realizado com sucesso!",
-                motorista: {
-                    id: motorista.getIdMotorista(),
-                    nome: motorista.getNomeMotorista(),
-                    email: motorista.getEmail()
-                }
-            });
-        } catch (error) {
-            return res.status(500).json({ mensagem: "Erro interno no servidor." });
+        if (!motorista) {
+            return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
         }
+
+        const senhaValida = await bcrypt.compare(senha, motorista.getSenha());
+        if (!senhaValida) {
+            return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
+        }
+
+        // -- O JWT --
+        const segredo = "PPL_ladygagasenha"; // No futuro, use .env
+        const token = jwt.sign(
+            { 
+                id: motorista.getIdMotorista(), 
+                email: motorista.getEmail(),
+                tipo: 'motorista' 
+            }, 
+            segredo, 
+            { expiresIn: '1h' } // O "acesso" expira em 1 hora
+        );
+
+        return res.status(200).json({
+            mensagem: "Login realizado com sucesso!",
+            token: token, // O motorista guarda esse token no celular/browser
+            motorista: {
+                id: motorista.getIdMotorista(),
+                nome: motorista.getNomeMotorista()
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ mensagem: "Erro interno." });
     }
+}
 
     // CADASTRO: Criptografa a senha antes de salvar
-    static async cadastro(req: Request, res: Response): Promise<Response> {
+static async cadastro(req: Request, res: Response): Promise<Response> {
         try {
-            const dadosMotorista = req.body;
+            const { endereco, ...dadosMotorista } = req.body; // Separa os dados do endereço
 
-            // Validação básica: já existe este email?
-            const jaExiste = await Motorista.buscarPorEmail(dadosMotorista.email);
-            if (jaExiste) {
-                return res.status(400).json({ mensagem: "Este e-mail já está cadastrado." });
-            }
-
-            // Gerar Hash da Senha
             const salt = await bcrypt.genSalt(10);
             dadosMotorista.senha = await bcrypt.hash(dadosMotorista.senha, salt);
 
-            const sucesso = await Motorista.cadastrarMotorista(dadosMotorista);
+            // 1. Cadastra o motorista e pega o ID
+            const idGerado = await Motorista.cadastrarMotorista(dadosMotorista);
             
-            if (sucesso) {
-                return res.status(201).json({ mensagem: "Motorista cadastrado com sucesso." });
+            if (idGerado) {
+                // 2. Cadastra o endereço usando o ID gerado
+                const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(idGerado, 'motorista', endereco);
+                
+                if (enderecoSucesso) {
+                    return res.status(201).json({ mensagem: "Motorista e Endereço cadastrados com sucesso!" });
+                }
+                return res.status(201).json({ mensagem: "Motorista cadastrado, mas erro no endereço." });
             } 
             return res.status(400).json({ mensagem: "Erro ao cadastrar motorista." });
             
         } catch (error) {
-            console.error(error);
             return res.status(500).json({ mensagem: "Erro ao processar cadastro." });
         }
     }
+
 }
 
 export { MotoristaController };

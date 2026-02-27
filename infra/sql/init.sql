@@ -7,7 +7,19 @@ DROP TABLE IF EXISTS corrida CASCADE;
 DROP TABLE IF EXISTS veiculo CASCADE;
 DROP TABLE IF EXISTS motorista CASCADE;
 DROP TABLE IF EXISTS passageiro CASCADE;
+DROP TABLE IF EXISTS administrador CASCADE;
 
+
+-- ============================================
+-- ADMINISTRADOR
+-- ============================================
+CREATE TABLE administrador (
+    id_admin INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    nome VARCHAR(80) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha TEXT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 -- ============================================
 -- PASSAGEIRO
@@ -90,6 +102,20 @@ CREATE TABLE avaliacao_corrida (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE endereco (
+    id_endereco INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    rua VARCHAR(150) NOT NULL,
+    numero VARCHAR(10) NOT NULL,
+    bairro VARCHAR(100) NOT NULL,
+    cidade VARCHAR(100) NOT NULL,
+    estado CHAR(2) NOT NULL,
+    cep CHAR(8) NOT NULL,
+    complemento VARCHAR(50),
+    id_motorista INTEGER UNIQUE, -- Um motorista tem um endereço
+    id_passageiro INTEGER UNIQUE, -- Um passageiro tem um endereço
+    CONSTRAINT fk_motorista FOREIGN KEY (id_motorista) REFERENCES motorista(id_motorista) ON DELETE CASCADE,
+    CONSTRAINT fk_passageiro FOREIGN KEY (id_passageiro) REFERENCES passageiro(id_passageiro) ON DELETE CASCADE
+);
 
 -- ============================================
 -- INSERTS (com hash bcrypt real de exemplo)
@@ -98,6 +124,18 @@ CREATE TABLE avaliacao_corrida (
 
 -- Hash real bcrypt de "123456"
 -- $2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2
+
+INSERT INTO administrador (nome, email, senha) VALUES
+ ('Pedro Roque', 'roquelindo@gmail.com', '$2b$10$8.V7vuYq0NEoM1BM4b91Iuo8bhC8e9WymnKf.n3t02KcxuvvDYvTu');
+
+-- Compensa mais inserir manualmente os administradores pra não ter que criar uma função pra registrar admin-- 
+-- node -e "console.log(require('bcrypt').hashSync('SUA_SENHA_AQUI', 10))" -- 
+-- faz o Hash da senha manualmente e loga depois pelo aplicativo, já sincroninzando com o banco de dados!!! 
+-- Demorei um puta tempo fazendo isso meudeus -- 
+
+
+
+
 
 INSERT INTO passageiro 
 (cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, endereco, email, celular, senha)
@@ -137,3 +175,4 @@ VALUES
 (1, 5, 'Excelente motorista, muito educado.'),
 (2, 4, 'Boa corrida, mas demorou um pouco.'),
 (3, 2, 'Motorista cancelou no meio do trajeto.');
+
