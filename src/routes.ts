@@ -6,8 +6,8 @@
   import { MotoristaController } from "./controller/MotoristaController.js";
   import { AvaliacaoController } from "./controller/AvaliacaoController.js";
   import { VeiculoController } from "./controller/VeiculoController.js";
-  // import { AuthController } from "./controller/AuthController.js";
-
+ 
+  
 
   const router = Router();
 
@@ -35,9 +35,13 @@
   router.get("/api/veiculos", VeiculoController.listar);
   router.post("/api/cadastro/veiculos", VeiculoController.cadastro);
 
-  // Login
-  // router.post("/api/register", AuthController.register);
-  // router.post("/api/login", AuthController.login);
+  // Login e Registro Motorista
+
+  router.post("/api/motorista/register", MotoristaController.cadastro);
+  router.post("/api/motorista/login", MotoristaController.login);
+
+  // Login e Registro Passageiro
+
 
 
   export { router };

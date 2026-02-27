@@ -74,8 +74,7 @@ CREATE TABLE corrida (
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     data_corrida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duracao_corrida INT NOT NULL CHECK (duracao_corrida >= 0),
-    status_corrida VARCHAR(20) NOT NULL 
-        CHECK (status_corrida IN ('Em andamento', 'Finalizada', 'Cancelada'))
+    status_corrida VARCHAR(20) NOT NULL CHECK (status_corrida IN ('Em andamento', 'Finalizada', 'Cancelada'))
 );
 
 

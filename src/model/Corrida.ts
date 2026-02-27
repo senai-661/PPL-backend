@@ -141,8 +141,8 @@ class Corrida {
     try {
       const queryInsertCorrida = `
         INSERT INTO corrida 
-        (id_passageiro, id_motorista, id_veiculo, origem_corrida, destino_corrida, preco, avaliacao, data_corrida, duracao_corrida, status_corrida) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_corrida;
+        (id_passageiro, id_motorista, id_veiculo, origem_corrida, destino_corrida, preco, data_corrida, duracao_corrida, status_corrida) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id_corrida;
       `;
       await database.query(queryInsertCorrida, [
         corrida.idPassageiro,
@@ -151,7 +151,6 @@ class Corrida {
         corrida.origemCorrida,
         corrida.destinoCorrida,
         corrida.preco,
-        corrida.avaliacao,
         corrida.dataCorrida,
         corrida.duracaoCorrida,
         corrida.statusCorrida,
