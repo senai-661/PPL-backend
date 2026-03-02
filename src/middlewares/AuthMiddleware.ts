@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-
-const SEGREDO = "PPL_ladygagasenha"; // Use a mesma do Controller!
+import { SENHAMAX } from "../services/AuthService.js";
 
 export class AuthMiddleware {
   // 1º Nível: Apenas verifica se o token é válido
@@ -16,7 +15,7 @@ export class AuthMiddleware {
     }
 
     try {
-      const decodificado = jwt.verify(token, SEGREDO);
+      const decodificado = jwt.verify(token, SENHAMAX);
       // Salva os dados do token dentro da requisição para os próximos passos usarem
       (req as any).usuario = decodificado;
       next();

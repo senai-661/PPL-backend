@@ -1,8 +1,9 @@
 import { Passageiro } from "../model/Passageiro.js";
 import { EnderecoController } from "./EnderecoController.js";
+import { AuthService } from "../services/AuthService.js";
+
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
 class PassageiroController extends Passageiro {
   // LISTAR: Usa os getters para retornar um JSON limpo
@@ -82,30 +83,30 @@ class PassageiroController extends Passageiro {
   static async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email, senha } = req.body;
+
+      // 1. Busca o passageiro
       const passageiro = await Passageiro.buscarPorEmail(email);
 
-      if (!passageiro) {
-        return res.status(404).json({ mensagem: "E-mail ou senha inválidos." });
-      }
-
-      const senhaValida = await bcrypt.compare(senha, passageiro.getSenha());
-
-      if (!senhaValida) {
+      // 2. Valida existência e senha usando o Service
+      // Se não achar o passageiro OU a senha não bater...
+      if (
+        !passageiro ||
+        !(await AuthService.compararSenha(senha, passageiro.getSenha()))
+      ) {
         return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
       }
-      const segredo = "PPL_ladygagasenha";
-      const token = jwt.sign(
-        {
-          id: passageiro.getIdPassageiro(),
-          email: passageiro.getEmail(),
-          tipo: "passageiro",
-        },
-        segredo,
-        { expiresIn: "1h" },
-      );
+
+      // 3. Gera o token centralizado no Service
+      const token = AuthService.gerarToken({
+        id: passageiro.getIdPassageiro(),
+        email: passageiro.getEmail(),
+        tipo: "passageiro",
+      });
+
+      // 4. Retorno limpo
       return res.status(200).json({
         mensagem: "Login realizado com sucesso!",
-        token: token,
+        token,
         passageiro: {
           id: passageiro.getIdPassageiro(),
           nome: passageiro.getNomePassageiro(),

@@ -1,8 +1,8 @@
 import { Motorista } from "../model/Motorista.js";
 import { EnderecoController } from "./EnderecoController.js";
+import { AuthService } from "../services/AuthService.js";
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
 class MotoristaController extends Motorista {
   // LISTAR: Retorna os dados usando os Getters, sem expor a senha
@@ -40,34 +40,27 @@ class MotoristaController extends Motorista {
       const { email, senha } = req.body;
       const motorista = await Motorista.buscarPorEmail(email);
 
-      if (!motorista) {
+      // Se não achar motorista ou a senha não bater (usando o Service)
+      if (
+        !motorista ||
+        !(await AuthService.compararSenha(senha, motorista.getSenha()))
+      ) {
         return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
       }
 
-      const senhaValida = await bcrypt.compare(senha, motorista.getSenha());
-      if (!senhaValida) {
-        return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
-      }
-
-      // -- O JWT --
-      const segredo = "PPL_ladygagasenha"; // No futuro, use .env
-      const token = jwt.sign(
-        {
-          id: motorista.getIdMotorista(),
-          email: motorista.getEmail(),
-          tipo: "motorista",
-        },
-        segredo,
-        { expiresIn: "1h" }, // O "acesso" expira em 1 hora
-      );
+      // Gera o token pelo Service
+      const token = AuthService.gerarToken({
+        id: motorista.getIdMotorista(),
+        email: motorista.getEmail(),
+        tipo: "motorista",
+      });
 
       return res.status(200).json({
         mensagem: "Login realizado com sucesso!",
-        token: token, // O motorista guarda esse token no celular/browser
+        token: token,
         motorista: {
           id: motorista.getIdMotorista(),
           nome: motorista.getNomeMotorista(),
-          sobrenome: motorista.getSobrenomeMotorista(),
         },
       });
     } catch (error) {
