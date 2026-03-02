@@ -4,83 +4,169 @@ import { DatabaseModel } from "./DatabaseModel.js";
 const database = new DatabaseModel().pool;
 
 export class Motorista {
-    private idMotorista: number;
-    private nomeMotorista: string;
-    private sobrenomeMotorista: string;
-    private cpf: string; 
-    private cnh: string;
-    private dataNascimento: Date;
-    private celular: string;
-    private email: string;
-    private antecedentesCriminais: string;
-    private senha: string;
+  private idMotorista: number;
+  private nomeMotorista: string;
+  private sobrenomeMotorista: string;
+  private cpf: string;
+  private cnh: string;
+  private dataNascimento: Date;
+  private celular: string;
+  private email: string;
+  private antecedentesCriminais: string;
+  private senha: string;
 
-    constructor(
-        _idMotorista: number = 0,
-        _nomeMotorista: string = "",
-        _sobrenomeMotorista: string = "",
-        _cpf: string = "",
-        _cnh: string = "",
-        _dataNascimento: Date = new Date(),
-        _celular: string = "",
-        _email: string = "", 
-        _antecedentesCriminais: string = "",
-        _senha: string = ""
-    ) {
-        this.idMotorista = _idMotorista;
-        this.nomeMotorista = _nomeMotorista;
-        this.sobrenomeMotorista = _sobrenomeMotorista;
-        this.cpf = _cpf;
-        this.cnh = _cnh;
-        this.dataNascimento = _dataNascimento;
-        this.celular = _celular;
-        this.email = _email;
-        this.antecedentesCriminais = _antecedentesCriminais;
-        this.senha = _senha;  
-    }
+  constructor(
+    _idMotorista: number = 0,
+    _nomeMotorista: string = "",
+    _sobrenomeMotorista: string = "",
+    _cpf: string = "",
+    _cnh: string = "",
+    _dataNascimento: Date = new Date(),
+    _celular: string = "",
+    _email: string = "",
+    _antecedentesCriminais: string = "",
+    _senha: string = "",
+  ) {
+    this.idMotorista = _idMotorista;
+    this.nomeMotorista = _nomeMotorista;
+    this.sobrenomeMotorista = _sobrenomeMotorista;
+    this.cpf = _cpf;
+    this.cnh = _cnh;
+    this.dataNascimento = _dataNascimento;
+    this.celular = _celular;
+    this.email = _email;
+    this.antecedentesCriminais = _antecedentesCriminais;
+    this.senha = _senha;
+  }
 
-    public getIdMotorista(): number { return this.idMotorista; }
-    public getNomeMotorista(): string { return this.nomeMotorista; }
-    public getSobrenomeMotorista(): string { return this.sobrenomeMotorista; }
-    public getCpf(): string { return this.cpf; }
-    public getCnh(): string { return this.cnh; }
-    public getDataNascimento(): Date { return this.dataNascimento; }
-    public getCelular(): string { return this.celular; }
-    public getEmail(): string { return this.email; }
-    public getAntecedentesCriminais(): string { return this.antecedentesCriminais; }
-    public getSenha(): string { return this.senha; }
+  public getIdMotorista(): number {
+    return this.idMotorista;
+  }
+  public getNomeMotorista(): string {
+    return this.nomeMotorista;
+  }
+  public getSobrenomeMotorista(): string {
+    return this.sobrenomeMotorista;
+  }
+  public getCpf(): string {
+    return this.cpf;
+  }
+  public getCnh(): string {
+    return this.cnh;
+  }
+  public getDataNascimento(): Date {
+    return this.dataNascimento;
+  }
+  public getCelular(): string {
+    return this.celular;
+  }
+  public getEmail(): string {
+    return this.email;
+  }
+  public getAntecedentesCriminais(): string {
+    return this.antecedentesCriminais;
+  }
+  public getSenha(): string {
+    return this.senha;
+  }
+  public setIdMotorista(idMotorista: number): void {
+    this.idMotorista = idMotorista;
+  }
+  public setNomeMotorista(nomeMotorista: string): void {
+    this.nomeMotorista = nomeMotorista;
+  }
+  public setSobrenomeMotorista(sobrenomeMotorista: string): void {
+    this.sobrenomeMotorista = sobrenomeMotorista;
+  }
+  public setCpf(cpf: string): void {
+    this.cpf = cpf;
+  }
+  public setCnh(cnh: string): void {
+    this.cnh = cnh;
+  }
+  public setDataNascimento(dataNascimento: Date): void {
+    this.dataNascimento = dataNascimento;
+  }
+  public setCelular(celular: string): void {
+    this.celular = celular;
+  }
+  public setEmail(email: string): void {
+    this.email = email;
+  }
+  public setAntecedentesCriminais(antecedentesCriminais: string): void {
+    this.antecedentesCriminais = antecedentesCriminais;
+  }
+  public setSenha(senha: string): void {
+    this.senha = senha;
+  }
 
-    static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
-        try {
-            const queryInsert = `
+  static async cadastrarMotorista(
+    motorista: MotoristaDTO,
+  ): Promise<number | null> {
+    try {
+      const queryInsert = `
                 INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, email, antecedentes_criminais, senha)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id_motorista;`;
-            
-            const values = [
-                motorista.cpf, motorista.cnh, motorista.nomeMotorista.toUpperCase(),
-                motorista.sobrenomeMotorista.toUpperCase(), motorista.dataNascimento,
-                motorista.celular, motorista.email, motorista.antecedentesCriminais.toUpperCase(), motorista.senha
-            ];
 
-            const res = await database.query(queryInsert, values);
-            return res.rows[0].id_motorista; // Retorna o ID para o Controller usar no Endereço
-        } catch (error) {
-            console.error(`Erro ao cadastrar motorista: ${error}`);
-            return null;
-        }
-    }
+      const values = [
+        motorista.cpf,
+        motorista.cnh,
+        motorista.nomeMotorista.toUpperCase(),
+        motorista.sobrenomeMotorista.toUpperCase(),
+        motorista.dataNascimento,
+        motorista.celular,
+        motorista.email,
+        motorista.antecedentesCriminais.toUpperCase(),
+        motorista.senha,
+      ];
 
-    static async buscarPorEmail(email: string): Promise<Motorista | null> {
-        const res = await database.query(`SELECT * FROM motorista WHERE email = $1;`, [email]);
-        if (res.rows.length > 0) {
-            const m = res.rows[0];
-            return new Motorista(m.id_motorista, m.nome_motorista, m.sobrenome_motorista, m.cpf, m.cnh, m.data_nascimento, m.celular, m.email, m.antecedentes_criminais, m.senha);
-        }
-        return null;
+      const res = await database.query(queryInsert, values);
+      return res.rows[0].id_motorista; // Retorna o ID para o Controller usar no Endereço
+    } catch (error) {
+      console.error(`Erro ao cadastrar motorista: ${error}`);
+      return null;
     }
+  }
 
-    static async listarMotoristas(): Promise<Array<Motorista> | null> {
-        const res = await database.query(`SELECT * FROM motorista;`);
-        return res.rows.map(m => new Motorista(m.id_motorista, m.nome_motorista, m.sobrenome_motorista, m.cpf, m.cnh, m.data_nascimento, m.celular, m.email, m.antecedentes_criminais, m.senha));
+  static async buscarPorEmail(email: string): Promise<Motorista | null> {
+    const res = await database.query(
+      `SELECT * FROM motorista WHERE email = $1;`,
+      [email],
+    );
+    if (res.rows.length > 0) {
+      const motorista = res.rows[0];
+      return new Motorista(
+        motorista.id_motorista,
+        motorista.nome_motorista,
+        motorista.sobrenome_motorista,
+        motorista.cpf,
+        motorista.cnh,
+        motorista.data_nascimento,
+        motorista.celular,
+        motorista.email,
+        motorista.antecedentes_criminais,
+        motorista.senha,
+      );
     }
+    return null;
+  }
+
+  static async listarMotoristas(): Promise<Array<Motorista> | null> {
+    const res = await database.query(`SELECT * FROM motorista;`);
+    return res.rows.map(
+      (motorista) =>
+        new Motorista(
+          motorista.id_motorista,
+          motorista.nome_motorista,
+          motorista.sobrenome_motorista,
+          motorista.cpf,
+          motorista.cnh,
+          motorista.data_nascimento,
+          motorista.celular,
+          motorista.email,
+          motorista.antecedentes_criminais,
+          motorista.senha,
+        ),
+    );
+  }
 }

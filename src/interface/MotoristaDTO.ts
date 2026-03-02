@@ -6,7 +6,6 @@ export interface MotoristaDTO {
   sobrenomeMotorista: string;
   dataNascimento: Date;
   celular: string;
-  endereco: string;
   email: string;
   antecedentesCriminais: string;
   senha: string;
