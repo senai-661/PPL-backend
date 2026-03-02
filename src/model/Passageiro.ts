@@ -102,7 +102,7 @@ export class Passageiro {
       ]);
       return res.rows[0].id_passageiro;
     } catch (error) {
-      console.error("Erro no Model Passageiro:", error);
+      console.error("Erro ao cadastrar Passageiro:", error);
       return null;
     }
   }

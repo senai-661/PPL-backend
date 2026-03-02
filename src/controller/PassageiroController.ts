@@ -35,7 +35,7 @@ class PassageiroController extends Passageiro {
   }
 
   // CADASTRO: Criptografa senha e salva endereço "casado"
-  static async cadastro(req: Request, res: Response): Promise<Response> {
+  static async register(req: Request, res: Response): Promise<Response> {
     try {
       // Desestruturamos para separar o endereço do resto dos dados
       const { endereco, ...dadosPassageiro } = req.body;

@@ -24,16 +24,15 @@ router.get("/api", (req: Request, res: Response) => {
 // ============================================
 
 // Motorista
-router.post("/api/motorista/cadastro", MotoristaController.cadastro);
+router.post("/api/motorista/registrar", MotoristaController.register);
 router.post("/api/motorista/login", MotoristaController.login);
 
 // Passageiro
-router.post("/api/passageiro/cadastro", PassageiroController.cadastro);
-// router.post("/api/passageiro/login", PassageiroController.login); // Descomente quando criar o login de passageiro
+router.post("/api/passageiro/registrar", PassageiroController.register);
+router.post("/api/passageiro/login", PassageiroController.login);
 
 // Admin
 router.post("/api/admin/login", AdminController.login);
-
 
 // ============================================
 // ROTAS RESTRITAS (Precisa de Token JWT)
@@ -41,34 +40,67 @@ router.post("/api/admin/login", AdminController.login);
 
 // --- Listagens (GET) ---
 // O 'verificarToken' garante que o usuário está logado
-router.get("/api/motoristas", AuthMiddleware.verificarToken, MotoristaController.listar);
-router.get("/api/passageiros", AuthMiddleware.verificarToken, PassageiroController.listar);
-router.get("/api/corridas", AuthMiddleware.verificarToken, CorridaController.listar);
-router.get("/api/veiculos", AuthMiddleware.verificarToken, VeiculoController.listar);
-router.get("/api/avaliacoes", AuthMiddleware.verificarToken, AvaliacaoController.listar);
+router.get(
+  "/api/motoristas",
+  AuthMiddleware.verificarToken,
+  MotoristaController.listar,
+);
+router.get(
+  "/api/passageiros",
+  AuthMiddleware.verificarToken,
+  PassageiroController.listar,
+);
+router.get(
+  "/api/corridas",
+  AuthMiddleware.verificarToken,
+  CorridaController.listar,
+);
+router.get(
+  "/api/veiculos",
+  AuthMiddleware.verificarToken,
+  VeiculoController.listar,
+);
+router.get(
+  "/api/avaliacoes",
+  AuthMiddleware.verificarToken,
+  AvaliacaoController.listar,
+);
 
 // --- Cadastros (POST) ---
-router.post("/api/corridas", AuthMiddleware.verificarToken, CorridaController.solicitar);
-router.post("/api/avaliacoes", AuthMiddleware.verificarToken, AvaliacaoController.avaliar);
-router.post("/api/veiculos", AuthMiddleware.verificarToken, VeiculoController.cadastro);
-
+router.post(
+  "/api/corridas",
+  AuthMiddleware.verificarToken,
+  CorridaController.solicitar,
+);
+router.post(
+  "/api/avaliacoes",
+  AuthMiddleware.verificarToken,
+  AvaliacaoController.avaliar,
+);
+router.post(
+  "/api/veiculos",
+  AuthMiddleware.verificarToken,
+  VeiculoController.cadastro,
+);
 
 // ============================================
 // ROTAS EXCLUSIVAS PARA ADMINS
 // ============================================
 
 // Listar Admins
-router.get("/api/admin/listar", 
-    AuthMiddleware.verificarToken, 
-    AuthMiddleware.somenteAdmin, 
-    AdminController.listar
+router.get(
+  "/api/admin/listar",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.listar,
 );
 
 // Listar todos os Endereços (com o JOIN que fizemos)
-router.get("/api/enderecos", 
-    AuthMiddleware.verificarToken, 
-    AuthMiddleware.somenteAdmin, 
-    EnderecoController.listar
+router.get(
+  "/api/enderecos",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  EnderecoController.listar,
 );
 
-export { router };  
+export { router };

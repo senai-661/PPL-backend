@@ -76,7 +76,7 @@ class MotoristaController extends Motorista {
   }
 
   // CADASTRO: Criptografa a senha antes de salvar
-  static async cadastro(req: Request, res: Response): Promise<Response> {
+  static async register(req: Request, res: Response): Promise<Response> {
     try {
       const { endereco, ...dadosMotorista } = req.body; // Separa os dados do endereço
 
@@ -95,11 +95,9 @@ class MotoristaController extends Motorista {
         );
 
         if (enderecoSucesso) {
-          return res
-            .status(201)
-            .json({
-              mensagem: "Motorista e Endereço cadastrados com sucesso!",
-            });
+          return res.status(201).json({
+            mensagem: "Motorista e Endereço cadastrados com sucesso!",
+          });
         }
         return res
           .status(201)

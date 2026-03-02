@@ -130,7 +130,8 @@ CREATE TABLE avaliacao_corrida (
 -- $2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2
 
 INSERT INTO administrador (nome, email, senha) VALUES
- ('Pedro Roque', 'roquelindo@gmail.com', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2');
+ ('Pedro Roque', 'roquelindo@gmail.com', '$2b$10$7pkXvcT6WnwzH6O1FSC6hOgXwSFudlmw9XqWt9Sbi/nCodfaBIYDK'), -- Senha = roque --
+ ('Pablo Sponchiado', 'irmaodasarah@gmail.com', '$2b$10$6Ykpx8J/F/4bDoljPhNE0eOue7F2LMfJCUBCgpeUpOW82DHQEjjye'); -- Senha = pablo -- 
 
 -- Compensa mais inserir manualmente os administradores pra não ter que criar uma função pra registrar admin-- 
 -- node -e "console.log(require('bcrypt').hashSync('SUA_SENHA_AQUI', 10))" -- 
