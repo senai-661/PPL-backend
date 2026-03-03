@@ -24,6 +24,7 @@ class MotoristaController extends Motorista {
         celular: m.getCelular(),
         email: m.getEmail(),
         antecedentes: m.getAntecedentesCriminais(),
+        especializacao: m.getEspecializacao(),
       }));
 
       return res.status(200).json(dadosTratados);

@@ -6,6 +6,7 @@ export interface PassageiroDTO {
   dataNascimento: Date;
   email: string;
   celular: string;
+  necessidadeEspecial: string;
   senha: string;
   criadoEm?: Date;
 }

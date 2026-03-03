@@ -11,6 +11,7 @@ export class Passageiro {
   private dataNascimento: Date;
   private email: string;
   private celular: string;
+  private necessidadeEspecial: string;
   private senha: string;
 
   constructor(
@@ -21,6 +22,7 @@ export class Passageiro {
     dataNasc: Date = new Date(),
     celular: string = "",
     email: string = "",
+    necessidadeEspecial: string = "",
     senha: string = "",
   ) {
     this.idPassageiro = id;
@@ -29,6 +31,7 @@ export class Passageiro {
     this.cpf = cpf;
     this.dataNascimento = dataNasc;
     this.celular = celular;
+    this.necessidadeEspecial = necessidadeEspecial;
     this.email = email;
     this.senha = senha;
   }
@@ -55,6 +58,9 @@ export class Passageiro {
   public getEmail(): string {
     return this.email;
   }
+  public getNecessidadeEspecial(): string {
+    return this.necessidadeEspecial;
+  }
   public getSenha(): string {
     return this.senha;
   }
@@ -79,6 +85,9 @@ export class Passageiro {
   public setEmail(email: string): void {
     this.email = email;
   }
+  public setNecessidadeEspecial(necessidadeEspecial: string): void {
+    this.necessidadeEspecial = necessidadeEspecial;
+  }
   public setSenha(senha: string): void {
     this.senha = senha;
   }
@@ -88,8 +97,8 @@ export class Passageiro {
   ): Promise<number | null> {
     try {
       const query = `
-                INSERT INTO passageiro (cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, email, celular, senha)
-                VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_passageiro;
+                INSERT INTO passageiro (cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, email, celular, necessidade_especial, senha)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id_passageiro;
             `;
       const res = await database.query(query, [
         passageiro.cpf,
@@ -98,6 +107,7 @@ export class Passageiro {
         passageiro.dataNascimento,
         passageiro.email,
         passageiro.celular,
+        passageiro.necessidadeEspecial.toUpperCase(),
         passageiro.senha,
       ]);
       return res.rows[0].id_passageiro;
@@ -121,6 +131,7 @@ export class Passageiro {
             passageiro.data_nascimento,
             passageiro.celular,
             passageiro.email,
+            passageiro.necessidade_especial,
             passageiro.senha,
           ),
       );
@@ -145,6 +156,7 @@ export class Passageiro {
         passageiro.data_nascimento,
         passageiro.celular,
         passageiro.email,
+        passageiro.necessidade_especial,
         passageiro.senha,
       );
     }

@@ -24,6 +24,7 @@ class PassageiroController extends Passageiro {
         dataNascimento: p.getDataNascimento(),
         celular: p.getCelular(),
         email: p.getEmail(),
+        necessidadeEspecial: p.getNecessidadeEspecial(),
       }));
 
       return res.status(200).json(dadosTratados);

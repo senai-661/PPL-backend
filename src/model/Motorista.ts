@@ -13,6 +13,7 @@ export class Motorista {
   private celular: string;
   private email: string;
   private antecedentesCriminais: string;
+  private especializacao: string;
   private senha: string;
 
   constructor(
@@ -25,6 +26,7 @@ export class Motorista {
     _celular: string = "",
     _email: string = "",
     _antecedentesCriminais: string = "",
+    _especializacao: string = "",
     _senha: string = "",
   ) {
     this.idMotorista = _idMotorista;
@@ -36,6 +38,7 @@ export class Motorista {
     this.celular = _celular;
     this.email = _email;
     this.antecedentesCriminais = _antecedentesCriminais;
+    this.especializacao = _especializacao;
     this.senha = _senha;
   }
 
@@ -65,6 +68,9 @@ export class Motorista {
   }
   public getAntecedentesCriminais(): string {
     return this.antecedentesCriminais;
+  }
+  public getEspecializacao(): string {
+    return this.especializacao;
   }
   public getSenha(): string {
     return this.senha;
@@ -96,6 +102,9 @@ export class Motorista {
   public setAntecedentesCriminais(antecedentesCriminais: string): void {
     this.antecedentesCriminais = antecedentesCriminais;
   }
+  public setEspecializacao(especializacao: string): void {
+    this.especializacao = especializacao;
+  }
   public setSenha(senha: string): void {
     this.senha = senha;
   }
@@ -105,8 +114,8 @@ export class Motorista {
   ): Promise<number | null> {
     try {
       const queryInsert = `
-                INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, email, antecedentes_criminais, senha)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id_motorista;`;
+                INSERT INTO motorista (cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, email, antecedentes_criminais, especializacao, senha)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_motorista;`;
 
       const values = [
         motorista.cpf,
@@ -117,6 +126,7 @@ export class Motorista {
         motorista.celular,
         motorista.email,
         motorista.antecedentesCriminais.toUpperCase(),
+        motorista.especializacao.toUpperCase(),
         motorista.senha,
       ];
 
@@ -145,6 +155,7 @@ export class Motorista {
         motorista.celular,
         motorista.email,
         motorista.antecedentes_criminais,
+        motorista.especializacao,
         motorista.senha,
       );
     }
@@ -165,6 +176,7 @@ export class Motorista {
           motorista.celular,
           motorista.email,
           motorista.antecedentes_criminais,
+          motorista.especializacao,
           motorista.senha,
         ),
     );

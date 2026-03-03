@@ -31,6 +31,7 @@ CREATE TABLE passageiro (
     data_nascimento DATE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     celular VARCHAR(20) NOT NULL,
+    necessidade_especial VARCHAR(50) NOT NULL DEFAULT 'Nenhuma',
     senha TEXT NOT NULL, 
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -48,6 +49,7 @@ CREATE TABLE motorista (
     celular VARCHAR(20) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     antecedentes_criminais VARCHAR(40) NOT NULL,
+    especializacao VARCHAR(50) NOT NULL DEFAULT 'Nenhuma',
     senha TEXT NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -94,7 +96,7 @@ CREATE TABLE corrida (
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     data_corrida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duracao_corrida INT NOT NULL CHECK (duracao_corrida >= 0),
-    status_corrida VARCHAR(20) NOT NULL CHECK (status_corrida IN ('Em andamento', 'Finalizada', 'Cancelada'))
+    status_corrida VARCHAR(20) NOT NULL CHECK (status_corrida IN ('Pendente', 'Aceito', 'Em andamento', 'Finalizada', 'Cancelada'))
 );
 
 -- ============================================
@@ -140,11 +142,11 @@ INSERT INTO administrador (nome, email, senha) VALUES
 
 -- Inserindo Passageiros (Sem a coluna endereço)
 INSERT INTO passageiro 
-(cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, email, celular, senha)
+(cpf, nome_passageiro, sobrenome_passageiro, data_nascimento, email, celular, necessidade_especial, senha)
 VALUES
-('52998224725', 'Carlos', 'Silva', '1995-04-10', 'carlos@email.com', '11999990001', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
-('12345678909', 'Mariana', 'Souza', '1998-09-21', 'mariana@email.com', '11999990002', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
-('11144477735', 'João', 'Oliveira', '1992-12-05', 'joao@email.com', '11999990003', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2');
+('52998224725', 'Carlos', 'Silva', '1995-04-10', 'carlos@email.com', '11999990001', 'Cadeirante', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
+('12345678909', 'Mariana', 'Souza', '1998-09-21', 'mariana@email.com', '11999990002', 'Cadeirante', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
+('11144477735', 'João', 'Oliveira', '1992-12-05', 'joao@email.com', '11999990003', 'Nenhuma', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2');
 
 -- Inserindo Endereços dos Passageiros (Ligando pelos IDs 1, 2 e 3)
 INSERT INTO endereco (rua, numero, bairro, cidade, estado, cep, id_passageiro) VALUES
@@ -154,11 +156,11 @@ INSERT INTO endereco (rua, numero, bairro, cidade, estado, cep, id_passageiro) V
 
 -- Inserindo Motoristas (Sem a coluna endereço)
 INSERT INTO motorista
-(cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, email, antecedentes_criminais, senha)
+(cpf, cnh, nome_motorista, sobrenome_motorista, data_nascimento, celular, email, antecedentes_criminais, especializacao, senha)
 VALUES
-('98765432100', '12345678901', 'Ricardo', 'Almeida', '1985-06-15', '11988880001', 'ricardo@email.com', 'Nada consta', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
-('74185296300', '23456789012', 'Fernanda', 'Costa', '1990-03-12', '11988880002', 'fernanda@email.com', 'Nada consta', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
-('36925814706', '34567890123', 'Bruno', 'Lima', '1982-11-30', '11988880003', 'bruno@email.com', 'Nada consta', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2');
+('98765432100', '12345678901', 'Ricardo', 'Almeida', '1985-06-15', '11988880001', 'ricardo@email.com', 'Nada consta', 'Mobilidade Reduzida', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
+('74185296300', '23456789012', 'Fernanda', 'Costa', '1990-03-12', '11988880002', 'fernanda@email.com', 'Nada consta', 'LIBRAS', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2'),
+('36925814706', '34567890123', 'Bruno', 'Lima', '1982-11-30', '11988880003', 'bruno@email.com', 'Nada consta', 'Nenhuma', '$2b$10$7a0XWnF1WmG0pYxJjXxJ9uG6v1JH7gHnL2gYw7mJ7Qp8VZbJm9mW2');
 
 -- Inserindo Endereços dos Motoristas (Ligando pelos IDs 1, 2 e 3)
 INSERT INTO endereco (rua, numero, bairro, cidade, estado, cep, id_motorista) VALUES
