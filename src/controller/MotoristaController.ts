@@ -61,6 +61,7 @@ class MotoristaController extends Motorista {
         motorista: {
           id: motorista.getIdMotorista(),
           nome: motorista.getNomeMotorista(),
+          sobrenome: motorista.getSobrenomeMotorista(),
         },
       });
     } catch (error) {
