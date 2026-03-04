@@ -4,7 +4,7 @@ mais limpas e evitar ficar repetindo funções igual a senha em todo santo contr
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-export const SENHAMAX = "PPL_ladygagasenha"; // O coração da segurança
+export const SENHAMAX = "PPL_ladygagasenha"; 
 
 export class AuthService {
   // Gera o Token (Centralizado)

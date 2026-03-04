@@ -126,7 +126,7 @@ export class Motorista {
         motorista.celular,
         motorista.email,
         motorista.antecedentesCriminais.toUpperCase(),
-        motorista.especializacao.toUpperCase(),
+        (motorista.especializacao ?? "Nenhuma").toUpperCase(), // 👈 fix here
         motorista.senha,
       ];
 

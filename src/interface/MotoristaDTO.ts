@@ -8,7 +8,7 @@ export interface MotoristaDTO {
   celular: string;
   email: string;
   antecedentesCriminais: string;
-  especializacao: string;
+  especializacao?: string;
   senha: string;
   criadoEm?: Date;
 }

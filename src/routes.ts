@@ -103,4 +103,37 @@ router.get(
   EnderecoController.listar,
 );
 
+// ============================================
+// ROTAS DE CORRIDAS
+// ============================================
+router.get(
+  "/api/corridas/pendentes",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  CorridaController.listarPendentes,
+);
+router.patch(
+  "/api/corridas/:id/aceitar",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  CorridaController.aceitar,
+);
+router.patch(
+  "/api/corridas/:id/iniciar",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,  
+  CorridaController.iniciar,
+);
+router.patch(
+  "/api/corridas/:id/finalizar",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  CorridaController.finalizar,
+);
+router.patch(
+  "/api/corridas/:id/cancelar",
+  AuthMiddleware.verificarToken,
+  CorridaController.cancelar,
+);
+
 export { router };
