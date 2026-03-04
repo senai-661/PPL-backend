@@ -78,7 +78,7 @@ router.post(
   AvaliacaoController.avaliar,
 );
 router.post(
-  "/api/veiculos",
+  "/api/cadastro/veiculos",
   AuthMiddleware.verificarToken,
   VeiculoController.cadastro,
 );
@@ -113,7 +113,7 @@ router.get(
   CorridaController.listarPendentes,
 );
 router.patch(
-  "/api/corridas/:id/aceitar",
+  "/api/corridas/aceitar/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
   CorridaController.aceitar,
