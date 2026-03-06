@@ -75,6 +75,7 @@ router.post(
 router.post(
   "/api/avaliacoes",
   AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
   AvaliacaoController.avaliar,
 );
 router.post(

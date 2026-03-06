@@ -50,4 +50,13 @@ export class AuthMiddleware {
         .json({ mensagem: "Acesso restrito apenas para motoristas." });
     }
   }
+  
+    static somentePassageiro(req: Request, res: Response, next: NextFunction) {
+    const usuario = (req as any).usuario;
+     if (usuario && usuario.tipo === "passageiro") {
+    next();
+  } else {
+    return res.status(403).json({ mensagem: "Acesso restrito apenas para passageiros." });
+  }
+}
 }
