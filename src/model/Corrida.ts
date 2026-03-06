@@ -147,7 +147,7 @@ class Corrida {
       const query = `
         UPDATE corrida
         SET status_corrida = 'Cancelada'
-        WHERE id_corrida = $1 AND status_corrida IN ('Pendente', 'Aceito')
+        WHERE id_corrida = $1 AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
         RETURNING id_corrida;
       `;
       const res = await database.query(query, [idCorrida]);

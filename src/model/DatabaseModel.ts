@@ -59,7 +59,7 @@ export class DatabaseModel {
       return true;
     } catch (error) {
       // Em caso de erro, exibe uma mensagem de erro
-      console.log("Error to connect database ");
+      console.log("Error to connect database X( ");
       console.log(error);
       // Encerra a conexão
       this._client.end();

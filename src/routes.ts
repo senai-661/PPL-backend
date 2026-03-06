@@ -113,7 +113,7 @@ router.get(
   CorridaController.listarPendentes,
 );
 router.patch(
-  "/api/corridas/aceitar/:id",
+  "/api/corridas/:id/aceitar/",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
   CorridaController.aceitar,
