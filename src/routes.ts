@@ -136,5 +136,19 @@ router.patch(
   AuthMiddleware.verificarToken,
   CorridaController.cancelar,
 );
-
+// ============================================
+// ROTAS DE PERFIL (GET)
+// ============================================
+router.get(
+  "/api/passageiro/perfil",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  PassageiroController.perfil,
+);
+router.get(
+  "/api/motorista/perfil",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  MotoristaController.perfil,
+);
 export { router };

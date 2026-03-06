@@ -143,4 +143,22 @@ export class Passageiro {
       return null;
     }
   }
+  static async buscarPorId(id: number): Promise<Passageiro | null> {
+  try {
+    const res = await database.query(
+      `SELECT * FROM passageiro WHERE id_passageiro = $1;`,
+      [id]
+    );
+    if (res.rows.length === 0) return null;
+    const p = res.rows[0];
+    return new Passageiro(
+      p.id_passageiro, p.nome_passageiro, p.sobrenome_passageiro,
+      p.cpf, p.data_nascimento, p.celular, p.email,
+      p.necessidades ?? [], p.tipo_viagem, p.preferencia_clima, p.senha,
+    );
+  } catch (error) {
+    console.error(`Erro ao buscar passageiro por id: ${error}`);
+    return null;
+  }
+}
 }

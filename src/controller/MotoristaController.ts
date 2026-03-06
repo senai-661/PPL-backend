@@ -103,6 +103,31 @@ class MotoristaController extends Motorista {
       return res.status(500).json({ mensagem: "Erro ao processar cadastro." });
     }
   }
+  static async perfil(req: Request, res: Response): Promise<Response> {
+  try {
+    const idMotorista = (req as any).usuario.id;
+    const motorista = await Motorista.buscarPorId(idMotorista);
+
+    if (!motorista) {
+      return res.status(404).json({ mensagem: "Motorista não encontrado." });
+    }
+
+    return res.status(200).json({
+      id: motorista.getIdMotorista(),
+      nome: motorista.getNomeMotorista(),
+      sobrenome: motorista.getSobrenomeMotorista(),
+      cpf: motorista.getCpf(),
+      cnh: motorista.getCnh(),
+      dataNascimento: motorista.getDataNascimento(),
+      celular: motorista.getCelular(),
+      email: motorista.getEmail(),
+      especializacao: motorista.getEspecializacao(),
+    });
+  } catch (error) {
+    console.error(`Erro ao buscar perfil: ${error}`);
+    return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
+  }
+}
 }
 
 export { MotoristaController };

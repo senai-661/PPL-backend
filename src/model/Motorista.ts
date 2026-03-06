@@ -179,6 +179,24 @@ export class Motorista {
           motorista.especializacao,
           motorista.senha,
         ),
-    );
+    );  
   }
+  static async buscarPorId(id: number): Promise<Motorista | null> {
+  try {
+    const res = await database.query(
+      `SELECT * FROM motorista WHERE id_motorista = $1;`,
+      [id]
+    );
+    if (res.rows.length === 0) return null;
+    const m = res.rows[0];
+    return new Motorista(
+      m.id_motorista, m.nome_motorista, m.sobrenome_motorista,
+      m.cpf, m.cnh, m.data_nascimento, m.celular, m.email,
+      m.antecedentes_criminais, m.especializacao, m.senha,
+    );
+  } catch (error) {
+    console.error(`Erro ao buscar motorista por id: ${error}`);
+    return null;
+  }
+}   
 }

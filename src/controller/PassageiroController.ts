@@ -109,6 +109,32 @@ class PassageiroController {
         .json({ mensagem: "Erro interno ao tentar fazer login." });
     }
   }
+  static async perfil(req: Request, res: Response): Promise<Response> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+    const passageiro = await Passageiro.buscarPorId(idPassageiro);
+
+    if (!passageiro) {
+      return res.status(404).json({ mensagem: "Passageiro não encontrado." });
+    }
+
+    return res.status(200).json({
+      id: passageiro.getIdPassageiro(),
+      nome: passageiro.getNomePassageiro(),
+      sobrenome: passageiro.getSobrenomePassageiro(),
+      cpf: passageiro.getCpf(),
+      dataNascimento: passageiro.getDataNascimento(),
+      celular: passageiro.getCelular(),
+      email: passageiro.getEmail(),
+      necessidades: passageiro.getNecessidades(),
+      tipoViagem: passageiro.getTipoViagem(),
+      preferenciaClima: passageiro.getPreferenciaClima(),
+    });
+  } catch (error) {
+    console.error(`Erro ao buscar perfil: ${error}`);
+    return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
+  }
+}
 }
 
 export { PassageiroController };
