@@ -192,6 +192,43 @@ class Corrida {
       return null;
     }
   }
+  static async historicoPorPassageiro(idPassageiro: number): Promise<Array<Corrida> | null> {
+  try {
+    const res = await database.query(
+      `SELECT * FROM corrida WHERE id_passageiro = $1 ORDER BY data_corrida DESC;`,
+      [idPassageiro]
+    );
+    return res.rows.map(
+      (c) => new Corrida(
+        c.id_corrida, c.id_passageiro, c.id_motorista,
+        c.id_veiculo, c.origem_corrida, c.destino_corrida,
+        c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
+      )
+    );
+  } catch (error) {
+    console.error(`Erro ao buscar histórico do passageiro: ${error}`);
+    return null;
+  }
+}
+
+static async historicoPorMotorista(idMotorista: number): Promise<Array<Corrida> | null> {
+  try {
+    const res = await database.query(
+      `SELECT * FROM corrida WHERE id_motorista = $1 ORDER BY data_corrida DESC;`,
+      [idMotorista]
+    );
+    return res.rows.map(
+      (c) => new Corrida(
+        c.id_corrida, c.id_passageiro, c.id_motorista,
+        c.id_veiculo, c.origem_corrida, c.destino_corrida,
+        c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
+      )
+    );
+  } catch (error) {
+    console.error(`Erro ao buscar histórico do motorista: ${error}`);
+    return null;
+  }
+}
 }
 
 export { Corrida };

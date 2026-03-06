@@ -108,6 +108,11 @@ router.get(
 // ROTAS DE CORRIDAS
 // ============================================
 router.get(
+  "/api/corridas/historico",
+  AuthMiddleware.verificarToken,
+  CorridaController.historico,
+);
+router.get(
   "/api/corridas/pendentes",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,

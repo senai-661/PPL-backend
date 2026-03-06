@@ -157,6 +157,28 @@ static async finalizar(req: Request, res: Response): Promise<Response> {
       return res.status(500).json({ mensagem: "Erro ao cancelar corrida." });
     }
   }
+  
+  static async historico(req: Request, res: Response): Promise<Response> {
+  try {
+    const usuario = (req as any).usuario;
+
+    // 👇 Works for both passageiro and motorista from the same endpoint
+    if (usuario.tipo === "passageiro") {
+      const corridas = await Corrida.historicoPorPassageiro(usuario.id);
+      return res.status(200).json(corridas ?? []);
+
+    } else if (usuario.tipo === "motorista") {
+      const corridas = await Corrida.historicoPorMotorista(usuario.id);
+      return res.status(200).json(corridas ?? []);
+
+    } else {
+      return res.status(403).json({ mensagem: "Tipo de usuário inválido." });
+    }
+  } catch (error) {
+    console.error(`Erro ao buscar histórico: ${error}`);
+    return res.status(500).json({ mensagem: "Erro ao buscar histórico de corridas." });
+  }
+}
 }
 
 export { CorridaController };
