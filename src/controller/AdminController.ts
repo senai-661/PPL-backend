@@ -68,4 +68,17 @@ export class AdminController {
         .json({ mensagem: "Erro ao buscar lista de administradores." });
     }
   }
+  static async dashboard(req: Request, res: Response): Promise<Response> {
+    try {
+      const dados = await Admin.dashboard();
+      if (!dados) {
+        return res
+          .status(500)
+          .json({ mensagem: "Erro ao buscar dados do dashboard." });
+      }
+      return res.status(200).json(dados);
+    } catch (error) {
+      return res.status(500).json({ mensagem: "Erro interno no dashboard." });
+    }
+  }
 }

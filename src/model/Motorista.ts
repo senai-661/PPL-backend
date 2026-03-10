@@ -207,4 +207,37 @@ export class Motorista {
       return null;
     }
   }
+  static async editarPerfil(
+    idMotorista: number,
+    dados: Partial<MotoristaDTO>,
+  ): Promise<boolean> {
+    try {
+      const campos: string[] = [];
+      const valores: any[] = [];
+      let i = 1;
+
+      if (dados.celular) {
+        campos.push(`celular = $${i++}`);
+        valores.push(dados.celular);
+      }
+      if (dados.senha) {
+        campos.push(`senha = $${i++}`);
+        valores.push(dados.senha);
+      }
+      if (dados.especializacao) {
+        campos.push(`especializacao = $${i++}`);
+        valores.push(dados.especializacao);
+      }
+
+      if (campos.length === 0) return false;
+
+      valores.push(idMotorista);
+      const query = `UPDATE motorista SET ${campos.join(", ")} WHERE id_motorista = $${i};`;
+      await database.query(query, valores);
+      return true;
+    } catch (error) {
+      console.error(`Erro ao editar perfil do motorista: ${error}`);
+      return false;
+    }
+  }
 }

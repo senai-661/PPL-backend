@@ -34,6 +34,14 @@ router.post("/api/passageiro/login", PassageiroController.login);
 // Admin
 router.post("/api/admin/login", AdminController.login);
 
+// Dashboard admin
+router.get(
+  "/api/admin/dashboard",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.dashboard,
+);
+
 // ============================================
 // ROTAS RESTRITAS (Precisa de Token JWT)
 // ============================================
@@ -64,6 +72,13 @@ router.get(
   "/api/avaliacoes",
   AuthMiddleware.verificarToken,
   AvaliacaoController.listar,
+);
+// Avaliações do motorista
+router.get(
+  "/api/avaliacoes/minhas",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  AvaliacaoController.minhas,
 );
 
 // --- Cadastros (POST) ---
@@ -127,7 +142,7 @@ router.patch(
 router.patch(
   "/api/corridas/:id/iniciar",
   AuthMiddleware.verificarToken,
-  AuthMiddleware.somenteMotorista,  
+  AuthMiddleware.somenteMotorista,
   CorridaController.iniciar,
 );
 router.patch(
@@ -155,5 +170,19 @@ router.get(
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
   MotoristaController.perfil,
+);
+
+// Editar perfil (PATCH)
+router.patch(
+  "/api/passageiro/perfil",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  PassageiroController.editarPerfil,
+);
+router.patch(
+  "/api/motorista/perfil",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  MotoristaController.editarPerfil,
 );
 export { router };

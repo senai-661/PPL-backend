@@ -1,4 +1,3 @@
-
 import { Avaliacao } from "../model/Avaliacao.js";
 import type { Request, Response } from "express";
 
@@ -8,7 +7,9 @@ class AvaliacaoController {
       const avaliacoes = await Avaliacao.listarAvaliacoes();
       return res.status(200).json(avaliacoes);
     } catch (error) {
-      return res.status(500).json({ mensagem: "Não foi possível acessar a lista de avaliações." });
+      return res
+        .status(500)
+        .json({ mensagem: "Não foi possível acessar a lista de avaliações." });
     }
   }
 
@@ -30,30 +31,83 @@ class AvaliacaoController {
         return res.status(404).json({ mensagem: "Corrida não encontrada." });
       }
       if (validacao === "not_finished") {
-        return res.status(400).json({ mensagem: "A corrida ainda não foi finalizada." });
+        return res
+          .status(400)
+          .json({ mensagem: "A corrida ainda não foi finalizada." });
       }
       if (validacao === "not_owner") {
-        return res.status(403).json({ mensagem: "Você não pode avaliar uma corrida que não é sua." });
+        return res.status(403).json({
+          mensagem: "Você não pode avaliar uma corrida que não é sua.",
+        });
       }
 
       // 3. Check if already rated
       const jaAvaliada = await Avaliacao.jaAvaliada(idCorrida);
       if (jaAvaliada) {
-        return res.status(400).json({ mensagem: "Essa corrida já foi avaliada." });
+        return res
+          .status(400)
+          .json({ mensagem: "Essa corrida já foi avaliada." });
       }
 
       // 4. Save the rating
-      const sucesso = await Avaliacao.criarAvaliacao({ idCorrida, nota, comentario });
+      const sucesso = await Avaliacao.criarAvaliacao({
+        idCorrida,
+        nota,
+        comentario,
+      });
       if (!sucesso) {
-        return res.status(400).json({ mensagem: "Erro ao cadastrar avaliação." });
+        return res
+          .status(400)
+          .json({ mensagem: "Erro ao cadastrar avaliação." });
       }
 
-      return res.status(201).json({ mensagem: "Avaliação registrada com sucesso!" });
+      return res
+        .status(201)
+        .json({ mensagem: "Avaliação registrada com sucesso!" });
     } catch (error) {
       console.error(`Erro ao avaliar: ${error}`);
-      return res.status(500).json({ mensagem: "Não foi possível inserir a avaliação." });
+      return res
+        .status(500)
+        .json({ mensagem: "Não foi possível inserir a avaliação." });
+    }
+  }
+  static async minhas(req: Request, res: Response): Promise<Response> {
+    try {
+      const idMotorista = (req as any).usuario.id;
+      const avaliacoes = await Avaliacao.historicoPorMotorista(idMotorista);
+
+      if (!avaliacoes || avaliacoes.length === 0) {
+        return res.status(200).json({
+          mediaGeral: null,
+          totalAvaliacoes: 0,
+          avaliacoes: [],
+        });
+      }
+      // Calculate overall average
+      const media =
+        avaliacoes.reduce((sum: number, a: any) => sum + a.nota, 0) /
+        avaliacoes.length;
+
+      return res.status(200).json({
+        mediaGeral: parseFloat(media.toFixed(1)),
+        totalAvaliacoes: avaliacoes.length,
+        avaliacoes: avaliacoes.map((a: any) => ({
+          id: a.id_avaliacao,
+          nota: a.nota,
+          comentario: a.comentario,
+          criadoEm: a.criado_em,
+          corrida: {
+            origem: a.origem_corrida,
+            destino: a.destino_corrida,
+            data: a.data_corrida,
+          },
+          passageiro: `${a.nome_passageiro} ${a.sobrenome_passageiro}`,
+        })),
+      });
+    } catch (error) {
+      return res.status(500).json({ mensagem: "Erro ao buscar avaliações." });
     }
   }
 }
 
-export { AvaliacaoController }; 
+export { AvaliacaoController };

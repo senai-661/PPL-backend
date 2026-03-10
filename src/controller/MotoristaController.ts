@@ -4,7 +4,7 @@ import { AuthService } from "../services/AuthService.js";
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
-class MotoristaController extends Motorista {
+class MotoristaController {
   // LISTAR: Retorna os dados usando os Getters, sem expor a senha
   static async listar(req: Request, res: Response): Promise<Response> {
     try {
@@ -104,30 +104,55 @@ class MotoristaController extends Motorista {
     }
   }
   static async perfil(req: Request, res: Response): Promise<Response> {
-  try {
-    const idMotorista = (req as any).usuario.id;
-    const motorista = await Motorista.buscarPorId(idMotorista);
+    try {
+      const idMotorista = (req as any).usuario.id;
+      const motorista = await Motorista.buscarPorId(idMotorista);
 
-    if (!motorista) {
-      return res.status(404).json({ mensagem: "Motorista não encontrado." });
+      if (!motorista) {
+        return res.status(404).json({ mensagem: "Motorista não encontrado." });
+      }
+
+      return res.status(200).json({
+        id: motorista.getIdMotorista(),
+        nome: motorista.getNomeMotorista(),
+        sobrenome: motorista.getSobrenomeMotorista(),
+        cpf: motorista.getCpf(),
+        cnh: motorista.getCnh(),
+        dataNascimento: motorista.getDataNascimento(),
+        celular: motorista.getCelular(),
+        email: motorista.getEmail(),
+        especializacao: motorista.getEspecializacao(),
+      });
+    } catch (error) {
+      console.error(`Erro ao buscar perfil: ${error}`);
+      return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
     }
-
-    return res.status(200).json({
-      id: motorista.getIdMotorista(),
-      nome: motorista.getNomeMotorista(),
-      sobrenome: motorista.getSobrenomeMotorista(),
-      cpf: motorista.getCpf(),
-      cnh: motorista.getCnh(),
-      dataNascimento: motorista.getDataNascimento(),
-      celular: motorista.getCelular(),
-      email: motorista.getEmail(),
-      especializacao: motorista.getEspecializacao(),
-    });
-  } catch (error) {
-    console.error(`Erro ao buscar perfil: ${error}`);
-    return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
   }
-}
+  static async editarPerfil(req: Request, res: Response): Promise<Response> {
+    try {
+      const idMotorista = (req as any).usuario.id;
+      const dados = req.body;
+
+      // Hash new password if sent
+      if (dados.senha) {
+        const salt = await bcrypt.genSalt(10);
+        dados.senha = await bcrypt.hash(dados.senha, salt);
+      }
+
+      const sucesso = await Motorista.editarPerfil(idMotorista, dados);
+      if (!sucesso) {
+        return res
+          .status(400)
+          .json({ mensagem: "Nenhum campo válido para atualizar." });
+      }
+
+      return res
+        .status(200)
+        .json({ mensagem: "Perfil atualizado com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
+    }
+  }
 }
 
 export { MotoristaController };

@@ -21,20 +21,37 @@ class Avaliacao {
     this.comentario = _comentario;
   }
 
-  public getIdAvaliacao(): number { return this.idAvaliacao; }
-  public setIdAvaliacao(idAvaliacao: number): void { this.idAvaliacao = idAvaliacao; }
-  public getIdCorrida(): number { return this.idCorrida; }
-  public setIdCorrida(idCorrida: number): void { this.idCorrida = idCorrida; }
-  public getNota(): number { return this.nota; }
-  public setNota(nota: number): void { this.nota = nota; }
-  public getComentario(): string { return this.comentario; }
-  public setComentario(comentario: string): void { this.comentario = comentario; }
+  public getIdAvaliacao(): number {
+    return this.idAvaliacao;
+  }
+  public setIdAvaliacao(idAvaliacao: number): void {
+    this.idAvaliacao = idAvaliacao;
+  }
+  public getIdCorrida(): number {
+    return this.idCorrida;
+  }
+  public setIdCorrida(idCorrida: number): void {
+    this.idCorrida = idCorrida;
+  }
+  public getNota(): number {
+    return this.nota;
+  }
+  public setNota(nota: number): void {
+    this.nota = nota;
+  }
+  public getComentario(): string {
+    return this.comentario;
+  }
+  public setComentario(comentario: string): void {
+    this.comentario = comentario;
+  }
 
   static async listarAvaliacoes(): Promise<Array<Avaliacao> | null> {
     try {
       const res = await database.query(`SELECT * FROM avaliacao_corrida;`);
       return res.rows.map(
-        (a) => new Avaliacao(a.id_avaliacao, a.id_corrida, a.nota, a.comentario)
+        (a) =>
+          new Avaliacao(a.id_avaliacao, a.id_corrida, a.nota, a.comentario),
       );
     } catch (error) {
       console.error(`Erro ao consultar avaliações: ${error}`);
@@ -45,12 +62,12 @@ class Avaliacao {
   // Checks if the corrida is Finalizada AND belongs to the passenger
   static async validarCorrida(
     idCorrida: number,
-    idPassageiro: number
+    idPassageiro: number,
   ): Promise<"ok" | "not_found" | "not_finished" | "not_owner"> {
     try {
       const res = await database.query(
         `SELECT id_passageiro, status_corrida FROM corrida WHERE id_corrida = $1;`,
-        [idCorrida]
+        [idCorrida],
       );
 
       if (res.rows.length === 0) return "not_found";
@@ -69,7 +86,7 @@ class Avaliacao {
     try {
       const res = await database.query(
         `SELECT id_avaliacao FROM avaliacao_corrida WHERE id_corrida = $1;`,
-        [idCorrida]
+        [idCorrida],
       );
       return res.rows.length > 0;
     } catch (error) {
@@ -104,11 +121,41 @@ class Avaliacao {
          FROM avaliacao_corrida ac
          JOIN corrida c ON c.id_corrida = ac.id_corrida
          WHERE c.id_motorista = $1;`,
-        [idMotorista]
+        [idMotorista],
       );
       return res.rows[0].media ? parseFloat(res.rows[0].media) : null;
     } catch (error) {
       console.error(`Erro ao calcular média: ${error}`);
+      return null;
+    }
+  }
+  static async historicoPorMotorista(
+    idMotorista: number,
+  ): Promise<Array<any> | null> {
+    try {
+      const res = await database.query(
+        `
+      SELECT 
+        ac.id_avaliacao,
+        ac.nota,
+        ac.comentario,
+        ac.criado_em,
+        c.origem_corrida,
+        c.destino_corrida,
+        c.data_corrida,
+        p.nome_passageiro,
+        p.sobrenome_passageiro
+      FROM avaliacao_corrida ac
+      JOIN corrida c ON c.id_corrida = ac.id_corrida
+      JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+      WHERE c.id_motorista = $1
+      ORDER BY ac.criado_em DESC;
+    `,
+        [idMotorista],
+      );
+      return res.rows;
+    } catch (error) {
+      console.error(`Erro ao buscar histórico de avaliações: ${error}`);
       return null;
     }
   }

@@ -59,7 +59,8 @@ class PassageiroController {
         }
 
         return res.status(201).json({
-          mensagem: "Passageiro cadastrado, mas houve um erro ao salvar o endereço.",
+          mensagem:
+            "Passageiro cadastrado, mas houve um erro ao salvar o endereço.",
         });
       }
 
@@ -110,31 +111,56 @@ class PassageiroController {
     }
   }
   static async perfil(req: Request, res: Response): Promise<Response> {
-  try {
-    const idPassageiro = (req as any).usuario.id;
-    const passageiro = await Passageiro.buscarPorId(idPassageiro);
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const passageiro = await Passageiro.buscarPorId(idPassageiro);
 
-    if (!passageiro) {
-      return res.status(404).json({ mensagem: "Passageiro não encontrado." });
+      if (!passageiro) {
+        return res.status(404).json({ mensagem: "Passageiro não encontrado." });
+      }
+
+      return res.status(200).json({
+        id: passageiro.getIdPassageiro(),
+        nome: passageiro.getNomePassageiro(),
+        sobrenome: passageiro.getSobrenomePassageiro(),
+        cpf: passageiro.getCpf(),
+        dataNascimento: passageiro.getDataNascimento(),
+        celular: passageiro.getCelular(),
+        email: passageiro.getEmail(),
+        necessidades: passageiro.getNecessidades(),
+        tipoViagem: passageiro.getTipoViagem(),
+        preferenciaClima: passageiro.getPreferenciaClima(),
+      });
+    } catch (error) {
+      console.error(`Erro ao buscar perfil: ${error}`);
+      return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
     }
-
-    return res.status(200).json({
-      id: passageiro.getIdPassageiro(),
-      nome: passageiro.getNomePassageiro(),
-      sobrenome: passageiro.getSobrenomePassageiro(),
-      cpf: passageiro.getCpf(),
-      dataNascimento: passageiro.getDataNascimento(),
-      celular: passageiro.getCelular(),
-      email: passageiro.getEmail(),
-      necessidades: passageiro.getNecessidades(),
-      tipoViagem: passageiro.getTipoViagem(),
-      preferenciaClima: passageiro.getPreferenciaClima(),
-    });
-  } catch (error) {
-    console.error(`Erro ao buscar perfil: ${error}`);
-    return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
   }
-}
+  static async editarPerfil(req: Request, res: Response): Promise<Response> {
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const dados = req.body;
+
+      // Hash new password if sent
+      if (dados.senha) {
+        const salt = await bcrypt.genSalt(10);
+        dados.senha = await bcrypt.hash(dados.senha, salt);
+      }
+
+      const sucesso = await Passageiro.editarPerfil(idPassageiro, dados);
+      if (!sucesso) {
+        return res
+          .status(400)
+          .json({ mensagem: "Nenhum campo válido para atualizar." });
+      }
+
+      return res
+        .status(200)
+        .json({ mensagem: "Perfil atualizado com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
+    }
+  }
 }
 
 export { PassageiroController };

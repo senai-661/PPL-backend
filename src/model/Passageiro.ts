@@ -42,31 +42,77 @@ export class Passageiro {
     this.senha = senha;
   }
 
-  public getIdPassageiro(): number { return this.idPassageiro; }
-  public getNomePassageiro(): string { return this.nomePassageiro; }
-  public getSobrenomePassageiro(): string { return this.sobrenomePassageiro; }
-  public getCpf(): string { return this.cpf; }
-  public getDataNascimento(): Date { return this.dataNascimento; }
-  public getCelular(): string { return this.celular; }
-  public getEmail(): string { return this.email; }
-  public getNecessidades(): string[] { return this.necessidades; }
-  public getTipoViagem(): string { return this.tipoViagem; }
-  public getPreferenciaClima(): string { return this.preferenciaClima; }
-  public getSenha(): string { return this.senha; }
+  public getIdPassageiro(): number {
+    return this.idPassageiro;
+  }
+  public getNomePassageiro(): string {
+    return this.nomePassageiro;
+  }
+  public getSobrenomePassageiro(): string {
+    return this.sobrenomePassageiro;
+  }
+  public getCpf(): string {
+    return this.cpf;
+  }
+  public getDataNascimento(): Date {
+    return this.dataNascimento;
+  }
+  public getCelular(): string {
+    return this.celular;
+  }
+  public getEmail(): string {
+    return this.email;
+  }
+  public getNecessidades(): string[] {
+    return this.necessidades;
+  }
+  public getTipoViagem(): string {
+    return this.tipoViagem;
+  }
+  public getPreferenciaClima(): string {
+    return this.preferenciaClima;
+  }
+  public getSenha(): string {
+    return this.senha;
+  }
 
-  public setIdPassageiro(id: number): void { this.idPassageiro = id; }
-  public setNomePassageiro(nome: string): void { this.nomePassageiro = nome; }
-  public setSobrenomePassageiro(sobrenome: string): void { this.sobrenomePassageiro = sobrenome; }
-  public setCpf(cpf: string): void { this.cpf = cpf; }
-  public setDataNascimento(data: Date): void { this.dataNascimento = data; }
-  public setCelular(celular: string): void { this.celular = celular; }
-  public setEmail(email: string): void { this.email = email; }
-  public setNecessidades(necessidades: string[]): void { this.necessidades = necessidades; }
-  public setTipoViagem(tipoViagem: string): void { this.tipoViagem = tipoViagem; }
-  public setPreferenciaClima(preferenciaClima: string): void { this.preferenciaClima = preferenciaClima; }
-  public setSenha(senha: string): void { this.senha = senha; }
+  public setIdPassageiro(id: number): void {
+    this.idPassageiro = id;
+  }
+  public setNomePassageiro(nome: string): void {
+    this.nomePassageiro = nome;
+  }
+  public setSobrenomePassageiro(sobrenome: string): void {
+    this.sobrenomePassageiro = sobrenome;
+  }
+  public setCpf(cpf: string): void {
+    this.cpf = cpf;
+  }
+  public setDataNascimento(data: Date): void {
+    this.dataNascimento = data;
+  }
+  public setCelular(celular: string): void {
+    this.celular = celular;
+  }
+  public setEmail(email: string): void {
+    this.email = email;
+  }
+  public setNecessidades(necessidades: string[]): void {
+    this.necessidades = necessidades;
+  }
+  public setTipoViagem(tipoViagem: string): void {
+    this.tipoViagem = tipoViagem;
+  }
+  public setPreferenciaClima(preferenciaClima: string): void {
+    this.preferenciaClima = preferenciaClima;
+  }
+  public setSenha(senha: string): void {
+    this.senha = senha;
+  }
 
-  static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
+  static async cadastrarPassageiro(
+    passageiro: PassageiroDTO,
+  ): Promise<number | null> {
     try {
       const query = `
         INSERT INTO passageiro 
@@ -97,19 +143,20 @@ export class Passageiro {
     try {
       const res = await database.query(`SELECT * FROM passageiro;`);
       return res.rows.map(
-        (p) => new Passageiro(
-        p.id_passageiro,
-        p.nome_passageiro,
-        p.sobrenome_passageiro,
-        p.cpf,
-        p.data_nascimento,
-        p.celular,
-        p.email,       // ✅ até aqui ok
-        p.necessidades ?? [],// ← posição 8 = necessidades ✅
-        p.tipo_viagem ?? "Convencional", // ← posição 9 = tipoViagem ✅
-        p.preferencia_clima ?? "Não Importa", // ← posição 10 = preferenciaClima ✅
-        p.senha        // ✅
-)
+        (p) =>
+          new Passageiro(
+            p.id_passageiro,
+            p.nome_passageiro,
+            p.sobrenome_passageiro,
+            p.cpf,
+            p.data_nascimento,
+            p.celular,
+            p.email, // ✅ até aqui ok
+            p.necessidades ?? [], // ← posição 8 = necessidades ✅
+            p.tipo_viagem ?? "Convencional", // ← posição 9 = tipoViagem ✅
+            p.preferencia_clima ?? "Não Importa", // ← posição 10 = preferenciaClima ✅
+            p.senha, // ✅
+          ),
       );
     } catch (error) {
       console.error("Erro ao listar passageiros:", error);
@@ -121,7 +168,7 @@ export class Passageiro {
     try {
       const res = await database.query(
         `SELECT * FROM passageiro WHERE email = $1;`,
-        [email]
+        [email],
       );
       if (res.rows.length === 0) return null;
       const p = res.rows[0];
@@ -144,21 +191,71 @@ export class Passageiro {
     }
   }
   static async buscarPorId(id: number): Promise<Passageiro | null> {
-  try {
-    const res = await database.query(
-      `SELECT * FROM passageiro WHERE id_passageiro = $1;`,
-      [id]
-    );
-    if (res.rows.length === 0) return null;
-    const p = res.rows[0];
-    return new Passageiro(
-      p.id_passageiro, p.nome_passageiro, p.sobrenome_passageiro,
-      p.cpf, p.data_nascimento, p.celular, p.email,
-      p.necessidades ?? [], p.tipo_viagem, p.preferencia_clima, p.senha,
-    );
-  } catch (error) {
-    console.error(`Erro ao buscar passageiro por id: ${error}`);
-    return null;
+    try {
+      const res = await database.query(
+        `SELECT * FROM passageiro WHERE id_passageiro = $1;`,
+        [id],
+      );
+      if (res.rows.length === 0) return null;
+      const p = res.rows[0];
+      return new Passageiro(
+        p.id_passageiro,
+        p.nome_passageiro,
+        p.sobrenome_passageiro,
+        p.cpf,
+        p.data_nascimento,
+        p.celular,
+        p.email,
+        p.necessidades ?? [],
+        p.tipo_viagem,
+        p.preferencia_clima,
+        p.senha,
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar passageiro por id: ${error}`);
+      return null;
+    }
   }
-}
+  static async editarPerfil(
+    idPassageiro: number,
+    dados: Partial<PassageiroDTO>,
+  ): Promise<boolean> {
+    try {
+      const campos: string[] = [];
+      const valores: any[] = [];
+      let i = 1;
+
+      // Only update fields that were sent
+      if (dados.celular) {
+        campos.push(`celular = $${i++}`);
+        valores.push(dados.celular);
+      }
+      if (dados.senha) {
+        campos.push(`senha = $${i++}`);
+        valores.push(dados.senha);
+      }
+      if (dados.necessidades) {
+        campos.push(`necessidades = $${i++}`);
+        valores.push(dados.necessidades);
+      }
+      if (dados.tipoViagem) {
+        campos.push(`tipo_viagem = $${i++}`);
+        valores.push(dados.tipoViagem);
+      }
+      if (dados.preferenciaClima) {
+        campos.push(`preferencia_clima = $${i++}`);
+        valores.push(dados.preferenciaClima);
+      }
+
+      if (campos.length === 0) return false;
+
+      valores.push(idPassageiro);
+      const query = `UPDATE passageiro SET ${campos.join(", ")} WHERE id_passageiro = $${i};`;
+      await database.query(query, valores);
+      return true;
+    } catch (error) {
+      console.error(`Erro ao editar perfil do passageiro: ${error}`);
+      return false;
+    }
+  }
 }
