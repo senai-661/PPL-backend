@@ -39,27 +39,67 @@ class Corrida {
     this.statusCorrida = _statusCorrida;
   }
 
-  public getIdCorrida(): number { return this.idCorrida; }
-  public getIdPassageiro(): number { return this.idPassageiro; }
-  public getIdMotorista(): number | null { return this.idMotorista; }
-  public getIdVeiculo(): number | null { return this.idVeiculo; }
-  public getOrigemCorrida(): string { return this.origemCorrida; }
-  public getDestinoCorrida(): string { return this.destinoCorrida; }
-  public getPreco(): number { return this.preco; }
-  public getDataCorrida(): Date { return this.dataCorrida; }
-  public getDuracaoCorrida(): number { return this.duracaoCorrida; }
-  public getStatusCorrida(): string { return this.statusCorrida; }
+  public getIdCorrida(): number {
+    return this.idCorrida;
+  }
+  public getIdPassageiro(): number {
+    return this.idPassageiro;
+  }
+  public getIdMotorista(): number | null {
+    return this.idMotorista;
+  }
+  public getIdVeiculo(): number | null {
+    return this.idVeiculo;
+  }
+  public getOrigemCorrida(): string {
+    return this.origemCorrida;
+  }
+  public getDestinoCorrida(): string {
+    return this.destinoCorrida;
+  }
+  public getPreco(): number {
+    return this.preco;
+  }
+  public getDataCorrida(): Date {
+    return this.dataCorrida;
+  }
+  public getDuracaoCorrida(): number {
+    return this.duracaoCorrida;
+  }
+  public getStatusCorrida(): string {
+    return this.statusCorrida;
+  }
 
-  public setIdCorrida(v: number): void { this.idCorrida = v; }
-  public setIdPassageiro(v: number): void { this.idPassageiro = v; }
-  public setIdMotorista(v: number | null): void { this.idMotorista = v; }
-  public setIdVeiculo(v: number | null): void { this.idVeiculo = v; }
-  public setOrigemCorrida(v: string): void { this.origemCorrida = v; }
-  public setDestinoCorrida(v: string): void { this.destinoCorrida = v; }
-  public setPreco(v: number): void { this.preco = v; }
-  public setDataCorrida(v: Date): void { this.dataCorrida = v; }
-  public setDuracaoCorrida(v: number): void { this.duracaoCorrida = v; }
-  public setStatusCorrida(v: string): void { this.statusCorrida = v; }
+  public setIdCorrida(v: number): void {
+    this.idCorrida = v;
+  }
+  public setIdPassageiro(v: number): void {
+    this.idPassageiro = v;
+  }
+  public setIdMotorista(v: number | null): void {
+    this.idMotorista = v;
+  }
+  public setIdVeiculo(v: number | null): void {
+    this.idVeiculo = v;
+  }
+  public setOrigemCorrida(v: string): void {
+    this.origemCorrida = v;
+  }
+  public setDestinoCorrida(v: string): void {
+    this.destinoCorrida = v;
+  }
+  public setPreco(v: number): void {
+    this.preco = v;
+  }
+  public setDataCorrida(v: Date): void {
+    this.dataCorrida = v;
+  }
+  public setDuracaoCorrida(v: number): void {
+    this.duracaoCorrida = v;
+  }
+  public setStatusCorrida(v: string): void {
+    this.statusCorrida = v;
+  }
 
   // Passageiro abre a solicitação — motorista/veiculo ainda não existem
   static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
@@ -87,7 +127,7 @@ class Corrida {
   static async aceitarCorrida(
     idCorrida: number,
     idMotorista: number,
-    idVeiculo: number
+    idVeiculo: number,
   ): Promise<boolean> {
     try {
       const query = `
@@ -96,7 +136,11 @@ class Corrida {
         WHERE id_corrida = $3 AND status_corrida = 'Pendente'
         RETURNING id_corrida;
       `;
-      const res = await database.query(query, [idMotorista, idVeiculo, idCorrida]);
+      const res = await database.query(query, [
+        idMotorista,
+        idVeiculo,
+        idCorrida,
+      ]);
       return res.rowCount !== null && res.rowCount > 0;
     } catch (error) {
       console.error(`Erro ao aceitar corrida: ${error}`);
@@ -124,7 +168,7 @@ class Corrida {
   // Finaliza a corrida — salva duração real, status → Finalizada
   static async finalizarCorrida(
     idCorrida: number,
-    duracaoCorrida: number
+    duracaoCorrida: number,
   ): Promise<boolean> {
     try {
       const query = `
@@ -162,11 +206,19 @@ class Corrida {
     try {
       const res = await database.query(`SELECT * FROM corrida;`);
       return res.rows.map(
-        (c) => new Corrida(
-          c.id_corrida, c.id_passageiro, c.id_motorista,
-          c.id_veiculo, c.origem_corrida, c.destino_corrida,
-          c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
-        )
+        (c) =>
+          new Corrida(
+            c.id_corrida,
+            c.id_passageiro,
+            c.id_motorista,
+            c.id_veiculo,
+            c.origem_corrida,
+            c.destino_corrida,
+            c.preco,
+            c.data_corrida,
+            c.duracao_corrida,
+            c.status_corrida,
+          ),
       );
     } catch (error) {
       console.error(`Erro ao listar corridas: ${error}`);
@@ -174,61 +226,112 @@ class Corrida {
     }
   }
 
-  // Lista só as corridas pendentes — para motoristas verem o que está disponível
-  static async listarPendentes(): Promise<Array<Corrida> | null> {
+  static async listarPendentes(
+    idMotorista: number,
+  ): Promise<Array<Corrida> | null> {
     try {
       const res = await database.query(
-        `SELECT * FROM corrida WHERE status_corrida = 'Pendente';`
-      );
-      return res.rows.map(
-        (c) => new Corrida(
-          c.id_corrida, c.id_passageiro, c.id_motorista,
-          c.id_veiculo, c.origem_corrida, c.destino_corrida,
-          c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
+        `
+      SELECT c.* FROM corrida c
+      JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+      JOIN motorista m ON m.id_motorista = $1
+      WHERE c.status_corrida = 'Pendente'
+      AND (
+        -- Passenger has no special needs — any driver can accept
+        array_length(p.necessidades, 1) IS NULL
+
+        OR
+
+        -- Match passenger needs to driver specialization
+        (
+          ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'Mobilidade Reduzida')
+          OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
+          OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'Deficiência Visual')
         )
+      )
+      ORDER BY c.data_corrida ASC;
+    `,
+        [idMotorista],
+      );
+
+      return res.rows.map(
+        (c) =>
+          new Corrida(
+            c.id_corrida,
+            c.id_passageiro,
+            c.id_motorista,
+            c.id_veiculo,
+            c.origem_corrida,
+            c.destino_corrida,
+            c.preco,
+            c.data_corrida,
+            c.duracao_corrida,
+            c.status_corrida,
+          ),
       );
     } catch (error) {
       console.error(`Erro ao listar corridas pendentes: ${error}`);
       return null;
     }
   }
-  static async historicoPorPassageiro(idPassageiro: number): Promise<Array<Corrida> | null> {
-  try {
-    const res = await database.query(
-      `SELECT * FROM corrida WHERE id_passageiro = $1 ORDER BY data_corrida DESC;`,
-      [idPassageiro]
-    );
-    return res.rows.map(
-      (c) => new Corrida(
-        c.id_corrida, c.id_passageiro, c.id_motorista,
-        c.id_veiculo, c.origem_corrida, c.destino_corrida,
-        c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
-      )
-    );
-  } catch (error) {
-    console.error(`Erro ao buscar histórico do passageiro: ${error}`);
-    return null;
-  }
-}
 
-static async historicoPorMotorista(idMotorista: number): Promise<Array<Corrida> | null> {
-  try {
-    const res = await database.query(
-      `SELECT * FROM corrida WHERE id_motorista = $1 ORDER BY data_corrida DESC;`,
-      [idMotorista]
-    );
-    return res.rows.map(
-      (c) => new Corrida(
-        c.id_corrida, c.id_passageiro, c.id_motorista,
-        c.id_veiculo, c.origem_corrida, c.destino_corrida,
-        c.preco, c.data_corrida, c.duracao_corrida, c.status_corrida,
-      )
-    );
-  } catch (error) {
-    console.error(`Erro ao buscar histórico do motorista: ${error}`);
-    return null;
+  static async historicoPorPassageiro(
+    idPassageiro: number,
+  ): Promise<Array<Corrida> | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM corrida WHERE id_passageiro = $1 ORDER BY data_corrida DESC;`,
+        [idPassageiro],
+      );
+      return res.rows.map(
+        (c) =>
+          new Corrida(
+            c.id_corrida,
+            c.id_passageiro,
+            c.id_motorista,
+            c.id_veiculo,
+            c.origem_corrida,
+            c.destino_corrida,
+            c.preco,
+            c.data_corrida,
+            c.duracao_corrida,
+            c.status_corrida,
+          ),
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do passageiro: ${error}`);
+      return null;
+    }
   }
-}
+
+  static async historicoPorMotorista(
+    idMotorista: number,
+  ): Promise<Array<Corrida> | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM corrida WHERE id_motorista = $1 ORDER BY data_corrida DESC;`,
+        [idMotorista],
+      );
+      return res.rows.map(
+        (c) =>
+          new Corrida(
+            c.id_corrida,
+            c.id_passageiro,
+            c.id_motorista,
+            c.id_veiculo,
+            c.origem_corrida,
+            c.destino_corrida,
+            c.preco,
+            c.data_corrida,
+            c.duracao_corrida,
+            c.status_corrida,
+          ),
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do motorista: ${error}`);
+      return null;
+    }
+  }
 }
 
 export { Corrida };
