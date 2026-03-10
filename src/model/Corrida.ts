@@ -13,6 +13,7 @@ class Corrida {
   private preco: number;
   private dataCorrida: Date;
   private duracaoCorrida: number;
+  private motivoCancelamento: string | null; // 👈 new
   private statusCorrida: string;
 
   constructor(
@@ -25,6 +26,7 @@ class Corrida {
     _preco: number,
     _dataCorrida: Date,
     _duracaoCorrida: number,
+    _motivoCancelamento: string | null, // 👈 new
     _statusCorrida: string,
   ) {
     this.idCorrida = _idCorrida;
@@ -36,7 +38,15 @@ class Corrida {
     this.preco = _preco;
     this.dataCorrida = _dataCorrida;
     this.duracaoCorrida = _duracaoCorrida;
+    this.motivoCancelamento = _motivoCancelamento;
     this.statusCorrida = _statusCorrida;
+  }
+
+  public getMotivoCancelamento(): string | null {
+    return this.motivoCancelamento;
+  }
+  public setMotivoCancelamento(v: string | null): void {
+    this.motivoCancelamento = v;
   }
 
   public getIdCorrida(): number {
@@ -185,16 +195,21 @@ class Corrida {
     }
   }
 
-  // Cancela em qualquer status antes de Finalizada
-  static async cancelarCorrida(idCorrida: number): Promise<boolean> {
+  static async cancelarCorrida(
+    idCorrida: number,
+    motivoCancelamento: string | null,
+  ): Promise<boolean> {
     try {
       const query = `
-        UPDATE corrida
-        SET status_corrida = 'Cancelada'
-        WHERE id_corrida = $1 AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
-        RETURNING id_corrida;
-      `;
-      const res = await database.query(query, [idCorrida]);
+      UPDATE corrida
+      SET status_corrida = 'Cancelada', motivo_cancelamento = $1
+      WHERE id_corrida = $2 AND status_corrida IN ('Pendente', 'Aceito')
+      RETURNING id_corrida;
+    `;
+      const res = await database.query(query, [
+        motivoCancelamento ?? null,
+        idCorrida,
+      ]);
       return res.rowCount !== null && res.rowCount > 0;
     } catch (error) {
       console.error(`Erro ao cancelar corrida: ${error}`);
@@ -217,6 +232,7 @@ class Corrida {
             c.preco,
             c.data_corrida,
             c.duracao_corrida,
+            c.motivo_cancelamento,
             c.status_corrida,
           ),
       );
@@ -266,6 +282,7 @@ class Corrida {
             c.preco,
             c.data_corrida,
             c.duracao_corrida,
+            c.motivo_cancelamento,
             c.status_corrida,
           ),
       );
@@ -295,6 +312,7 @@ class Corrida {
             c.preco,
             c.data_corrida,
             c.duracao_corrida,
+            c.motivo_cancelamento,
             c.status_corrida,
           ),
       );
@@ -324,11 +342,147 @@ class Corrida {
             c.preco,
             c.data_corrida,
             c.duracao_corrida,
+            c.motivo_cancelamento,
             c.status_corrida,
           ),
       );
     } catch (error) {
       console.error(`Erro ao buscar histórico do motorista: ${error}`);
+      return null;
+    }
+  }
+  static async listarPorStatus(
+    status: string,
+    idMotorista?: number,
+  ): Promise<Array<Corrida> | null> {
+    try {
+      // Pendente with matching logic for motoristas
+      if (status === "Pendente" && idMotorista) {
+        const res = await database.query(
+          `
+        SELECT c.* FROM corrida c
+        JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+        JOIN motorista m ON m.id_motorista = $1
+        WHERE c.status_corrida = 'Pendente'
+        AND (
+          array_length(p.necessidades, 1) IS NULL
+          OR (
+            ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'Mobilidade Reduzida')
+            OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
+            OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'Deficiência Visual')
+          )
+        )
+        ORDER BY c.data_corrida ASC;
+      `,
+          [idMotorista],
+        );
+
+        return res.rows.map(
+          (c) =>
+            new Corrida(
+              c.id_corrida,
+              c.id_passageiro,
+              c.id_motorista,
+              c.id_veiculo,
+              c.origem_corrida,
+              c.destino_corrida,
+              c.preco,
+              c.data_corrida,
+              c.duracao_corrida,
+              c.motivo_cancelamento,
+              c.status_corrida,
+            ),
+        );
+      }
+
+      // All other statuses — simple filter
+      const res = await database.query(
+        `SELECT * FROM corrida WHERE status_corrida = $1 ORDER BY data_corrida DESC;`,
+        [status],
+      );
+      return res.rows.map(
+        (c) =>
+          new Corrida(
+            c.id_corrida,
+            c.id_passageiro,
+            c.id_motorista,
+            c.id_veiculo,
+            c.origem_corrida,
+            c.destino_corrida,
+            c.preco,
+            c.data_corrida,
+            c.duracao_corrida,
+            c.motivo_cancelamento,
+            c.status_corrida,
+          ),
+      );
+    } catch (error) {
+      console.error(`Erro ao listar corridas por status: ${error}`);
+      return null;
+    }
+  }
+
+  static async relatorioMotorista(idMotorista: number): Promise<any | null> {
+    try {
+      const statsRes = await database.query(
+        `
+      SELECT
+        COUNT(*) FILTER (WHERE status_corrida = 'Finalizada')    AS total_finalizadas,
+        COUNT(*) FILTER (WHERE status_corrida = 'Cancelada')     AS total_canceladas,
+        COUNT(*)                                                  AS total_corridas,
+        COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_ganho,
+        ROUND(AVG(preco) FILTER (WHERE status_corrida = 'Finalizada'), 2)    AS ticket_medio,
+        ROUND(AVG(duracao_corrida) FILTER (WHERE status_corrida = 'Finalizada'), 1) AS duracao_media
+      FROM corrida
+      WHERE id_motorista = $1;
+    `,
+        [idMotorista],
+      );
+
+      const avaliacaoRes = await database.query(
+        `
+      SELECT
+        ROUND(AVG(ac.nota), 1) AS media_avaliacao,
+        COUNT(ac.id_avaliacao) AS total_avaliacoes
+      FROM avaliacao_corrida ac
+      JOIN corrida c ON c.id_corrida = ac.id_corrida
+      WHERE c.id_motorista = $1;
+    `,
+        [idMotorista],
+      );
+
+      const stats = statsRes.rows[0];
+      const avaliacao = avaliacaoRes.rows[0];
+
+      return {
+        corridas: {
+          total: parseInt(stats.total_corridas),
+          finalizadas: parseInt(stats.total_finalizadas),
+          canceladas: parseInt(stats.total_canceladas),
+          taxaCancelamento:
+            stats.total_corridas > 0
+              ? parseFloat(
+                  (
+                    (stats.total_canceladas / stats.total_corridas) *
+                    100
+                  ).toFixed(1),
+                )
+              : 0,
+        },
+        financeiro: {
+          totalGanho: parseFloat(stats.total_ganho),
+          ticketMedio: parseFloat(stats.ticket_medio) || 0,
+          duracaoMedia: parseFloat(stats.duracao_media) || 0,
+        },
+        avaliacao: {
+          media: avaliacao.media_avaliacao
+            ? parseFloat(avaliacao.media_avaliacao)
+            : null,
+          total: parseInt(avaliacao.total_avaliacoes),
+        },
+      };
+    } catch (error) {
+      console.error(`Erro ao gerar relatório do motorista: ${error}`);
       return null;
     }
   }

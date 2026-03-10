@@ -8,5 +8,11 @@ export interface CorridaDTO {
   preco: number;
   dataCorrida?: Date;
   duracaoCorrida: number;
-  statusCorrida: "Pendente" | "Aceito" | "Em andamento" | "Finalizada" | "Cancelada";
+  motivoCancelamento?: string | null;
+  statusCorrida:
+    | "Pendente"
+    | "Aceito"
+    | "Em andamento"
+    | "Finalizada"
+    | "Cancelada";
 }

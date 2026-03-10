@@ -6,27 +6,38 @@ import { DatabaseModel } from "../model/DatabaseModel.js";
 const database = new DatabaseModel().pool;
 
 class CorridaController {
+  // GET /api/corridas OR GET /api/corridas?status=Pendente
   static async listar(req: Request, res: Response): Promise<Response> {
     try {
-      const corridas = await Corrida.listarCorridas();
-      return res.status(200).json(corridas);
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possível acessar a lista de corridas." });
-    }
-  }
+      const status = req.query.status as string | undefined;
+      const usuario = (req as any).usuario;
 
-  static async listarPendentes(req: Request, res: Response): Promise<Response> {
-    try {
-      // 👇 Get motorista id from token
-      const idMotorista = (req as any).usuario.id;
-      const corridas = await Corrida.listarPendentes(idMotorista);
+      if (status) {
+        const validStatuses = [
+          "Pendente",
+          "Aceito",
+          "Em andamento",
+          "Finalizada",
+          "Cancelada",
+        ];
+        if (!validStatuses.includes(status)) {
+          return res.status(400).json({ mensagem: "Status inválido." });
+        }
+
+        // Pendente with matching only for motoristas
+        const idMotorista =
+          usuario.tipo === "motorista" ? usuario.id : undefined;
+        const corridas = await Corrida.listarPorStatus(status, idMotorista);
+        return res.status(200).json(corridas ?? []);
+      }
+
+      // No filter — return all
+      const corridas = await Corrida.listarCorridas();
       return res.status(200).json(corridas ?? []);
     } catch (error) {
       return res
         .status(500)
-        .json({ mensagem: "Erro ao listar corridas pendentes." });
+        .json({ mensagem: "Não foi possível acessar a lista de corridas." });
     }
   }
 
@@ -60,6 +71,7 @@ class CorridaController {
         idVeiculo: null,
         dataCorrida: new Date(),
         duracaoCorrida: 0,
+        motivoCancelamento: null,
         statusCorrida: "Pendente",
       });
 
@@ -84,11 +96,8 @@ class CorridaController {
   static async aceitar(req: Request, res: Response): Promise<Response> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
-
-      // 👇 Get idMotorista from the token, not from the body
       const idMotorista = (req as any).usuario.id;
 
-      // 👇 Fetch the motorista's vehicle automatically from DB
       const veiculo = await database.query(
         `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
         [idMotorista],
@@ -101,12 +110,12 @@ class CorridaController {
       }
 
       const idVeiculo = veiculo.rows[0].id_veiculo;
-
       const sucesso = await Corrida.aceitarCorrida(
         idCorrida,
         idMotorista,
         idVeiculo,
       );
+
       if (!sucesso) {
         return res
           .status(400)
@@ -155,9 +164,8 @@ class CorridaController {
       }
 
       const dataInicio: Date = corridaRes.rows[0].data_corrida;
-      const agora = new Date();
       const duracaoCorrida = Math.ceil(
-        (agora.getTime() - dataInicio.getTime()) / 60000, // ms → minutes
+        (new Date().getTime() - dataInicio.getTime()) / 60000,
       );
 
       const sucesso = await Corrida.finalizarCorrida(idCorrida, duracaoCorrida);
@@ -177,11 +185,16 @@ class CorridaController {
     }
   }
 
+  // Updated — now accepts motivoCancelamento from body
   static async cancelar(req: Request, res: Response): Promise<Response> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
-      const sucesso = await Corrida.cancelarCorrida(idCorrida);
+      const { motivoCancelamento } = req.body;
 
+      const sucesso = await Corrida.cancelarCorrida(
+        idCorrida,
+        motivoCancelamento ?? null,
+      );
       if (!sucesso) {
         return res
           .status(400)
@@ -198,7 +211,6 @@ class CorridaController {
     try {
       const usuario = (req as any).usuario;
 
-      // 👇 Works for both passageiro and motorista from the same endpoint
       if (usuario.tipo === "passageiro") {
         const corridas = await Corrida.historicoPorPassageiro(usuario.id);
         return res.status(200).json(corridas ?? []);
@@ -209,10 +221,27 @@ class CorridaController {
         return res.status(403).json({ mensagem: "Tipo de usuário inválido." });
       }
     } catch (error) {
-      console.error(`Erro ao buscar histórico: ${error}`);
       return res
         .status(500)
         .json({ mensagem: "Erro ao buscar histórico de corridas." });
+    }
+  }
+
+  // New — motorista's own report
+  static async relatorio(req: Request, res: Response): Promise<Response> {
+    try {
+      const idMotorista = (req as any).usuario.id;
+      const dados = await Corrida.relatorioMotorista(idMotorista);
+
+      if (!dados) {
+        return res.status(500).json({ mensagem: "Erro ao gerar relatório." });
+      }
+
+      return res.status(200).json(dados);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ mensagem: "Erro interno ao gerar relatório." });
     }
   }
 }
