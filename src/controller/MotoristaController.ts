@@ -5,7 +5,6 @@ import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
 class MotoristaController {
-  // LISTAR: Retorna os dados usando os Getters, sem expor a senha
   static async listar(req: Request, res: Response): Promise<Response> {
     try {
       const motoristas = await Motorista.listarMotoristas();
@@ -14,42 +13,22 @@ class MotoristaController {
         return res.status(200).json([]);
       }
 
-      const dadosTratados = motoristas.map((m) => ({
-        id: m.getIdMotorista(),
-        nome: m.getNomeMotorista(),
-        sobrenome: m.getSobrenomeMotorista(),
-        cpf: m.getCpf(),
-        cnh: m.getCnh(),
-        dataNascimento: m.getDataNascimento(),
-        celular: m.getCelular(),
-        email: m.getEmail(),
-        antecedentes: m.getAntecedentesCriminais(),
-        especializacao: m.getEspecializacao(),
-      }));
-
-      return res.status(200).json(dadosTratados);
+      // listarMotoristas() already returns plain objects, no getters needed
+      return res.status(200).json(motoristas);
     } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Erro ao buscar lista de motoristas." });
+      return res.status(500).json({ mensagem: "Erro ao buscar lista de motoristas." });
     }
   }
 
-  // LOGIN: Verifica email e senha (bcrypt)
   static async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email, senha } = req.body;
       const motorista = await Motorista.buscarPorEmail(email);
 
-      // Se não achar motorista ou a senha não bater (usando o Service)
-      if (
-        !motorista ||
-        !(await AuthService.compararSenha(senha, motorista.getSenha()))
-      ) {
+      if (!motorista || !(await AuthService.compararSenha(senha, motorista.getSenha()))) {
         return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
       }
 
-      // Gera o token pelo Service
       const token = AuthService.gerarToken({
         id: motorista.getIdMotorista(),
         email: motorista.getEmail(),
@@ -58,11 +37,11 @@ class MotoristaController {
 
       return res.status(200).json({
         mensagem: "Login realizado com sucesso!",
-        token: token,
+        token,
         motorista: {
           id: motorista.getIdMotorista(),
-          nome: motorista.getNomeMotorista(),
-          sobrenome: motorista.getSobrenomeMotorista(),
+          nome: motorista.getNome(),           // ✅
+          sobrenome: motorista.getSobrenome(), // ✅
         },
       });
     } catch (error) {
@@ -70,39 +49,32 @@ class MotoristaController {
     }
   }
 
-  // CADASTRO: Criptografa a senha antes de salvar
   static async register(req: Request, res: Response): Promise<Response> {
     try {
-      const { endereco, ...dadosMotorista } = req.body; // Separa os dados do endereço
+      const { endereco, ...dadosMotorista } = req.body;
 
       const salt = await bcrypt.genSalt(10);
       dadosMotorista.senha = await bcrypt.hash(dadosMotorista.senha, salt);
 
-      // 1. Cadastra o motorista e pega o ID
       const idGerado = await Motorista.cadastrarMotorista(dadosMotorista);
 
       if (idGerado) {
-        // 2. Cadastra o endereço usando o ID gerado
         const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
-          idGerado,
-          "motorista",
-          endereco,
+          idGerado, "motorista", endereco,
         );
 
         if (enderecoSucesso) {
-          return res.status(201).json({
-            mensagem: "Motorista e Endereço cadastrados com sucesso!",
-          });
+          return res.status(201).json({ mensagem: "Motorista e Endereço cadastrados com sucesso!" });
         }
-        return res
-          .status(201)
-          .json({ mensagem: "Motorista cadastrado, mas erro no endereço." });
+        return res.status(201).json({ mensagem: "Motorista cadastrado, mas erro no endereço." });
       }
+
       return res.status(400).json({ mensagem: "Erro ao cadastrar motorista." });
     } catch (error) {
       return res.status(500).json({ mensagem: "Erro ao processar cadastro." });
     }
   }
+
   static async perfil(req: Request, res: Response): Promise<Response> {
     try {
       const idMotorista = (req as any).usuario.id;
@@ -114,8 +86,8 @@ class MotoristaController {
 
       return res.status(200).json({
         id: motorista.getIdMotorista(),
-        nome: motorista.getNomeMotorista(),
-        sobrenome: motorista.getSobrenomeMotorista(),
+        nome: motorista.getNome(),           // ✅
+        sobrenome: motorista.getSobrenome(), // ✅
         cpf: motorista.getCpf(),
         cnh: motorista.getCnh(),
         dataNascimento: motorista.getDataNascimento(),
@@ -128,12 +100,12 @@ class MotoristaController {
       return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
     }
   }
+
   static async editarPerfil(req: Request, res: Response): Promise<Response> {
     try {
       const idMotorista = (req as any).usuario.id;
       const dados = req.body;
 
-      // Hash new password if sent
       if (dados.senha) {
         const salt = await bcrypt.genSalt(10);
         dados.senha = await bcrypt.hash(dados.senha, salt);
@@ -141,14 +113,10 @@ class MotoristaController {
 
       const sucesso = await Motorista.editarPerfil(idMotorista, dados);
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({ mensagem: "Nenhum campo válido para atualizar." });
+        return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
       }
 
-      return res
-        .status(200)
-        .json({ mensagem: "Perfil atualizado com sucesso!" });
+      return res.status(200).json({ mensagem: "Perfil atualizado com sucesso!" });
     } catch (error) {
       return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
     }
