@@ -1,7 +1,6 @@
 import { Passageiro } from "../model/Passageiro.js";
 import { EnderecoController } from "./EnderecoController.js";
 import { AuthService } from "../services/AuthService.js";
-
 import type { Request, Response } from "express";
 import bcrypt from "bcrypt";
 
@@ -16,8 +15,8 @@ class PassageiroController {
 
       const dadosTratados = passageiros.map((p) => ({
         id: p.getIdPassageiro(),
-        nome: p.getNomePassageiro(),
-        sobrenome: p.getSobrenomePassageiro(),
+        nome: p.getNome(),           // ✅ from Usuario
+        sobrenome: p.getSobrenome(), // ✅ from Usuario
         cpf: p.getCpf(),
         dataNascimento: p.getDataNascimento(),
         celular: p.getCelular(),
@@ -30,9 +29,7 @@ class PassageiroController {
       return res.status(200).json(dadosTratados);
     } catch (error) {
       console.error(`Erro ao consultar modelo: ${error}`);
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possível acessar a lista de passageiros." });
+      return res.status(500).json({ mensagem: "Não foi possível acessar a lista de passageiros." });
     }
   }
 
@@ -47,44 +44,28 @@ class PassageiroController {
 
       if (idGerado) {
         const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
-          idGerado,
-          "passageiro",
-          endereco,
+          idGerado, "passageiro", endereco,
         );
 
         if (enderecoSucesso) {
-          return res.status(201).json({
-            mensagem: "Passageiro e endereço cadastrados com sucesso!",
-          });
+          return res.status(201).json({ mensagem: "Passageiro e endereço cadastrados com sucesso!" });
         }
-
-        return res.status(201).json({
-          mensagem:
-            "Passageiro cadastrado, mas houve um erro ao salvar o endereço.",
-        });
+        return res.status(201).json({ mensagem: "Passageiro cadastrado, mas houve um erro ao salvar o endereço." });
       }
 
-      return res
-        .status(400)
-        .json({ mensagem: "Erro ao cadastrar passageiro no banco." });
+      return res.status(400).json({ mensagem: "Erro ao cadastrar passageiro no banco." });
     } catch (error) {
       console.error(`Erro no processo de cadastro: ${error}`);
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possível inserir o passageiro." });
+      return res.status(500).json({ mensagem: "Não foi possível inserir o passageiro." });
     }
   }
 
   static async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email, senha } = req.body;
-
       const passageiro = await Passageiro.buscarPorEmail(email);
 
-      if (
-        !passageiro ||
-        !(await AuthService.compararSenha(senha, passageiro.getSenha()))
-      ) {
+      if (!passageiro || !(await AuthService.compararSenha(senha, passageiro.getSenha()))) {
         return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
       }
 
@@ -99,17 +80,16 @@ class PassageiroController {
         token,
         passageiro: {
           id: passageiro.getIdPassageiro(),
-          nome: passageiro.getNomePassageiro(),
-          sobrenome: passageiro.getSobrenomePassageiro(),
+          nome: passageiro.getNome(),           // ✅
+          sobrenome: passageiro.getSobrenome(), // ✅
         },
       });
     } catch (error) {
       console.error(`Erro no login: ${error}`);
-      return res
-        .status(500)
-        .json({ mensagem: "Erro interno ao tentar fazer login." });
+      return res.status(500).json({ mensagem: "Erro interno ao tentar fazer login." });
     }
   }
+
   static async perfil(req: Request, res: Response): Promise<Response> {
     try {
       const idPassageiro = (req as any).usuario.id;
@@ -121,8 +101,8 @@ class PassageiroController {
 
       return res.status(200).json({
         id: passageiro.getIdPassageiro(),
-        nome: passageiro.getNomePassageiro(),
-        sobrenome: passageiro.getSobrenomePassageiro(),
+        nome: passageiro.getNome(),           // ✅
+        sobrenome: passageiro.getSobrenome(), // ✅
         cpf: passageiro.getCpf(),
         dataNascimento: passageiro.getDataNascimento(),
         celular: passageiro.getCelular(),
@@ -136,12 +116,12 @@ class PassageiroController {
       return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
     }
   }
+
   static async editarPerfil(req: Request, res: Response): Promise<Response> {
     try {
       const idPassageiro = (req as any).usuario.id;
       const dados = req.body;
 
-      // Hash new password if sent
       if (dados.senha) {
         const salt = await bcrypt.genSalt(10);
         dados.senha = await bcrypt.hash(dados.senha, salt);
@@ -149,14 +129,10 @@ class PassageiroController {
 
       const sucesso = await Passageiro.editarPerfil(idPassageiro, dados);
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({ mensagem: "Nenhum campo válido para atualizar." });
+        return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
       }
 
-      return res
-        .status(200)
-        .json({ mensagem: "Perfil atualizado com sucesso!" });
+      return res.status(200).json({ mensagem: "Perfil atualizado com sucesso!" });
     } catch (error) {
       return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
     }

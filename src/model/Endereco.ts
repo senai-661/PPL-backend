@@ -99,18 +99,19 @@ export class Endereco {
   static async listarTodos(): Promise<any[] | null> {
     try {
       const query = `
-            SELECT 
-                e.*, 
-                m.nome_motorista as dono_motorista, 
-                p.nome_passageiro as dono_passageiro
-            FROM endereco e
-            LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
-            LEFT JOIN passageiro p ON e.id_passageiro = p.id_passageiro
-            ORDER BY e.id_endereco ASC;
-        `;
+      SELECT 
+        e.*,
+        u_m.nome || ' ' || u_m.sobrenome AS dono_motorista,
+        u_p.nome || ' ' || u_p.sobrenome AS dono_passageiro
+      FROM endereco e
+      LEFT JOIN motorista m ON e.id_motorista = m.id_motorista
+      LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
+      LEFT JOIN passageiro p ON e.id_passageiro = p.id_passageiro
+      LEFT JOIN usuario u_p ON u_p.id_usuario = p.id_usuario
+      ORDER BY e.id_endereco ASC;
+    `;
       const res = await database.query(query);
 
-      // Tratamos os dados para facilitar a leitura no Front-end
       return res.rows.map((row) => ({
         id: row.id_endereco,
         rua: row.rua,
@@ -120,7 +121,6 @@ export class Endereco {
         estado: row.estado,
         cep: row.cep,
         complemento: row.complemento,
-        // Lógica para definir quem é o dono
         proprietario:
           row.dono_motorista || row.dono_passageiro || "Não identificado",
         tipo_usuario: row.id_motorista ? "Motorista" : "Passageiro",
