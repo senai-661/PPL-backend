@@ -33,63 +33,6 @@ class PassageiroController {
     }
   }
 
-  static async register(req: Request, res: Response): Promise<Response> {
-    try {
-      const { endereco, ...dadosPassageiro } = req.body;
-
-      const salt = await bcrypt.genSalt(10);
-      dadosPassageiro.senha = await bcrypt.hash(dadosPassageiro.senha, salt);
-
-      const idGerado = await Passageiro.cadastrarPassageiro(dadosPassageiro);
-
-      if (idGerado) {
-        const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
-          idGerado, "passageiro", endereco,
-        );
-
-        if (enderecoSucesso) {
-          return res.status(201).json({ mensagem: "Passageiro e endereço cadastrados com sucesso!" });
-        }
-        return res.status(201).json({ mensagem: "Passageiro cadastrado, mas houve um erro ao salvar o endereço." });
-      }
-
-      return res.status(400).json({ mensagem: "Erro ao cadastrar passageiro no banco." });
-    } catch (error) {
-      console.error(`Erro no processo de cadastro: ${error}`);
-      return res.status(500).json({ mensagem: "Não foi possível inserir o passageiro." });
-    }
-  }
-
-  static async login(req: Request, res: Response): Promise<Response> {
-    try {
-      const { email, senha } = req.body;
-      const passageiro = await Passageiro.buscarPorEmail(email);
-
-      if (!passageiro || !(await AuthService.compararSenha(senha, passageiro.getSenha()))) {
-        return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
-      }
-
-      const token = AuthService.gerarToken({
-        id: passageiro.getIdPassageiro(),
-        email: passageiro.getEmail(),
-        tipo: "passageiro",
-      });
-
-      return res.status(200).json({
-        mensagem: "Login realizado com sucesso!",
-        token,
-        passageiro: {
-          id: passageiro.getIdPassageiro(),
-          nome: passageiro.getNome(),           // ✅
-          sobrenome: passageiro.getSobrenome(), // ✅
-        },
-      });
-    } catch (error) {
-      console.error(`Erro no login: ${error}`);
-      return res.status(500).json({ mensagem: "Erro interno ao tentar fazer login." });
-    }
-  }
-
   static async perfil(req: Request, res: Response): Promise<Response> {
     try {
       const idPassageiro = (req as any).usuario.id;
