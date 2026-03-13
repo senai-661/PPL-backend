@@ -43,8 +43,8 @@ class CorridaController {
 
   static async solicitar(req: Request, res: Response): Promise<Response> {
     try {
+      const idPassageiro = (req as any).usuario.id;
       const {
-        idPassageiro,
         origemCorrida,
         destinoCorrida,
         latOrigem,
@@ -137,11 +137,9 @@ class CorridaController {
       const sucesso = await Corrida.iniciarCorrida(idCorrida);
 
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({
-            mensagem: "Corrida não encontrada ou não foi aceita ainda.",
-          });
+        return res.status(400).json({
+          mensagem: "Corrida não encontrada ou não foi aceita ainda.",
+        });
       }
 
       return res.status(200).json({ mensagem: "Corrida iniciada!" });
