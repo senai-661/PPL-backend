@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 
+import { UsuarioController } from "./controller/UsuarioController.js";
 import { PassageiroController } from "./controller/PassageiroController.js";
 import { CorridaController } from "./controller/CorridaController.js";
 import { MotoristaController } from "./controller/MotoristaController.js";
@@ -22,11 +23,8 @@ router.get("/api", (req: Request, res: Response) => {
 // ============================================
 // ROTAS PÚBLICAS (sem token)
 // ============================================
-router.post("/api/motorista/registrar", MotoristaController.register);
-router.post("/api/motorista/login", MotoristaController.login);
-router.post("/api/passageiro/registrar", PassageiroController.register);
-router.post("/api/passageiro/login", PassageiroController.login);
-router.post("/api/admin/login", AdminController.login);
+router.post("/api/registrar", UsuarioController.registrar);
+router.post("/api/login",     UsuarioController.login);
 
 // ============================================
 // PERFIL (GET + PATCH)
@@ -92,7 +90,7 @@ router.get(
 router.get(
   "/api/corridas",
   AuthMiddleware.verificarToken,
-  CorridaController.listar, // handles ?status= filter too
+  CorridaController.listar,
 );
 router.post(
   "/api/corridas",
