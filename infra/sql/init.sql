@@ -59,7 +59,7 @@ CREATE TABLE motorista (
     data_nascimento DATE NOT NULL,
     antecedentes_criminais VARCHAR(40) NOT NULL,
     especializacao VARCHAR(50) NOT NULL DEFAULT 'Nenhuma',
-    disponivel BOOLEAN DEFAULT false; 
+    disponivel BOOLEAN DEFAULT false
 );
 
 -- ============================================
