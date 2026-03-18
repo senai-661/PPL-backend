@@ -4,12 +4,12 @@ mais limpas e evitar ficar repetindo funções igual a senha em todo santo contr
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-export const SENHAMAX = "PPL_ladygagasenha"; 
+export const SENHABD = process.env.JWT_SECRET!; 
 
 export class AuthService {
   // Gera o Token (Centralizado)
   static gerarToken(payload: object): string {
-    return jwt.sign(payload, SENHAMAX, { expiresIn: "1h" });
+    return jwt.sign(payload, SENHABD, { expiresIn: "5h" });
   }
 
   // Compara a senha digitada com o Hash do banco
