@@ -6,25 +6,25 @@ import { DatabaseModel } from "../model/DatabaseModel.js";
 const database = new DatabaseModel().pool;
 
 class CorridaController {
-  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const status = Array.isArray(req.query.status)
-        ? req.query.status[0] as string
-        : req.query.status as string | undefined;
-      const usuario = (req as any).usuario;
+static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const status = Array.isArray(req.query.status)
+      ? req.query.status[0] as string
+      : req.query.status as string | undefined;
+    const usuario = (req as any).usuario;
+    console.log("usuario do token:", usuario); 
+    console.log("status:", status);            
+    if (status) {
+      const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
+      
+      console.log("idMotorista:", idMotorista);
 
-      if (status) {
-        const validStatuses = ["Pendente", "Aceito", "Em andamento", "Finalizada", "Cancelada"];
-        if (!validStatuses.includes(status)) {
-          return res.status(400).json({ mensagem: "Status inválido." });
-        }
-        const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
-        const corridas = await Corrida.listarPorStatus(status, idMotorista);
-        return res.status(200).json(corridas ?? []);
-      }
-
-      const corridas = await Corrida.listarCorridas();
+      const corridas = await Corrida.listarPorStatus(status, idMotorista);
+      
+      console.log("corridas:", corridas);      
+      
       return res.status(200).json(corridas ?? []);
+    }
     } catch (error) {
       next(error);
     }

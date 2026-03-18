@@ -69,9 +69,7 @@ export class Motorista extends Usuario {
       motorista.senha,
       "motorista"
     );
-
     if (!idUsuario) return null;
-
     const res = await database.query(
       `INSERT INTO motorista
         (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
@@ -116,29 +114,30 @@ export class Motorista extends Usuario {
     }
   }
 
-  static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
-    try {
-      const res = await database.query(
-        `SELECT u.*, m.id_motorista, m.cpf, m.cnh, m.celular,
-                m.data_nascimento, m.antecedentes_criminais, m.especializacao
-         FROM usuario u
-         JOIN motorista m ON m.id_usuario = u.id_usuario
-         WHERE m.id_motorista = $1;`,
-        [idMotorista]
-      );
-      if (res.rows.length === 0) return null;
-      const r = res.rows[0];
-      return new Motorista(
-        r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
-        r.id_motorista, r.cpf, r.cnh, r.celular,
-        r.data_nascimento, r.antecedentes_criminais, r.especializacao,
-        r.disponivel,
-      );
-    } catch (error) {
-      console.error(`Erro ao buscar motorista por id: ${error}`);
-      return null;
-    }
+static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
+  try {
+    const res = await database.query(
+      `SELECT u.*, m.id_motorista, m.cpf, m.cnh, m.celular,
+              m.data_nascimento, m.antecedentes_criminais, m.especializacao,
+              m.disponivel
+       FROM usuario u
+       JOIN motorista m ON m.id_usuario = u.id_usuario
+       WHERE m.id_motorista = $1;`,
+      [idMotorista]
+    );
+    if (res.rows.length === 0) return null;
+    const r = res.rows[0];
+    return new Motorista(
+      r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
+      r.id_motorista, r.cpf, r.cnh, r.celular,
+      r.data_nascimento, r.antecedentes_criminais, r.especializacao,
+      r.disponivel,
+    );
+  } catch (error) {
+    console.error(`Erro ao buscar motorista por id: ${error}`);
+    return null;
   }
+}
 
   static async listarMotoristas(): Promise<Array<any> | null> {
     try {

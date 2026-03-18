@@ -45,33 +45,80 @@ class Corrida {
     this.statusCorrida = _statusCorrida;
   }
 
-  public getIdCorrida(): number { return this.idCorrida; }
-  public getIdPassageiro(): number { return this.idPassageiro; }
-  public getIdMotorista(): number | null { return this.idMotorista; }
-  public getIdVeiculo(): number | null { return this.idVeiculo; }
-  public getOrigemCorrida(): string { return this.origemCorrida; }
-  public getDestinoCorrida(): string { return this.destinoCorrida; }
-  public getTipoCorrida(): string { return this.tipoCorrida; }
-  public getPreco(): number { return this.preco; }
-  public getDataCorrida(): Date { return this.dataCorrida; }
-  public getDuracaoCorrida(): number { return this.duracaoCorrida; }
-  public getMotivoCancelamento(): string | null { return this.motivoCancelamento; }
-  public getStatusCorrida(): string { return this.statusCorrida; }
+  public getIdCorrida(): number {
+    return this.idCorrida;
+  }
+  public getIdPassageiro(): number {
+    return this.idPassageiro;
+  }
+  public getIdMotorista(): number | null {
+    return this.idMotorista;
+  }
+  public getIdVeiculo(): number | null {
+    return this.idVeiculo;
+  }
+  public getOrigemCorrida(): string {
+    return this.origemCorrida;
+  }
+  public getDestinoCorrida(): string {
+    return this.destinoCorrida;
+  }
+  public getTipoCorrida(): string {
+    return this.tipoCorrida;
+  }
+  public getPreco(): number {
+    return this.preco;
+  }
+  public getDataCorrida(): Date {
+    return this.dataCorrida;
+  }
+  public getDuracaoCorrida(): number {
+    return this.duracaoCorrida;
+  }
+  public getMotivoCancelamento(): string | null {
+    return this.motivoCancelamento;
+  }
+  public getStatusCorrida(): string {
+    return this.statusCorrida;
+  }
 
-  public setIdCorrida(v: number): void { this.idCorrida = v; }
-  public setIdPassageiro(v: number): void { this.idPassageiro = v; }
-  public setIdMotorista(v: number | null): void { this.idMotorista = v; }
-  public setIdVeiculo(v: number | null): void { this.idVeiculo = v; }
-  public setOrigemCorrida(v: string): void { this.origemCorrida = v; }
-  public setDestinoCorrida(v: string): void { this.destinoCorrida = v; }
-  public setTipoCorrida(v: string): void { this.tipoCorrida = v; }
-  public setPreco(v: number): void { this.preco = v; }
-  public setDataCorrida(v: Date): void { this.dataCorrida = v; }
-  public setDuracaoCorrida(v: number): void { this.duracaoCorrida = v; }
-  public setMotivoCancelamento(v: string | null): void { this.motivoCancelamento = v; }
-  public setStatusCorrida(v: string): void { this.statusCorrida = v; }
+  public setIdCorrida(v: number): void {
+    this.idCorrida = v;
+  }
+  public setIdPassageiro(v: number): void {
+    this.idPassageiro = v;
+  }
+  public setIdMotorista(v: number | null): void {
+    this.idMotorista = v;
+  }
+  public setIdVeiculo(v: number | null): void {
+    this.idVeiculo = v;
+  }
+  public setOrigemCorrida(v: string): void {
+    this.origemCorrida = v;
+  }
+  public setDestinoCorrida(v: string): void {
+    this.destinoCorrida = v;
+  }
+  public setTipoCorrida(v: string): void {
+    this.tipoCorrida = v;
+  }
+  public setPreco(v: number): void {
+    this.preco = v;
+  }
+  public setDataCorrida(v: Date): void {
+    this.dataCorrida = v;
+  }
+  public setDuracaoCorrida(v: number): void {
+    this.duracaoCorrida = v;
+  }
+  public setMotivoCancelamento(v: string | null): void {
+    this.motivoCancelamento = v;
+  }
+  public setStatusCorrida(v: string): void {
+    this.statusCorrida = v;
+  }
 
-  // Helper to avoid repeating the constructor mapping everywhere
   private static fromRow(c: any): Corrida {
     return new Corrida(
       c.id_corrida,
@@ -89,9 +136,9 @@ class Corrida {
     );
   }
   static async buscarPorId(idCorrida: number): Promise<any | null> {
-  try {
-    const res = await database.query(
-      `SELECT
+    try {
+      const res = await database.query(
+        `SELECT
         c.*,
         -- Passenger info
         u_p.nome       AS passageiro_nome,
@@ -114,47 +161,51 @@ class Corrida {
        LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
        LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
        WHERE c.id_corrida = $1;`,
-      [idCorrida]
-    );
+        [idCorrida],
+      );
 
-    if (res.rows.length === 0) return null;
-    const c = res.rows[0];
+      if (res.rows.length === 0) return null;
+      const c = res.rows[0];
 
-    return {
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      duracaoCorrida: c.duracao_corrida,
-      motivoCancelamento: c.motivo_cancelamento,
-      statusCorrida: c.status_corrida,
-      passageiro: {
-        id: c.id_passageiro,
-        nome: c.passageiro_nome,
-        sobrenome: c.passageiro_sobrenome,
-        celular: c.passageiro_celular,
-        necessidades: c.passageiro_necessidades,
-      },
-      motorista: c.id_motorista ? {
-        id: c.id_motorista,
-        nome: c.motorista_nome,
-        sobrenome: c.motorista_sobrenome,
-        celular: c.motorista_celular,
-        especializacao: c.especializacao,
-      } : null,
-      veiculo: c.id_veiculo ? {
-        modelo: c.modelo_veiculo,
-        placa: c.placa,
-        tipo: c.tipo_veiculo,
-      } : null,
-    };
-  } catch (error) {
-    console.error(`Erro ao buscar corrida por id: ${error}`);
-    return null;
+      return {
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        duracaoCorrida: c.duracao_corrida,
+        motivoCancelamento: c.motivo_cancelamento,
+        statusCorrida: c.status_corrida,
+        passageiro: {
+          id: c.id_passageiro,
+          nome: c.passageiro_nome,
+          sobrenome: c.passageiro_sobrenome,
+          celular: c.passageiro_celular,
+          necessidades: c.passageiro_necessidades,
+        },
+        motorista: c.id_motorista
+          ? {
+              id: c.id_motorista,
+              nome: c.motorista_nome,
+              sobrenome: c.motorista_sobrenome,
+              celular: c.motorista_celular,
+              especializacao: c.especializacao,
+            }
+          : null,
+        veiculo: c.id_veiculo
+          ? {
+              modelo: c.modelo_veiculo,
+              placa: c.placa,
+              tipo: c.tipo_veiculo,
+            }
+          : null,
+      };
+    } catch (error) {
+      console.error(`Erro ao buscar corrida por id: ${error}`);
+      return null;
+    }
   }
-}
   static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     try {
       const res = await database.query(
@@ -168,7 +219,7 @@ class Corrida {
           corrida.destinoCorrida,
           corrida.tipoCorrida ?? "Convencional",
           corrida.preco,
-        ]
+        ],
       );
       return res.rows[0].id_corrida;
     } catch (error) {
@@ -178,33 +229,33 @@ class Corrida {
   }
 
   static async aceitarCorrida(
-  idCorrida: number,
-  idMotorista: number,
-  idVeiculo: number,
-): Promise<boolean> {
-  try {
-    const res = await database.query(
-      `UPDATE corrida
+    idCorrida: number,
+    idMotorista: number,
+    idVeiculo: number,
+  ): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `UPDATE corrida
        SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
        WHERE id_corrida = $3 AND status_corrida = 'Pendente'
        RETURNING id_corrida;`,
-      [idMotorista, idVeiculo, idCorrida]
-    );
+        [idMotorista, idVeiculo, idCorrida],
+      );
 
-    if (res.rowCount === null || res.rowCount === 0) return false;
+      if (res.rowCount === null || res.rowCount === 0) return false;
 
-    // Driver goes offline automatically after accepting
-    await database.query(
-      `UPDATE motorista SET disponivel = false WHERE id_motorista = $1;`,
-      [idMotorista]
-    );
+      // Driver goes offline automatically after accepting
+      await database.query(
+        `UPDATE motorista SET disponivel = false WHERE id_motorista = $1;`,
+        [idMotorista],
+      );
 
-    return true;
-  } catch (error) {
-    console.error(`Erro ao aceitar corrida: ${error}`);
-    return false;
+      return true;
+    } catch (error) {
+      console.error(`Erro ao aceitar corrida: ${error}`);
+      return false;
+    }
   }
-}
 
   static async iniciarCorrida(idCorrida: number): Promise<boolean> {
     try {
@@ -213,7 +264,7 @@ class Corrida {
          SET status_corrida = 'Em andamento'
          WHERE id_corrida = $1 AND status_corrida = 'Aceito'
          RETURNING id_corrida;`,
-        [idCorrida]
+        [idCorrida],
       );
       return res.rowCount !== null && res.rowCount > 0;
     } catch (error) {
@@ -231,13 +282,11 @@ class Corrida {
       `UPDATE corrida
        SET status_corrida = 'Finalizada', duracao_corrida = $1
        WHERE id_corrida = $2 AND status_corrida = 'Em andamento'
-       RETURNING id_corrida, id_motorista;`,
+       RETURNING id_corrida, id_motorista;`,  
       [duracaoCorrida, idCorrida]
     );
 
     if (res.rowCount === null || res.rowCount === 0) return false;
-
-    // Driver goes back online automatically after finishing
     const idMotorista = res.rows[0].id_motorista;
     if (idMotorista) {
       await database.query(
@@ -252,38 +301,36 @@ class Corrida {
     return false;
   }
 }
-
-
   static async cancelarCorrida(
-  idCorrida: number,
-  motivoCancelamento: string | null,
-): Promise<boolean> {
-  try {
-    const res = await database.query(
-      `UPDATE corrida
+    idCorrida: number,
+    motivoCancelamento: string | null,
+  ): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `UPDATE corrida
        SET status_corrida = 'Cancelada', motivo_cancelamento = $1
        WHERE id_corrida = $2 AND status_corrida IN ('Pendente', 'Aceito')
        RETURNING id_corrida, id_motorista;`,
-      [motivoCancelamento ?? null, idCorrida]
-    );
-
-    if (res.rowCount === null || res.rowCount === 0) return false;
-
-    // Driver goes back online if ride was already accepted
-    const idMotorista = res.rows[0].id_motorista;
-    if (idMotorista) {
-      await database.query(
-        `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
-        [idMotorista]
+        [motivoCancelamento ?? null, idCorrida],
       );
-    }
 
-    return true;
-  } catch (error) {
-    console.error(`Erro ao cancelar corrida: ${error}`);
-    return false;
+      if (res.rowCount === null || res.rowCount === 0) return false;
+
+      // Driver goes back online if ride was already accepted
+      const idMotorista = res.rows[0].id_motorista;
+      if (idMotorista) {
+        await database.query(
+          `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
+          [idMotorista],
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`Erro ao cancelar corrida: ${error}`);
+      return false;
+    }
   }
-}
 
   static async listarCorridas(): Promise<Array<Corrida> | null> {
     try {
@@ -295,7 +342,7 @@ class Corrida {
     }
   }
 
- static async listarPorStatus(
+static async listarPorStatus(
   status: string,
   idMotorista?: number,
 ): Promise<Array<any> | null> {
@@ -304,11 +351,10 @@ class Corrida {
       const res = await database.query(
         `SELECT 
           c.*,
-          -- Passenger info
-          u_p.nome        AS passageiro_nome,
-          u_p.sobrenome   AS passageiro_sobrenome,
-          p.celular       AS passageiro_celular,
-          p.necessidades  AS passageiro_necessidades
+          u_p.nome       AS passageiro_nome,
+          u_p.sobrenome  AS passageiro_sobrenome,
+          p.celular      AS passageiro_celular,
+          p.necessidades AS passageiro_necessidades
          FROM corrida c
          JOIN passageiro p ON p.id_passageiro = c.id_passageiro
          JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
@@ -318,15 +364,14 @@ class Corrida {
          AND (
            array_length(p.necessidades, 1) IS NULL
            OR (
-             ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'Mobilidade Reduzida')
-             OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
-             OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'Deficiência Visual')
+             ('Cadeirante' = ANY(p.necessidades) AND m.especializacao ILIKE 'mobilidade reduzida')
+             OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao ILIKE 'libras')
+             OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao ILIKE 'deficiência visual')
            )
          )
          ORDER BY c.data_corrida ASC;`,
-        [idMotorista]
-      );
-
+        [idMotorista],  
+      );              
       return res.rows.map((c) => ({
         idCorrida: c.id_corrida,
         origemCorrida: c.origem_corrida,
@@ -344,17 +389,13 @@ class Corrida {
         },
       }));
     }
-
-    // Other statuses — include driver + vehicle info for passengers
     const res = await database.query(
       `SELECT 
         c.*,
-        -- Driver info
         u_m.nome       AS motorista_nome,
         u_m.sobrenome  AS motorista_sobrenome,
         m.celular      AS motorista_celular,
         m.especializacao,
-        -- Vehicle info
         v.modelo_veiculo,
         v.placa,
         v.tipo_veiculo
@@ -364,9 +405,8 @@ class Corrida {
        LEFT JOIN veiculo v    ON v.id_veiculo = c.id_veiculo
        WHERE c.status_corrida = $1
        ORDER BY c.data_corrida DESC;`,
-      [status]
+      [status],
     );
-
     return res.rows.map((c) => ({
       idCorrida: c.id_corrida,
       origemCorrida: c.origem_corrida,
@@ -396,12 +436,12 @@ class Corrida {
   }
 }
 
-static async historicoPorPassageiro(
-  idPassageiro: number,
-): Promise<Array<any> | null> {
-  try {
-    const res = await database.query(
-      `SELECT 
+  static async historicoPorPassageiro(
+    idPassageiro: number,
+  ): Promise<Array<any> | null> {
+    try {
+      const res = await database.query(
+        `SELECT 
         c.*,
         u_m.nome      AS motorista_nome,
         u_m.sobrenome AS motorista_sobrenome,
@@ -416,44 +456,48 @@ static async historicoPorPassageiro(
        LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
        WHERE c.id_passageiro = $1
        ORDER BY c.data_corrida DESC;`,
-      [idPassageiro]
-    );
+        [idPassageiro],
+      );
 
-    return res.rows.map((c) => ({
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      duracaoCorrida: c.duracao_corrida,
-      motivoCancelamento: c.motivo_cancelamento,
-      statusCorrida: c.status_corrida,
-      motorista: c.id_motorista ? {
-        id: c.id_motorista,
-        nome: c.motorista_nome,
-        sobrenome: c.motorista_sobrenome,
-        celular: c.motorista_celular,
-        especializacao: c.especializacao,
-      } : null,
-      veiculo: c.id_veiculo ? {
-        modelo: c.modelo_veiculo,
-        placa: c.placa,
-        tipo: c.tipo_veiculo,
-      } : null,
-    }));
-  } catch (error) {
-    console.error(`Erro ao buscar histórico do passageiro: ${error}`);
-    return null;
+      return res.rows.map((c) => ({
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        duracaoCorrida: c.duracao_corrida,
+        motivoCancelamento: c.motivo_cancelamento,
+        statusCorrida: c.status_corrida,
+        motorista: c.id_motorista
+          ? {
+              id: c.id_motorista,
+              nome: c.motorista_nome,
+              sobrenome: c.motorista_sobrenome,
+              celular: c.motorista_celular,
+              especializacao: c.especializacao,
+            }
+          : null,
+        veiculo: c.id_veiculo
+          ? {
+              modelo: c.modelo_veiculo,
+              placa: c.placa,
+              tipo: c.tipo_veiculo,
+            }
+          : null,
+      }));
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do passageiro: ${error}`);
+      return null;
+    }
   }
-} 
 
-static async historicoPorMotorista(
-  idMotorista: number,
-): Promise<Array<any> | null> {
-  try {
-    const res = await database.query(
-      `SELECT 
+  static async historicoPorMotorista(
+    idMotorista: number,
+  ): Promise<Array<any> | null> {
+    try {
+      const res = await database.query(
+        `SELECT 
         c.*,
         u_p.nome       AS passageiro_nome,
         u_p.sobrenome  AS passageiro_sobrenome,
@@ -464,32 +508,32 @@ static async historicoPorMotorista(
        JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
        WHERE c.id_motorista = $1
        ORDER BY c.data_corrida DESC;`,
-      [idMotorista]
-    );
+        [idMotorista],
+      );
 
-    return res.rows.map((c) => ({
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      duracaoCorrida: c.duracao_corrida,
-      motivoCancelamento: c.motivo_cancelamento,
-      statusCorrida: c.status_corrida,
-      passageiro: {
-        id: c.id_passageiro,
-        nome: c.passageiro_nome,
-        sobrenome: c.passageiro_sobrenome,
-        celular: c.passageiro_celular,
-        necessidades: c.passageiro_necessidades,
-      },
-    }));
-  } catch (error) {
-    console.error(`Erro ao buscar histórico do motorista: ${error}`);
-    return null;
+      return res.rows.map((c) => ({
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        duracaoCorrida: c.duracao_corrida,
+        motivoCancelamento: c.motivo_cancelamento,
+        statusCorrida: c.status_corrida,
+        passageiro: {
+          id: c.id_passageiro,
+          nome: c.passageiro_nome,
+          sobrenome: c.passageiro_sobrenome,
+          celular: c.passageiro_celular,
+          necessidades: c.passageiro_necessidades,
+        },
+      }));
+    } catch (error) {
+      console.error(`Erro ao buscar histórico do motorista: ${error}`);
+      return null;
+    }
   }
-}
   static async relatorioMotorista(idMotorista: number): Promise<any | null> {
     try {
       const statsRes = await database.query(
@@ -501,7 +545,7 @@ static async historicoPorMotorista(
           ROUND(AVG(preco) FILTER (WHERE status_corrida = 'Finalizada'), 2)    AS ticket_medio,
           ROUND(AVG(duracao_corrida) FILTER (WHERE status_corrida = 'Finalizada'), 1) AS duracao_media
          FROM corrida WHERE id_motorista = $1;`,
-        [idMotorista]
+        [idMotorista],
       );
 
       const avaliacaoRes = await database.query(
@@ -511,7 +555,7 @@ static async historicoPorMotorista(
          FROM avaliacao_corrida ac
          JOIN corrida c ON c.id_corrida = ac.id_corrida
          WHERE c.id_motorista = $1;`,
-        [idMotorista]
+        [idMotorista],
       );
 
       const stats = statsRes.rows[0];
@@ -522,9 +566,15 @@ static async historicoPorMotorista(
           total: parseInt(stats.total_corridas),
           finalizadas: parseInt(stats.total_finalizadas),
           canceladas: parseInt(stats.total_canceladas),
-          taxaCancelamento: stats.total_corridas > 0
-            ? parseFloat(((stats.total_canceladas / stats.total_corridas) * 100).toFixed(1))
-            : 0,
+          taxaCancelamento:
+            stats.total_corridas > 0
+              ? parseFloat(
+                  (
+                    (stats.total_canceladas / stats.total_corridas) *
+                    100
+                  ).toFixed(1),
+                )
+              : 0,
         },
         financeiro: {
           totalGanho: parseFloat(stats.total_ganho),
@@ -532,7 +582,9 @@ static async historicoPorMotorista(
           duracaoMedia: parseFloat(stats.duracao_media) || 0,
         },
         avaliacao: {
-          media: avaliacao.media_avaliacao ? parseFloat(avaliacao.media_avaliacao) : null,
+          media: avaliacao.media_avaliacao
+            ? parseFloat(avaliacao.media_avaliacao)
+            : null,
           total: parseInt(avaliacao.total_avaliacoes),
         },
       };

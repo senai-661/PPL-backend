@@ -86,15 +86,15 @@ export abstract class Usuario {
     }
   }
   
-  static async login(email: string): Promise<any | null> {
+ static async login(email: string): Promise<any | null> {
   try {
     const res = await database.query(
       `SELECT u.*, 
         p.id_passageiro, p.cpf AS p_cpf, p.celular AS p_celular,
         p.data_nascimento AS p_data_nascimento, p.necessidades,
-        p.tipo_viagem, p.preferencia_clima,
         m.id_motorista, m.cpf AS m_cpf, m.cnh, m.celular AS m_celular,
-        m.data_nascimento AS m_data_nascimento, m.antecedentes_criminais, m.especializacao,
+        m.data_nascimento AS m_data_nascimento, m.antecedentes_criminais, 
+        m.especializacao, m.disponivel,
         a.id_admin
        FROM usuario u
        LEFT JOIN passageiro p ON p.id_usuario = u.id_usuario
@@ -108,5 +108,5 @@ export abstract class Usuario {
     console.error(`Erro ao buscar usuário para login: ${error}`);
     return null;
   }
-}
+} 
 }
