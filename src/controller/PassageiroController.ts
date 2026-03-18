@@ -15,15 +15,13 @@ class PassageiroController {
 
       const dadosTratados = passageiros.map((p) => ({
         id: p.getIdPassageiro(),
-        nome: p.getNome(),           // ✅ from Usuario
-        sobrenome: p.getSobrenome(), // ✅ from Usuario
+        nome: p.getNome(),           
+        sobrenome: p.getSobrenome(), 
         cpf: p.getCpf(),
         dataNascimento: p.getDataNascimento(),
         celular: p.getCelular(),
         email: p.getEmail(),
         necessidades: p.getNecessidades(),
-        tipoViagem: p.getTipoViagem(),
-        preferenciaClima: p.getPreferenciaClima(),
       }));
 
       return res.status(200).json(dadosTratados);
@@ -44,15 +42,13 @@ class PassageiroController {
 
       return res.status(200).json({
         id: passageiro.getIdPassageiro(),
-        nome: passageiro.getNome(),           // ✅
-        sobrenome: passageiro.getSobrenome(), // ✅
+        nome: passageiro.getNome(),           
+        sobrenome: passageiro.getSobrenome(), 
         cpf: passageiro.getCpf(),
         dataNascimento: passageiro.getDataNascimento(),
         celular: passageiro.getCelular(),
         email: passageiro.getEmail(),
         necessidades: passageiro.getNecessidades(),
-        tipoViagem: passageiro.getTipoViagem(),
-        preferenciaClima: passageiro.getPreferenciaClima(),
       });
     } catch (error) {
       console.error(`Erro ao buscar perfil: ${error}`);

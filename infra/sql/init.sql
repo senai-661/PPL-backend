@@ -43,11 +43,7 @@ CREATE TABLE passageiro (
     cpf CHAR(11) UNIQUE NOT NULL CHECK (length(cpf) = 11),
     celular VARCHAR(20) NOT NULL,
     data_nascimento DATE NOT NULL,
-    necessidades TEXT[] DEFAULT '{}',
-    tipo_viagem VARCHAR(20) NOT NULL DEFAULT 'Convencional'
-        CHECK (tipo_viagem IN ('Convencional', 'EconoComigo', 'Premium')),
-    preferencia_clima VARCHAR(20) NOT NULL DEFAULT 'Não Importa'
-        CHECK (preferencia_clima IN ('Silencioso', 'Com Música', 'Não Importa'))
+    necessidades TEXT[] DEFAULT '{}'
 );
 
 -- ============================================
@@ -105,12 +101,13 @@ CREATE TABLE veiculo (
 -- ============================================
 CREATE TABLE corrida (
     id_corrida INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    id_passageiro INT NOT NULL
-        REFERENCES passageiro(id_passageiro) ON DELETE CASCADE,
+    id_passageiro INT NOT NULL REFERENCES passageiro(id_passageiro) ON DELETE CASCADE,
     id_motorista INT REFERENCES motorista(id_motorista),
     id_veiculo INT REFERENCES veiculo(id_veiculo),
     origem_corrida VARCHAR(200) NOT NULL,
     destino_corrida VARCHAR(200) NOT NULL,
+    tipo_corrida VARCHAR(20) NOT NULL DEFAULT 'Convencional'
+        CHECK (tipo_corrida IN ('Convencional', 'EconoComigo', 'Premium')),
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     data_corrida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duracao_corrida INT NOT NULL DEFAULT 0 CHECK (duracao_corrida >= 0),
@@ -154,14 +151,14 @@ INSERT INTO usuario (nome, sobrenome, email, senha, tipo_usuario) VALUES
 ('Roberto',  'Alves',    'roberto.alves@email.com',    '$2b$10$i3q/gcEKZjsJPyZchgOLoOEiRrrUvmPkHRS0iWUn01FZLU9.HRPr.', 'passageiro'),
 ('Juliana',  'Rocha',    'juliana.rocha@email.com',    '$2b$10$i3q/gcEKZjsJPyZchgOLoOEiRrrUvmPkHRS0iWUn01FZLU9.HRPr.', 'passageiro');
 
-INSERT INTO passageiro (id_usuario, cpf, celular, data_nascimento, necessidades, tipo_viagem, preferencia_clima) VALUES
-((SELECT id_usuario FROM usuario WHERE email = 'carlos@email.com'),          '52998224725', '11999990001', '1995-04-10', '{"Cadeirante"}',                     'Convencional', 'Não Importa'),
-((SELECT id_usuario FROM usuario WHERE email = 'mariana@email.com'),         '12345678909', '11999990002', '1998-09-21', '{"Cadeirante","Deficiência Visual"}', 'Premium',      'Silencioso'),
-((SELECT id_usuario FROM usuario WHERE email = 'joao@email.com'),            '11144477735', '11999990003', '1992-12-05', '{}',                                 'EconoComigo',  'Com Música'),
-((SELECT id_usuario FROM usuario WHERE email = 'lucas.martins@email.com'),   '55566677788', '11988881111', '2000-01-15', '{"Cadeirante"}',                     'Convencional', 'Silencioso'),
-((SELECT id_usuario FROM usuario WHERE email = 'fernanda.costa@email.com'),  '66677788899', '11988882222', '1995-08-30', '{"Deficiência Auditiva"}',           'Premium',      'Silencioso'),
-((SELECT id_usuario FROM usuario WHERE email = 'roberto.alves@email.com'),   '77788899900', '11988883333', '1980-12-20', '{"Deficiência Visual"}',             'EconoComigo',  'Com Música'),
-((SELECT id_usuario FROM usuario WHERE email = 'juliana.rocha@email.com'),   '88899900011', '11988884444', '2002-06-10', '{}',                                 'Convencional', 'Não Importa');
+INSERT INTO passageiro (id_usuario, cpf, celular, data_nascimento, necessidades) VALUES
+((SELECT id_usuario FROM usuario WHERE email = 'carlos@email.com'),          '52998224725', '11999990001', '1995-04-10', '{"Cadeirante"}'),
+((SELECT id_usuario FROM usuario WHERE email = 'mariana@email.com'),         '12345678909', '11999990002', '1998-09-21', '{"Cadeirante","Deficiência Visual"}'),
+((SELECT id_usuario FROM usuario WHERE email = 'joao@email.com'),            '11144477735', '11999990003', '1992-12-05', '{}'),
+((SELECT id_usuario FROM usuario WHERE email = 'lucas.martins@email.com'),   '55566677788', '11988881111', '2000-01-15', '{"Cadeirante"}'),
+((SELECT id_usuario FROM usuario WHERE email = 'fernanda.costa@email.com'),  '66677788899', '11988882222', '1995-08-30', '{"Deficiência Auditiva"}'),
+((SELECT id_usuario FROM usuario WHERE email = 'roberto.alves@email.com'),   '77788899900', '11988883333', '1980-12-20', '{"Deficiência Visual"}'),
+((SELECT id_usuario FROM usuario WHERE email = 'juliana.rocha@email.com'),   '88899900011', '11988884444', '2002-06-10', '{}');
 
 -- ENDERECOS DOS PASSAGEIROS
 INSERT INTO endereco (rua, numero, bairro, cidade, estado, cep, id_passageiro) VALUES
@@ -214,18 +211,18 @@ INSERT INTO veiculo (id_motorista, placa, tipo_veiculo, modelo_veiculo) VALUES
 
 -- CORRIDAS
 INSERT INTO corrida
-(id_passageiro, id_motorista, id_veiculo, origem_corrida, destino_corrida, preco, duracao_corrida, status_corrida)
+(id_passageiro, id_motorista, id_veiculo, origem_corrida, destino_corrida, tipo_corrida, preco, duracao_corrida, status_corrida)
 VALUES
-(1, 1, 1, 'Shopping Center',      'Aeroporto',             45.50, 35, 'Finalizada'),
-(2, 2, 2, 'Rodoviária',           'Centro Empresarial',    32.00, 25, 'Finalizada'),
-(3, 3, 3, 'Universidade',         'Estação de Metrô',      18.75, 15, 'Cancelada'),
-(4, 4, 4, 'Terminal Barra Funda', 'Hospital das Clínicas', 28.50, 22, 'Finalizada'),
-(5, 5, 5, 'Aeroporto de Congonhas','Shopping Ibirapuera',  52.00, 40, 'Finalizada'),
-(6, 6, 6, 'Metrô Consolação',     'USP Cidade Universitária', 19.75, 18, 'Finalizada'),
-(7, 7, 7, 'Rua Haddock Lobo',     'Parque Ibirapuera',     14.00, 12, 'Finalizada'),
-(4, NULL, NULL, 'Terminal Santana',   'AACD',               22.00, 0,  'Pendente'),
-(5, NULL, NULL, 'Metrô Brigadeiro',   'Teatro Municipal',   18.50, 0,  'Pendente'),
-(6, NULL, NULL, 'Av. Paulista',       'Pinacoteca do Estado', 15.00, 0, 'Pendente');
+(1, 1, 1, 'Shopping Center',       'Aeroporto',                'Premium',      45.50, 35, 'Finalizada'),
+(2, 2, 2, 'Rodoviária',            'Centro Empresarial',       'Convencional', 32.00, 25, 'Finalizada'),
+(3, 3, 3, 'Universidade',          'Estação de Metrô',         'EconoComigo',  18.75, 15, 'Cancelada'),
+(4, 4, 4, 'Terminal Barra Funda',  'Hospital das Clínicas',    'Convencional', 28.50, 22, 'Finalizada'),
+(5, 5, 5, 'Aeroporto de Congonhas','Shopping Ibirapuera',      'Premium',      52.00, 40, 'Finalizada'),
+(6, 6, 6, 'Metrô Consolação',      'USP Cidade Universitária', 'EconoComigo',  19.75, 18, 'Finalizada'),
+(7, 7, 7, 'Rua Haddock Lobo',      'Parque Ibirapuera',        'Convencional', 14.00, 12, 'Finalizada'),
+(4, NULL, NULL, 'Terminal Santana',    'AACD',                 'Convencional', 22.00, 0,  'Pendente'),
+(5, NULL, NULL, 'Metrô Brigadeiro',    'Teatro Municipal',     'EconoComigo',  18.50, 0,  'Pendente'),
+(6, NULL, NULL, 'Av. Paulista',        'Pinacoteca do Estado', 'Convencional', 15.00, 0,  'Pendente');
 
 -- AVALIACOES
 INSERT INTO avaliacao_corrida (id_corrida, nota, comentario) VALUES

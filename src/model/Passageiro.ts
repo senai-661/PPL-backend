@@ -10,8 +10,6 @@ export class Passageiro extends Usuario {
   private celular: string;
   private dataNascimento: Date;
   private necessidades: string[];
-  private tipoViagem: string;
-  private preferenciaClima: string;
 
   constructor(
     idUsuario: number,
@@ -25,8 +23,6 @@ export class Passageiro extends Usuario {
     celular: string,
     dataNascimento: Date,
     necessidades: string[],
-    tipoViagem: string,
-    preferenciaClima: string,
   ) {
     super(idUsuario, nome, sobrenome, email, "passageiro", senha, criadoEm);
     this.idPassageiro = idPassageiro;
@@ -34,8 +30,6 @@ export class Passageiro extends Usuario {
     this.celular = celular;
     this.dataNascimento = dataNascimento;
     this.necessidades = necessidades;
-    this.tipoViagem = tipoViagem;
-    this.preferenciaClima = preferenciaClima;
   }
 
   public getIdPassageiro(): number { return this.idPassageiro; }
@@ -43,20 +37,15 @@ export class Passageiro extends Usuario {
   public getCelular(): string { return this.celular; }
   public getDataNascimento(): Date { return this.dataNascimento; }
   public getNecessidades(): string[] { return this.necessidades; }
-  public getTipoViagem(): string { return this.tipoViagem; }
-  public getPreferenciaClima(): string { return this.preferenciaClima; }
 
   public setIdPassageiro(v: number): void { this.idPassageiro = v; }
   public setCpf(v: string): void { this.cpf = v; }
   public setCelular(v: string): void { this.celular = v; }
   public setDataNascimento(v: Date): void { this.dataNascimento = v; }
   public setNecessidades(v: string[]): void { this.necessidades = v; }
-  public setTipoViagem(v: string): void { this.tipoViagem = v; }
-  public setPreferenciaClima(v: string): void { this.preferenciaClima = v; }
 
   static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
     try {
-      // 1. Insert into usuario first
       const idUsuario = await Usuario.criarUsuario(
         passageiro.nomePassageiro,
         passageiro.sobrenomePassageiro,
@@ -64,23 +53,17 @@ export class Passageiro extends Usuario {
         passageiro.senha,
         "passageiro"
       );
-
       if (!idUsuario) return null;
 
-      // 2. Insert into passageiro with the generated id_usuario
       const res = await database.query(
-        `INSERT INTO passageiro 
-          (id_usuario, cpf, celular, data_nascimento, necessidades, tipo_viagem, preferencia_clima)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id_passageiro;`,
+        `INSERT INTO passageiro (id_usuario, cpf, celular, data_nascimento, necessidades)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id_passageiro;`,
         [
           idUsuario,
           passageiro.cpf,
           passageiro.celular,
           passageiro.dataNascimento,
           passageiro.necessidades ?? [],
-          passageiro.tipoViagem ?? "Convencional",
-          passageiro.preferenciaClima ?? "Não Importa",
         ]
       );
       return res.rows[0].id_passageiro;
@@ -93,8 +76,7 @@ export class Passageiro extends Usuario {
   static async buscarPorEmail(email: string): Promise<Passageiro | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento,
-                p.necessidades, p.tipo_viagem, p.preferencia_clima
+        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
          FROM usuario u
          JOIN passageiro p ON p.id_usuario = u.id_usuario
          WHERE u.email = $1;`,
@@ -104,8 +86,7 @@ export class Passageiro extends Usuario {
       const r = res.rows[0];
       return new Passageiro(
         r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
-        r.id_passageiro, r.cpf, r.celular, r.data_nascimento,
-        r.necessidades ?? [], r.tipo_viagem, r.preferencia_clima,
+        r.id_passageiro, r.cpf, r.celular, r.data_nascimento, r.necessidades ?? [],
       );
     } catch (error) {
       console.error(`Erro ao buscar passageiro: ${error}`);
@@ -116,8 +97,7 @@ export class Passageiro extends Usuario {
   static async buscarPorId(idPassageiro: number): Promise<Passageiro | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento,
-                p.necessidades, p.tipo_viagem, p.preferencia_clima
+        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
          FROM usuario u
          JOIN passageiro p ON p.id_usuario = u.id_usuario
          WHERE p.id_passageiro = $1;`,
@@ -127,8 +107,7 @@ export class Passageiro extends Usuario {
       const r = res.rows[0];
       return new Passageiro(
         r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
-        r.id_passageiro, r.cpf, r.celular, r.data_nascimento,
-        r.necessidades ?? [], r.tipo_viagem, r.preferencia_clima,
+        r.id_passageiro, r.cpf, r.celular, r.data_nascimento, r.necessidades ?? [],
       );
     } catch (error) {
       console.error(`Erro ao buscar passageiro por id: ${error}`);
@@ -139,15 +118,13 @@ export class Passageiro extends Usuario {
   static async listarPassageiros(): Promise<Array<Passageiro> | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento,
-                p.necessidades, p.tipo_viagem, p.preferencia_clima
+        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
          FROM usuario u
          JOIN passageiro p ON p.id_usuario = u.id_usuario;`
       );
       return res.rows.map((r) => new Passageiro(
         r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
-        r.id_passageiro, r.cpf, r.celular, r.data_nascimento,
-        r.necessidades ?? [], r.tipo_viagem, r.preferencia_clima,
+        r.id_passageiro, r.cpf, r.celular, r.data_nascimento, r.necessidades ?? [],
       ));
     } catch (error) {
       console.error(`Erro ao listar passageiros: ${error}`);
@@ -160,7 +137,6 @@ export class Passageiro extends Usuario {
     dados: Partial<PassageiroDTO>
   ): Promise<boolean> {
     try {
-      // Update usuario table
       if (dados.email || dados.senha) {
         const camposU: string[] = [];
         const valoresU: any[] = [];
@@ -175,14 +151,11 @@ export class Passageiro extends Usuario {
         );
       }
 
-      // Update passageiro table
       const camposP: string[] = [];
       const valoresP: any[] = [];
       let j = 1;
-      if (dados.celular)          { camposP.push(`celular = $${j++}`);           valoresP.push(dados.celular); }
-      if (dados.necessidades)     { camposP.push(`necessidades = $${j++}`);      valoresP.push(dados.necessidades); }
-      if (dados.tipoViagem)       { camposP.push(`tipo_viagem = $${j++}`);       valoresP.push(dados.tipoViagem); }
-      if (dados.preferenciaClima) { camposP.push(`preferencia_clima = $${j++}`); valoresP.push(dados.preferenciaClima); }
+      if (dados.celular)      { camposP.push(`celular = $${j++}`);      valoresP.push(dados.celular); }
+      if (dados.necessidades) { camposP.push(`necessidades = $${j++}`); valoresP.push(dados.necessidades); }
 
       if (camposP.length > 0) {
         valoresP.push(idPassageiro);

@@ -5,14 +5,10 @@ export interface CorridaDTO {
   idVeiculo?: number | null;
   origemCorrida: string;
   destinoCorrida: string;
+  tipoCorrida?: string;           
   preco: number;
   dataCorrida?: Date;
   duracaoCorrida: number;
   motivoCancelamento?: string | null;
-  statusCorrida:
-    | "Pendente"
-    | "Aceito"
-    | "Em andamento"
-    | "Finalizada"
-    | "Cancelada";
+  statusCorrida: "Pendente" | "Aceito" | "Em andamento" | "Finalizada" | "Cancelada";
 }
