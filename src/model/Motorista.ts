@@ -61,41 +61,38 @@ export class Motorista extends Usuario {
   public setDisponivel(v: boolean): void {this.disponivel = v;}
 
   static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
-    try {
-      // 1. Insert into usuario first
-      const idUsuario = await Usuario.criarUsuario(
-        motorista.nomeMotorista,
-        motorista.sobrenomeMotorista,
-        motorista.email,
-        motorista.senha,
-        "motorista"
-      );
+  try {
+    const idUsuario = await Usuario.criarUsuario(
+      motorista.nome,      
+      motorista.sobrenome, 
+      motorista.email,
+      motorista.senha,
+      "motorista"
+    );
 
-      if (!idUsuario) return null;
+    if (!idUsuario) return null;
 
-      // 2. Insert into motorista with the generated id_usuario
-      const res = await database.query(
-        `INSERT INTO motorista
-          (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id_motorista;`,
-        [
-          idUsuario,
-          motorista.cpf,
-          motorista.cnh,
-          motorista.celular,
-          motorista.dataNascimento,
-          motorista.antecedentesCriminais.toUpperCase(),
-          (motorista.especializacao ?? "Nenhuma").toUpperCase(),
-        ]
-      );
-      return res.rows[0].id_motorista;
-    } catch (error) {
-      console.error(`Erro ao cadastrar motorista: ${error}`);
-      return null;
-    }
+    const res = await database.query(
+      `INSERT INTO motorista
+        (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id_motorista;`,
+      [
+        idUsuario,
+        motorista.cpf,
+        motorista.cnh,
+        motorista.celular,
+        motorista.dataNascimento,
+        motorista.antecedentesCriminais.toUpperCase(),
+        (motorista.especializacao ?? "Nenhuma").toUpperCase(),
+      ]
+    );
+    return res.rows[0].id_motorista;
+  } catch (error) {
+    console.error(`Erro ao cadastrar motorista: ${error}`);
+    return null;
   }
-
+}
   static async buscarPorEmail(email: string): Promise<Motorista | null> {
     try {
       const res = await database.query(

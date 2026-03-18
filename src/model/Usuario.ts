@@ -45,26 +45,32 @@ export abstract class Usuario {
   public setSenha(v: string): void { this.senha = v; }
   public setCriadoEm(v: Date): void { this.criadoEm = v; }
 
-  // Shared DB method — insert into usuario table, returns id_usuario
+ 
   static async criarUsuario(
-    nome: string,
-    sobrenome: string,
-    email: string,
-    senha: string,
-    tipoUsuario: string,
-  ): Promise<number | null> {
-    try {
-      const res = await database.query(
-        `INSERT INTO usuario (nome, sobrenome, email, senha, tipo_usuario)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario;`,
-        [nome.toUpperCase(), sobrenome.toUpperCase(), email, senha, tipoUsuario]
-      );
-      return res.rows[0].id_usuario;
-    } catch (error) {
-      console.error(`Erro ao criar usuário: ${error}`);
-      return null;
-    }
+  nome: string,
+  sobrenome: string,
+  email: string,
+  senha: string,
+  tipoUsuario: string,
+): Promise<number | null> {
+  try {
+    const res = await database.query(
+      `INSERT INTO usuario (nome, sobrenome, email, senha, tipo_usuario)
+       VALUES ($1, $2, $3, $4, $5) RETURNING id_usuario;`,
+      [
+        nome?.toUpperCase() ?? nome,
+        sobrenome?.toUpperCase() ?? sobrenome,
+        email,
+        senha,
+        tipoUsuario
+      ]
+    );
+    return res.rows[0].id_usuario;
+  } catch (error) {
+    console.error(`Erro ao criar usuário: ${error}`);
+    return null;
   }
+}
 
   // Single login — works for all user types
   static async buscarPorEmail(email: string): Promise<any | null> {

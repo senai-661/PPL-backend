@@ -1,8 +1,8 @@
 export interface PassageiroDTO {
   idPassageiro?: number;
   cpf: string;
-  nomePassageiro: string;
-  sobrenomePassageiro: string;
+  nome: string;        
+  sobrenome: string;   
   dataNascimento: Date;
   email: string;
   celular: string;
