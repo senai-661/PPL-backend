@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Usuario } from "../model/Usuario.js";
 import { Passageiro } from "../model/Passageiro.js";
 import { Motorista } from "../model/Motorista.js";
@@ -8,8 +8,7 @@ import bcrypt from "bcrypt";
 
 export class UsuarioController {
 
-  // POST /api/login
-  static async login(req: Request, res: Response): Promise<Response> {
+  static async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { email, senha } = req.body;
 
@@ -19,41 +18,22 @@ export class UsuarioController {
         return res.status(401).json({ mensagem: "E-mail ou senha inválidos." });
       }
 
-      // Build token payload based on tipo_usuario
       let id: number;
       let dadosRetorno: any;
 
       switch (usuario.tipo_usuario) {
         case "passageiro":
           id = usuario.id_passageiro;
-          dadosRetorno = {
-            id,
-            nome: usuario.nome,
-            sobrenome: usuario.sobrenome,
-            tipo: "passageiro",
-          };
+          dadosRetorno = { id, nome: usuario.nome, sobrenome: usuario.sobrenome, tipo: "passageiro" };
           break;
-
         case "motorista":
           id = usuario.id_motorista;
-          dadosRetorno = {
-            id,
-            nome: usuario.nome,
-            sobrenome: usuario.sobrenome,
-            tipo: "motorista",
-          };
+          dadosRetorno = { id, nome: usuario.nome, sobrenome: usuario.sobrenome, tipo: "motorista" };
           break;
-
         case "admin":
           id = usuario.id_admin;
-          dadosRetorno = {
-            id,
-            nome: usuario.nome,
-            sobrenome: usuario.sobrenome,
-            tipo: "admin",
-          };
+          dadosRetorno = { id, nome: usuario.nome, sobrenome: usuario.sobrenome, tipo: "admin" };
           break;
-
         default:
           return res.status(400).json({ mensagem: "Tipo de usuário inválido." });
       }
@@ -69,15 +49,12 @@ export class UsuarioController {
         token,
         usuario: dadosRetorno,
       });
-
     } catch (error) {
-      console.error(`Erro no login: ${error}`);
-      return res.status(500).json({ mensagem: "Erro interno ao fazer login." });
+      next(error);
     }
   }
 
-  // POST /api/registrar
-  static async registrar(req: Request, res: Response): Promise<Response> {
+  static async registrar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { tipo, endereco, ...dados } = req.body;
 
@@ -85,7 +62,6 @@ export class UsuarioController {
         return res.status(400).json({ mensagem: "Tipo inválido. Use 'passageiro' ou 'motorista'." });
       }
 
-      // Hash password
       const salt = await bcrypt.genSalt(10);
       dados.senha = await bcrypt.hash(dados.senha, salt);
 
@@ -101,7 +77,6 @@ export class UsuarioController {
         return res.status(400).json({ mensagem: `Erro ao cadastrar ${tipo}.` });
       }
 
-      // Register address if provided
       if (endereco) {
         const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
           idGerado, tipo, endereco,
@@ -114,13 +89,9 @@ export class UsuarioController {
         }
       }
 
-      return res.status(201).json({
-        mensagem: `${tipo} cadastrado com sucesso!`,
-      });
-
+      return res.status(201).json({ mensagem: `${tipo} cadastrado com sucesso!` });
     } catch (error) {
-      console.error(`Erro no cadastro: ${error}`);
-      return res.status(500).json({ mensagem: "Erro interno ao cadastrar." });
+      next(error);
     }
   }
 }

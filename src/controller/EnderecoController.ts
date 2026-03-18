@@ -1,21 +1,21 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Endereco } from "../model/Endereco.js";
 import type { EnderecoDTO } from "../interface/EnderecoDTO.js";
 
 export class EnderecoController {
-  static async listar(req: Request, res: Response): Promise<Response> {
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const enderecos = await Endereco.listarTodos();
       if (!enderecos) {
-        return res.status(200).json([]); // Retorna lista vazia em vez de erro 500 se não houver nada
+        return res.status(200).json([]);
       }
       return res.status(200).json(enderecos);
     } catch (error) {
-      console.error("Erro ao listar:", error);
-      return res.status(500).json({ mensagem: "Erro ao buscar endereços." });
+      next(error);
     }
   }
 
+  // Internal method — keeps try/catch since it has no next()
   static async cadastrarParaUsuario(
     idUsuario: number,
     tipo: "motorista" | "passageiro",
@@ -29,7 +29,6 @@ export class EnderecoController {
         cidade: dados.cidade,
         estado: dados.estado,
         cep: dados.cep,
-        // Mudança aqui: pegamos o valor bruto, o constructor limpa depois
         complemento: dados.complemento,
         id_motorista: tipo === "motorista" ? idUsuario : null,
         id_passageiro: tipo === "passageiro" ? idUsuario : null,

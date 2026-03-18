@@ -1,71 +1,55 @@
 import { Corrida } from "../model/Corrida.js";
 import { calcularPreco } from "../services/CalcularPreco.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { DatabaseModel } from "../model/DatabaseModel.js";
 
 const database = new DatabaseModel().pool;
 
 class CorridaController {
-  // GET /api/corridas OR GET /api/corridas?status=Pendente
-  static async listar(req: Request, res: Response): Promise<Response> {
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const status = req.query.status as string | undefined;
+      const status = Array.isArray(req.query.status)
+        ? req.query.status[0] as string
+        : req.query.status as string | undefined;
       const usuario = (req as any).usuario;
 
       if (status) {
-        const validStatuses = [
-          "Pendente",
-          "Aceito",
-          "Em andamento",
-          "Finalizada",
-          "Cancelada",
-        ];
+        const validStatuses = ["Pendente", "Aceito", "Em andamento", "Finalizada", "Cancelada"];
         if (!validStatuses.includes(status)) {
           return res.status(400).json({ mensagem: "Status inválido." });
         }
-
-        // Pendente with matching only for motoristas
-        const idMotorista =
-          usuario.tipo === "motorista" ? usuario.id : undefined;
+        const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
         const corridas = await Corrida.listarPorStatus(status, idMotorista);
         return res.status(200).json(corridas ?? []);
       }
 
-      // No filter — return all
       const corridas = await Corrida.listarCorridas();
       return res.status(200).json(corridas ?? []);
     } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Não foi possível acessar a lista de corridas." });
+      next(error);
     }
   }
 
-  static async solicitar(req: Request, res: Response): Promise<Response> {
+  static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
       const {
-        origemCorrida,
-        destinoCorrida,
-        latOrigem,
-        lngOrigem,
-        latDestino,
-        lngDestino,
-        tipoViagem,
+        origemCorrida, destinoCorrida,
+        latOrigem, lngOrigem,
+        latDestino, lngDestino,
+        tipoCorrida,
       } = req.body;
 
       const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
-        latOrigem,
-        lngOrigem,
-        latDestino,
-        lngDestino,
-        tipoViagem ?? "Convencional",
+        latOrigem, lngOrigem, latDestino, lngDestino,
+        tipoCorrida ?? "Convencional",
       );
 
       const idGerado = await Corrida.solicitarCorrida({
         idPassageiro,
         origemCorrida,
         destinoCorrida,
+        tipoCorrida: tipoCorrida ?? "Convencional",
         preco,
         idMotorista: null,
         idVeiculo: null,
@@ -82,18 +66,17 @@ class CorridaController {
       return res.status(201).json({
         mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
         idCorrida: idGerado,
+        tipoCorrida: tipoCorrida ?? "Convencional",
         preco,
         distanciaKm,
         duracaoEstimadaMin,
       });
     } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Erro interno ao solicitar corrida." });
+      next(error);
     }
   }
 
-  static async aceitar(req: Request, res: Response): Promise<Response> {
+  static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
       const idMotorista = (req as any).usuario.id;
@@ -104,51 +87,38 @@ class CorridaController {
       );
 
       if (veiculo.rows.length === 0) {
-        return res
-          .status(400)
-          .json({ mensagem: "Motorista não possui veículo cadastrado." });
+        return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
       }
 
       const idVeiculo = veiculo.rows[0].id_veiculo;
-      const sucesso = await Corrida.aceitarCorrida(
-        idCorrida,
-        idMotorista,
-        idVeiculo,
-      );
+      const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
 
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({ mensagem: "Corrida não encontrada ou não está pendente." });
+        return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
       }
 
-      return res
-        .status(200)
-        .json({ mensagem: "Corrida aceita! Aguardando início." });
+      return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
     } catch (error) {
-      console.error("❌ Erro ao aceitar corrida:", error);
-      return res.status(500).json({ mensagem: "Erro ao aceitar corrida." });
+      next(error);
     }
   }
 
-  static async iniciar(req: Request, res: Response): Promise<Response> {
+  static async iniciar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
       const sucesso = await Corrida.iniciarCorrida(idCorrida);
 
       if (!sucesso) {
-        return res.status(400).json({
-          mensagem: "Corrida não encontrada ou não foi aceita ainda.",
-        });
+        return res.status(400).json({ mensagem: "Corrida não encontrada ou não foi aceita ainda." });
       }
 
       return res.status(200).json({ mensagem: "Corrida iniciada!" });
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao iniciar corrida." });
+      next(error);
     }
   }
 
-  static async finalizar(req: Request, res: Response): Promise<Response> {
+  static async finalizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
 
@@ -168,9 +138,7 @@ class CorridaController {
 
       const sucesso = await Corrida.finalizarCorrida(idCorrida, duracaoCorrida);
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({ mensagem: "Corrida não está em andamento." });
+        return res.status(400).json({ mensagem: "Corrida não está em andamento." });
       }
 
       return res.status(200).json({
@@ -178,34 +146,27 @@ class CorridaController {
         duracaoCorrida: `${duracaoCorrida} minutos`,
       });
     } catch (error) {
-      console.error("❌ Erro ao finalizar corrida:", error);
-      return res.status(500).json({ mensagem: "Erro ao finalizar corrida." });
+      next(error);
     }
   }
 
-  // Updated — now accepts motivoCancelamento from body
-  static async cancelar(req: Request, res: Response): Promise<Response> {
+  static async cancelar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
       const { motivoCancelamento } = req.body;
 
-      const sucesso = await Corrida.cancelarCorrida(
-        idCorrida,
-        motivoCancelamento ?? null,
-      );
+      const sucesso = await Corrida.cancelarCorrida(idCorrida, motivoCancelamento ?? null);
       if (!sucesso) {
-        return res
-          .status(400)
-          .json({ mensagem: "Corrida não pode ser cancelada." });
+        return res.status(400).json({ mensagem: "Corrida não pode ser cancelada." });
       }
 
       return res.status(200).json({ mensagem: "Corrida cancelada." });
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao cancelar corrida." });
+      next(error);
     }
   }
 
-  static async historico(req: Request, res: Response): Promise<Response> {
+  static async historico(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const usuario = (req as any).usuario;
 
@@ -216,17 +177,14 @@ class CorridaController {
         const corridas = await Corrida.historicoPorMotorista(usuario.id);
         return res.status(200).json(corridas ?? []);
       } else {
-        return res.status(403).json({ mensagem: "Tipo de usuário inválido." });
+        return res.status(403).json({ mensagem: "Você não tem permissão para acessar essa área." });
       }
     } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Erro ao buscar histórico de corridas." });
+      next(error);
     }
   }
 
-  // New — motorista's own report
-  static async relatorio(req: Request, res: Response): Promise<Response> {
+  static async relatorio(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
       const dados = await Corrida.relatorioMotorista(idMotorista);
@@ -237,31 +195,29 @@ class CorridaController {
 
       return res.status(200).json(dados);
     } catch (error) {
-      return res
-        .status(500)
-        .json({ mensagem: "Erro interno ao gerar relatório." });
+      next(error);
     }
   }
-  static async buscarPorId(req: Request, res: Response): Promise<Response> {
-  try {
-    const idCorrida = parseInt(req.params.id as string, 10);
 
-    if (isNaN(idCorrida)) {
-      return res.status(400).json({ mensagem: "ID inválido." });
+  static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idCorrida = parseInt(req.params.id as string, 10);
+
+      if (isNaN(idCorrida)) {
+        return res.status(400).json({ mensagem: "ID inválido." });
+      }
+
+      const corrida = await Corrida.buscarPorId(idCorrida);
+
+      if (!corrida) {
+        return res.status(404).json({ mensagem: "Corrida não encontrada." });
+      }
+
+      return res.status(200).json(corrida);
+    } catch (error) {
+      next(error);
     }
-
-    const corrida = await Corrida.buscarPorId(idCorrida);
-
-    if (!corrida) {
-      return res.status(404).json({ mensagem: "Corrida não encontrada." });
-    }
-
-    return res.status(200).json(corrida);
-  } catch (error) {
-    console.error(`Erro ao buscar corrida: ${error}`);
-    return res.status(500).json({ mensagem: "Erro ao buscar corrida." });
   }
-}
 }
 
 export { CorridaController };

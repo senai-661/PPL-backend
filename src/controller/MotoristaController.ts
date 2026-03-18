@@ -1,11 +1,9 @@
 import { Motorista } from "../model/Motorista.js";
-import { EnderecoController } from "./EnderecoController.js";
-import { AuthService } from "../services/AuthService.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 
 class MotoristaController {
-  static async listar(req: Request, res: Response): Promise<Response> {
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const motoristas = await Motorista.listarMotoristas();
 
@@ -13,14 +11,13 @@ class MotoristaController {
         return res.status(200).json([]);
       }
 
-      // listarMotoristas() already returns plain objects, no getters needed
       return res.status(200).json(motoristas);
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao buscar lista de motoristas." });
+      next(error);
     }
   }
 
-  static async perfil(req: Request, res: Response): Promise<Response> {
+  static async perfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
       const motorista = await Motorista.buscarPorId(idMotorista);
@@ -31,23 +28,22 @@ class MotoristaController {
 
       return res.status(200).json({
         id: motorista.getIdMotorista(),
-        nome: motorista.getNome(),           // ✅
-        sobrenome: motorista.getSobrenome(), // ✅
+        nome: motorista.getNome(),
+        sobrenome: motorista.getSobrenome(),
         cpf: motorista.getCpf(),
         cnh: motorista.getCnh(),
         dataNascimento: motorista.getDataNascimento(),
         celular: motorista.getCelular(),
         email: motorista.getEmail(),
         especializacao: motorista.getEspecializacao(),
-        disponivel: motorista.getDisponivel(),
+        disponivel: motorista.getDisponivel(), 
       });
     } catch (error) {
-      console.error(`Erro ao buscar perfil: ${error}`);
-      return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
+      next(error);
     }
   }
 
-  static async editarPerfil(req: Request, res: Response): Promise<Response> {
+  static async editarPerfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
       const dados = req.body;
@@ -64,30 +60,31 @@ class MotoristaController {
 
       return res.status(200).json({ mensagem: "Perfil atualizado com sucesso!" });
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
+      next(error);
     }
   }
-  static async alterarDisponibilidade(req: Request, res: Response): Promise<Response> {
-  try {
-    const idMotorista = (req as any).usuario.id;
-    const { disponivel } = req.body;
 
-    if (typeof disponivel !== "boolean") {
-      return res.status(400).json({ mensagem: "Campo 'disponivel' deve ser true ou false." });
+  static async alterarDisponibilidade(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idMotorista = (req as any).usuario.id;
+      const { disponivel } = req.body;
+
+      if (typeof disponivel !== "boolean") {
+        return res.status(400).json({ mensagem: "Campo 'disponivel' deve ser true ou false." });
+      }
+
+      const sucesso = await Motorista.alterarDisponibilidade(idMotorista, disponivel);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Erro ao alterar disponibilidade." });
+      }
+
+      return res.status(200).json({
+        mensagem: disponivel ? "Você está online! " : "Você está offline! "
+      });
+    } catch (error) {
+      next(error);
     }
-
-    const sucesso = await Motorista.alterarDisponibilidade(idMotorista, disponivel);
-    if (!sucesso) {
-      return res.status(400).json({ mensagem: "Erro ao alterar disponibilidade." });
-    }
-
-    return res.status(200).json({
-      mensagem: disponivel ? "Você está online! 🟢" : "Você está offline! 🔴"
-    });
-  } catch (error) {
-    return res.status(500).json({ mensagem: "Erro interno." });
   }
-}
 }
 
 export { MotoristaController };

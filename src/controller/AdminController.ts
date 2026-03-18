@@ -1,9 +1,8 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Admin } from "../model/Admin.js";
 
 export class AdminController {
-
-  static async listar(req: Request, res: Response): Promise<Response> {
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const admins = await Admin.listarAdmins();
 
@@ -12,20 +11,19 @@ export class AdminController {
       }
 
       const dadosTratados = admins.map((a) => ({
-        id: a.getIdAdmin(),      // ✅ was a.getId()
-        nome: a.getNome(),       // ✅ inherited
-        sobrenome: a.getSobrenome(), // ✅ inherited
+        id: a.getIdAdmin(),
+        nome: a.getNome(),
+        sobrenome: a.getSobrenome(),
         email: a.getEmail(),
       }));
 
       return res.status(200).json(dadosTratados);
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ mensagem: "Erro ao buscar lista de administradores." });
+      next(error);
     }
   }
 
-  static async dashboard(req: Request, res: Response): Promise<Response> {
+  static async dashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const dados = await Admin.dashboard();
       if (!dados) {
@@ -33,7 +31,7 @@ export class AdminController {
       }
       return res.status(200).json(dados);
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro interno no dashboard." });
+      next(error);
     }
   }
 }

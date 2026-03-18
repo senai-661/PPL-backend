@@ -1,11 +1,9 @@
 import { Passageiro } from "../model/Passageiro.js";
-import { EnderecoController } from "./EnderecoController.js";
-import { AuthService } from "../services/AuthService.js";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 
 class PassageiroController {
-  static async listar(req: Request, res: Response): Promise<Response> {
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const passageiros = await Passageiro.listarPassageiros();
 
@@ -15,8 +13,8 @@ class PassageiroController {
 
       const dadosTratados = passageiros.map((p) => ({
         id: p.getIdPassageiro(),
-        nome: p.getNome(),           
-        sobrenome: p.getSobrenome(), 
+        nome: p.getNome(),
+        sobrenome: p.getSobrenome(),
         cpf: p.getCpf(),
         dataNascimento: p.getDataNascimento(),
         celular: p.getCelular(),
@@ -26,12 +24,11 @@ class PassageiroController {
 
       return res.status(200).json(dadosTratados);
     } catch (error) {
-      console.error(`Erro ao consultar modelo: ${error}`);
-      return res.status(500).json({ mensagem: "Não foi possível acessar a lista de passageiros." });
+      next(error);
     }
   }
 
-  static async perfil(req: Request, res: Response): Promise<Response> {
+  static async perfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
       const passageiro = await Passageiro.buscarPorId(idPassageiro);
@@ -42,8 +39,8 @@ class PassageiroController {
 
       return res.status(200).json({
         id: passageiro.getIdPassageiro(),
-        nome: passageiro.getNome(),           
-        sobrenome: passageiro.getSobrenome(), 
+        nome: passageiro.getNome(),
+        sobrenome: passageiro.getSobrenome(),
         cpf: passageiro.getCpf(),
         dataNascimento: passageiro.getDataNascimento(),
         celular: passageiro.getCelular(),
@@ -51,12 +48,11 @@ class PassageiroController {
         necessidades: passageiro.getNecessidades(),
       });
     } catch (error) {
-      console.error(`Erro ao buscar perfil: ${error}`);
-      return res.status(500).json({ mensagem: "Erro ao buscar perfil." });
+      next(error);
     }
   }
 
-  static async editarPerfil(req: Request, res: Response): Promise<Response> {
+  static async editarPerfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
       const dados = req.body;
@@ -73,7 +69,7 @@ class PassageiroController {
 
       return res.status(200).json({ mensagem: "Perfil atualizado com sucesso!" });
     } catch (error) {
-      return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
+      next(error);
     }
   }
 }
