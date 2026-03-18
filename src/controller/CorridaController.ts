@@ -242,6 +242,26 @@ class CorridaController {
         .json({ mensagem: "Erro interno ao gerar relatório." });
     }
   }
+  static async buscarPorId(req: Request, res: Response): Promise<Response> {
+  try {
+    const idCorrida = parseInt(req.params.id as string, 10);
+
+    if (isNaN(idCorrida)) {
+      return res.status(400).json({ mensagem: "ID inválido." });
+    }
+
+    const corrida = await Corrida.buscarPorId(idCorrida);
+
+    if (!corrida) {
+      return res.status(404).json({ mensagem: "Corrida não encontrada." });
+    }
+
+    return res.status(200).json(corrida);
+  } catch (error) {
+    console.error(`Erro ao buscar corrida: ${error}`);
+    return res.status(500).json({ mensagem: "Erro ao buscar corrida." });
+  }
+}
 }
 
 export { CorridaController };

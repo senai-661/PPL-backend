@@ -97,6 +97,11 @@ router.get(
   AuthMiddleware.verificarToken,
   CorridaController.listar,
 );
+router.get(
+  "/api/corridas/:id",
+  AuthMiddleware.verificarToken,
+  CorridaController.buscarPorId,
+);
 router.post(
   "/api/corridas",
   AuthMiddleware.verificarToken,

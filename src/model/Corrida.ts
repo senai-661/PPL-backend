@@ -88,7 +88,73 @@ class Corrida {
       c.status_corrida,
     );
   }
+  static async buscarPorId(idCorrida: number): Promise<any | null> {
+  try {
+    const res = await database.query(
+      `SELECT
+        c.*,
+        -- Passenger info
+        u_p.nome       AS passageiro_nome,
+        u_p.sobrenome  AS passageiro_sobrenome,
+        p.celular      AS passageiro_celular,
+        p.necessidades AS passageiro_necessidades,
+        -- Driver info
+        u_m.nome       AS motorista_nome,
+        u_m.sobrenome  AS motorista_sobrenome,
+        m.celular      AS motorista_celular,
+        m.especializacao,
+        -- Vehicle info
+        v.modelo_veiculo,
+        v.placa,
+        v.tipo_veiculo
+       FROM corrida c
+       JOIN passageiro p     ON p.id_passageiro = c.id_passageiro
+       JOIN usuario u_p      ON u_p.id_usuario = p.id_usuario
+       LEFT JOIN motorista m ON m.id_motorista = c.id_motorista
+       LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
+       LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
+       WHERE c.id_corrida = $1;`,
+      [idCorrida]
+    );
 
+    if (res.rows.length === 0) return null;
+    const c = res.rows[0];
+
+    return {
+      idCorrida: c.id_corrida,
+      origemCorrida: c.origem_corrida,
+      destinoCorrida: c.destino_corrida,
+      tipoCorrida: c.tipo_corrida,
+      preco: c.preco,
+      dataCorrida: c.data_corrida,
+      duracaoCorrida: c.duracao_corrida,
+      motivoCancelamento: c.motivo_cancelamento,
+      statusCorrida: c.status_corrida,
+      passageiro: {
+        id: c.id_passageiro,
+        nome: c.passageiro_nome,
+        sobrenome: c.passageiro_sobrenome,
+        celular: c.passageiro_celular,
+        necessidades: c.passageiro_necessidades,
+      },
+      motorista: c.id_motorista ? {
+        id: c.id_motorista,
+        nome: c.motorista_nome,
+        sobrenome: c.motorista_sobrenome,
+        celular: c.motorista_celular,
+        especializacao: c.especializacao,
+      } : null,
+      veiculo: c.id_veiculo ? {
+        modelo: c.modelo_veiculo,
+        placa: c.placa,
+        tipo: c.tipo_veiculo,
+      } : null,
+    };
+  } catch (error) {
+    console.error(`Erro ao buscar corrida por id: ${error}`);
+    return null;
+  }
+}
   static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     try {
       const res = await database.query(
@@ -112,24 +178,33 @@ class Corrida {
   }
 
   static async aceitarCorrida(
-    idCorrida: number,
-    idMotorista: number,
-    idVeiculo: number,
-  ): Promise<boolean> {
-    try {
-      const res = await database.query(
-        `UPDATE corrida
-         SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
-         WHERE id_corrida = $3 AND status_corrida = 'Pendente'
-         RETURNING id_corrida;`,
-        [idMotorista, idVeiculo, idCorrida]
-      );
-      return res.rowCount !== null && res.rowCount > 0;
-    } catch (error) {
-      console.error(`Erro ao aceitar corrida: ${error}`);
-      return false;
-    }
+  idCorrida: number,
+  idMotorista: number,
+  idVeiculo: number,
+): Promise<boolean> {
+  try {
+    const res = await database.query(
+      `UPDATE corrida
+       SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
+       WHERE id_corrida = $3 AND status_corrida = 'Pendente'
+       RETURNING id_corrida;`,
+      [idMotorista, idVeiculo, idCorrida]
+    );
+
+    if (res.rowCount === null || res.rowCount === 0) return false;
+
+    // Driver goes offline automatically after accepting
+    await database.query(
+      `UPDATE motorista SET disponivel = false WHERE id_motorista = $1;`,
+      [idMotorista]
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Erro ao aceitar corrida: ${error}`);
+    return false;
   }
+}
 
   static async iniciarCorrida(idCorrida: number): Promise<boolean> {
     try {
@@ -148,42 +223,67 @@ class Corrida {
   }
 
   static async finalizarCorrida(
-    idCorrida: number,
-    duracaoCorrida: number,
-  ): Promise<boolean> {
-    try {
-      const res = await database.query(
-        `UPDATE corrida
-         SET status_corrida = 'Finalizada', duracao_corrida = $1
-         WHERE id_corrida = $2 AND status_corrida = 'Em andamento'
-         RETURNING id_corrida;`,
-        [duracaoCorrida, idCorrida]
+  idCorrida: number,
+  duracaoCorrida: number,
+): Promise<boolean> {
+  try {
+    const res = await database.query(
+      `UPDATE corrida
+       SET status_corrida = 'Finalizada', duracao_corrida = $1
+       WHERE id_corrida = $2 AND status_corrida = 'Em andamento'
+       RETURNING id_corrida, id_motorista;`,
+      [duracaoCorrida, idCorrida]
+    );
+
+    if (res.rowCount === null || res.rowCount === 0) return false;
+
+    // Driver goes back online automatically after finishing
+    const idMotorista = res.rows[0].id_motorista;
+    if (idMotorista) {
+      await database.query(
+        `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
+        [idMotorista]
       );
-      return res.rowCount !== null && res.rowCount > 0;
-    } catch (error) {
-      console.error(`Erro ao finalizar corrida: ${error}`);
-      return false;
     }
+
+    return true;
+  } catch (error) {
+    console.error(`Erro ao finalizar corrida: ${error}`);
+    return false;
   }
+}
+
 
   static async cancelarCorrida(
-    idCorrida: number,
-    motivoCancelamento: string | null,
-  ): Promise<boolean> {
-    try {
-      const res = await database.query(
-        `UPDATE corrida
-         SET status_corrida = 'Cancelada', motivo_cancelamento = $1
-         WHERE id_corrida = $2 AND status_corrida IN ('Pendente', 'Aceito')
-         RETURNING id_corrida;`,
-        [motivoCancelamento ?? null, idCorrida]
+  idCorrida: number,
+  motivoCancelamento: string | null,
+): Promise<boolean> {
+  try {
+    const res = await database.query(
+      `UPDATE corrida
+       SET status_corrida = 'Cancelada', motivo_cancelamento = $1
+       WHERE id_corrida = $2 AND status_corrida IN ('Pendente', 'Aceito')
+       RETURNING id_corrida, id_motorista;`,
+      [motivoCancelamento ?? null, idCorrida]
+    );
+
+    if (res.rowCount === null || res.rowCount === 0) return false;
+
+    // Driver goes back online if ride was already accepted
+    const idMotorista = res.rows[0].id_motorista;
+    if (idMotorista) {
+      await database.query(
+        `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
+        [idMotorista]
       );
-      return res.rowCount !== null && res.rowCount > 0;
-    } catch (error) {
-      console.error(`Erro ao cancelar corrida: ${error}`);
-      return false;
     }
+
+    return true;
+  } catch (error) {
+    console.error(`Erro ao cancelar corrida: ${error}`);
+    return false;
   }
+}
 
   static async listarCorridas(): Promise<Array<Corrida> | null> {
     try {
