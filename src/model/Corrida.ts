@@ -195,73 +195,201 @@ class Corrida {
     }
   }
 
-  static async listarPorStatus(
-    status: string,
-    idMotorista?: number,
-  ): Promise<Array<Corrida> | null> {
-    try {
-      if (status === "Pendente" && idMotorista) {
-        const res = await database.query(
-          `SELECT c.* FROM corrida c
-           JOIN passageiro p ON p.id_passageiro = c.id_passageiro
-           JOIN motorista m ON m.id_motorista = $1
-           WHERE c.status_corrida = 'Pendente'
-           AND m.disponivel = true                        
-           AND (
-             array_length(p.necessidades, 1) IS NULL
-             OR (
-               ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'Mobilidade Reduzida')
-               OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
-               OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'Deficiência Visual')
-             )
+ static async listarPorStatus(
+  status: string,
+  idMotorista?: number,
+): Promise<Array<any> | null> {
+  try {
+    if (status === "Pendente" && idMotorista) {
+      const res = await database.query(
+        `SELECT 
+          c.*,
+          -- Passenger info
+          u_p.nome        AS passageiro_nome,
+          u_p.sobrenome   AS passageiro_sobrenome,
+          p.celular       AS passageiro_celular,
+          p.necessidades  AS passageiro_necessidades
+         FROM corrida c
+         JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+         JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
+         JOIN motorista m  ON m.id_motorista = $1
+         WHERE c.status_corrida = 'Pendente'
+         AND m.disponivel = true
+         AND (
+           array_length(p.necessidades, 1) IS NULL
+           OR (
+             ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'Mobilidade Reduzida')
+             OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
+             OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'Deficiência Visual')
            )
-           ORDER BY c.data_corrida ASC;`,
-          [idMotorista]
-        );
-        return res.rows.map(Corrida.fromRow);
-      }
-
-      const res = await database.query(
-        `SELECT * FROM corrida WHERE status_corrida = $1 ORDER BY data_corrida DESC;`,
-        [status]
-      );
-      return res.rows.map(Corrida.fromRow);
-    } catch (error) {
-      console.error(`Erro ao listar corridas por status: ${error}`);
-      return null;
-    }
-  }
-
-  static async historicoPorPassageiro(
-    idPassageiro: number,
-  ): Promise<Array<Corrida> | null> {
-    try {
-      const res = await database.query(
-        `SELECT * FROM corrida WHERE id_passageiro = $1 ORDER BY data_corrida DESC;`,
-        [idPassageiro]
-      );
-      return res.rows.map(Corrida.fromRow);
-    } catch (error) {
-      console.error(`Erro ao buscar histórico do passageiro: ${error}`);
-      return null;
-    }
-  }
-
-  static async historicoPorMotorista(
-    idMotorista: number,
-  ): Promise<Array<Corrida> | null> {
-    try {
-      const res = await database.query(
-        `SELECT * FROM corrida WHERE id_motorista = $1 ORDER BY data_corrida DESC;`,
+         )
+         ORDER BY c.data_corrida ASC;`,
         [idMotorista]
       );
-      return res.rows.map(Corrida.fromRow);
-    } catch (error) {
-      console.error(`Erro ao buscar histórico do motorista: ${error}`);
-      return null;
-    }
-  }
 
+      return res.rows.map((c) => ({
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        statusCorrida: c.status_corrida,
+        passageiro: {
+          id: c.id_passageiro,
+          nome: c.passageiro_nome,
+          sobrenome: c.passageiro_sobrenome,
+          celular: c.passageiro_celular,
+          necessidades: c.passageiro_necessidades,
+        },
+      }));
+    }
+
+    // Other statuses — include driver + vehicle info for passengers
+    const res = await database.query(
+      `SELECT 
+        c.*,
+        -- Driver info
+        u_m.nome       AS motorista_nome,
+        u_m.sobrenome  AS motorista_sobrenome,
+        m.celular      AS motorista_celular,
+        m.especializacao,
+        -- Vehicle info
+        v.modelo_veiculo,
+        v.placa,
+        v.tipo_veiculo
+       FROM corrida c
+       LEFT JOIN motorista m  ON m.id_motorista = c.id_motorista
+       LEFT JOIN usuario u_m  ON u_m.id_usuario = m.id_usuario
+       LEFT JOIN veiculo v    ON v.id_veiculo = c.id_veiculo
+       WHERE c.status_corrida = $1
+       ORDER BY c.data_corrida DESC;`,
+      [status]
+    );
+
+    return res.rows.map((c) => ({
+      idCorrida: c.id_corrida,
+      origemCorrida: c.origem_corrida,
+      destinoCorrida: c.destino_corrida,
+      tipoCorrida: c.tipo_corrida,
+      preco: c.preco,
+      dataCorrida: c.data_corrida,
+      duracaoCorrida: c.duracao_corrida,
+      motivoCancelamento: c.motivo_cancelamento,
+      statusCorrida: c.status_corrida,
+      motorista: c.id_motorista ? {
+        id: c.id_motorista,
+        nome: c.motorista_nome,
+        sobrenome: c.motorista_sobrenome,
+        celular: c.motorista_celular,
+        especializacao: c.especializacao,
+      } : null,
+      veiculo: c.id_veiculo ? {
+        modelo: c.modelo_veiculo,
+        placa: c.placa,
+        tipo: c.tipo_veiculo,
+      } : null,
+    }));
+  } catch (error) {
+    console.error(`Erro ao listar corridas por status: ${error}`);
+    return null;
+  }
+}
+
+static async historicoPorPassageiro(
+  idPassageiro: number,
+): Promise<Array<any> | null> {
+  try {
+    const res = await database.query(
+      `SELECT 
+        c.*,
+        u_m.nome      AS motorista_nome,
+        u_m.sobrenome AS motorista_sobrenome,
+        m.celular     AS motorista_celular,
+        m.especializacao,
+        v.modelo_veiculo,
+        v.placa,
+        v.tipo_veiculo
+       FROM corrida c
+       LEFT JOIN motorista m ON m.id_motorista = c.id_motorista
+       LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
+       LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
+       WHERE c.id_passageiro = $1
+       ORDER BY c.data_corrida DESC;`,
+      [idPassageiro]
+    );
+
+    return res.rows.map((c) => ({
+      idCorrida: c.id_corrida,
+      origemCorrida: c.origem_corrida,
+      destinoCorrida: c.destino_corrida,
+      tipoCorrida: c.tipo_corrida,
+      preco: c.preco,
+      dataCorrida: c.data_corrida,
+      duracaoCorrida: c.duracao_corrida,
+      motivoCancelamento: c.motivo_cancelamento,
+      statusCorrida: c.status_corrida,
+      motorista: c.id_motorista ? {
+        id: c.id_motorista,
+        nome: c.motorista_nome,
+        sobrenome: c.motorista_sobrenome,
+        celular: c.motorista_celular,
+        especializacao: c.especializacao,
+      } : null,
+      veiculo: c.id_veiculo ? {
+        modelo: c.modelo_veiculo,
+        placa: c.placa,
+        tipo: c.tipo_veiculo,
+      } : null,
+    }));
+  } catch (error) {
+    console.error(`Erro ao buscar histórico do passageiro: ${error}`);
+    return null;
+  }
+} 
+
+static async historicoPorMotorista(
+  idMotorista: number,
+): Promise<Array<any> | null> {
+  try {
+    const res = await database.query(
+      `SELECT 
+        c.*,
+        u_p.nome       AS passageiro_nome,
+        u_p.sobrenome  AS passageiro_sobrenome,
+        p.celular      AS passageiro_celular,
+        p.necessidades AS passageiro_necessidades
+       FROM corrida c
+       JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+       JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
+       WHERE c.id_motorista = $1
+       ORDER BY c.data_corrida DESC;`,
+      [idMotorista]
+    );
+
+    return res.rows.map((c) => ({
+      idCorrida: c.id_corrida,
+      origemCorrida: c.origem_corrida,
+      destinoCorrida: c.destino_corrida,
+      tipoCorrida: c.tipo_corrida,
+      preco: c.preco,
+      dataCorrida: c.data_corrida,
+      duracaoCorrida: c.duracao_corrida,
+      motivoCancelamento: c.motivo_cancelamento,
+      statusCorrida: c.status_corrida,
+      passageiro: {
+        id: c.id_passageiro,
+        nome: c.passageiro_nome,
+        sobrenome: c.passageiro_sobrenome,
+        celular: c.passageiro_celular,
+        necessidades: c.passageiro_necessidades,
+      },
+    }));
+  } catch (error) {
+    console.error(`Erro ao buscar histórico do motorista: ${error}`);
+    return null;
+  }
+}
   static async relatorioMotorista(idMotorista: number): Promise<any | null> {
     try {
       const statsRes = await database.query(
