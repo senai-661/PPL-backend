@@ -12,6 +12,7 @@ export class Motorista extends Usuario {
   private dataNascimento: Date;
   private antecedentesCriminais: string;
   private especializacao: string;
+  private disponivel: boolean;
 
   constructor(
     idUsuario: number,
@@ -27,6 +28,7 @@ export class Motorista extends Usuario {
     dataNascimento: Date,
     antecedentesCriminais: string,
     especializacao: string,
+    disponivel: boolean = false,
   ) {
     super(idUsuario, nome, sobrenome, email, "motorista", senha, criadoEm);
     this.idMotorista = idMotorista;
@@ -36,6 +38,7 @@ export class Motorista extends Usuario {
     this.dataNascimento = dataNascimento;
     this.antecedentesCriminais = antecedentesCriminais;
     this.especializacao = especializacao;
+    this.disponivel = disponivel; 
   }
 
   public getIdMotorista(): number { return this.idMotorista; }
@@ -45,6 +48,8 @@ export class Motorista extends Usuario {
   public getDataNascimento(): Date { return this.dataNascimento; }
   public getAntecedentesCriminais(): string { return this.antecedentesCriminais; }
   public getEspecializacao(): string { return this.especializacao; }
+  public getDisponivel(): boolean {return this.disponivel;}
+  
 
   public setIdMotorista(v: number): void { this.idMotorista = v; }
   public setCpf(v: string): void { this.cpf = v; }
@@ -53,6 +58,7 @@ export class Motorista extends Usuario {
   public setDataNascimento(v: Date): void { this.dataNascimento = v; }
   public setAntecedentesCriminais(v: string): void { this.antecedentesCriminais = v; }
   public setEspecializacao(v: string): void { this.especializacao = v; }
+  public setDisponivel(v: boolean): void {this.disponivel = v;}
 
   static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
     try {
@@ -129,6 +135,7 @@ export class Motorista extends Usuario {
         r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
         r.id_motorista, r.cpf, r.cnh, r.celular,
         r.data_nascimento, r.antecedentes_criminais, r.especializacao,
+        r.disponivel,
       );
     } catch (error) {
       console.error(`Erro ao buscar motorista por id: ${error}`);

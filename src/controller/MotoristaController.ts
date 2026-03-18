@@ -39,6 +39,7 @@ class MotoristaController {
         celular: motorista.getCelular(),
         email: motorista.getEmail(),
         especializacao: motorista.getEspecializacao(),
+        disponivel: motorista.getDisponivel(),
       });
     } catch (error) {
       console.error(`Erro ao buscar perfil: ${error}`);
