@@ -58,7 +58,7 @@ CREATE TABLE motorista (
     celular VARCHAR(20) NOT NULL,
     data_nascimento DATE NOT NULL,
     antecedentes_criminais VARCHAR(40) NOT NULL,
-    especializacao VARCHAR(50) NOT NULL DEFAULT 'Nenhuma'
+    especializacao VARCHAR(50) NOT NULL DEFAULT 'Nenhuma',
     disponivel BOOLEAN DEFAULT false; 
 );
 
@@ -181,14 +181,14 @@ INSERT INTO usuario (nome, sobrenome, email, senha, tipo_usuario) VALUES
 ('Beatriz', 'Santos',  'beatriz.santos@email.com',  '$2b$10$i3q/gcEKZjsJPyZchgOLoOEiRrrUvmPkHRS0iWUn01FZLU9.HRPr.', 'motorista'),
 ('Diego',   'Lima',    'diego.lima@email.com',      '$2b$10$i3q/gcEKZjsJPyZchgOLoOEiRrrUvmPkHRS0iWUn01FZLU9.HRPr.', 'motorista');
 
-INSERT INTO motorista (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao) VALUES
-((SELECT id_usuario FROM usuario WHERE email = 'ricardo@email.com'),        '98765432100', '12345678901', '11988880001', '1985-06-15', 'NADA CONSTA', 'MOBILIDADE REDUZIDA'),
-((SELECT id_usuario FROM usuario WHERE email = 'fernanda@email.com'),       '74185296300', '23456789012', '11988880002', '1990-03-12', 'NADA CONSTA', 'LIBRAS'),
-((SELECT id_usuario FROM usuario WHERE email = 'bruno@email.com'),          '36925814706', '34567890123', '11988880003', '1982-11-30', 'NADA CONSTA', 'NENHUMA'),
-((SELECT id_usuario FROM usuario WHERE email = 'ana.ferreira@email.com'),   '11122233344', '11122233344', '11977771111', '1990-03-22', 'NADA CONSTA', 'MOBILIDADE REDUZIDA'),
-((SELECT id_usuario FROM usuario WHERE email = 'carlos.mendes@email.com'),  '22233344455', '22233344455', '11977772222', '1985-07-10', 'NADA CONSTA', 'LIBRAS'),
-((SELECT id_usuario FROM usuario WHERE email = 'beatriz.santos@email.com'), '33344455566', '33344455566', '11977773333', '1992-11-05', 'NADA CONSTA', 'DEFICIÊNCIA VISUAL'),
-((SELECT id_usuario FROM usuario WHERE email = 'diego.lima@email.com'),     '44455566677', '44455566677', '11977774444', '1988-04-18', 'NADA CONSTA', 'NENHUMA');
+INSERT INTO motorista (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao, disponivel) VALUES
+((SELECT id_usuario FROM usuario WHERE email = 'ricardo@email.com'),        '98765432100', '12345678901', '11988880001', '1985-06-15', 'NADA CONSTA', 'MOBILIDADE REDUZIDA', true),
+((SELECT id_usuario FROM usuario WHERE email = 'fernanda@email.com'),       '74185296300', '23456789012', '11988880002', '1990-03-12', 'NADA CONSTA', 'LIBRAS',              true),
+((SELECT id_usuario FROM usuario WHERE email = 'bruno@email.com'),          '36925814706', '34567890123', '11988880003', '1982-11-30', 'NADA CONSTA', 'NENHUMA',             true),
+((SELECT id_usuario FROM usuario WHERE email = 'ana.ferreira@email.com'),   '11122233344', '11122233344', '11977771111', '1990-03-22', 'NADA CONSTA', 'MOBILIDADE REDUZIDA', true),
+((SELECT id_usuario FROM usuario WHERE email = 'carlos.mendes@email.com'),  '22233344455', '22233344455', '11977772222', '1985-07-10', 'NADA CONSTA', 'LIBRAS',              true),
+((SELECT id_usuario FROM usuario WHERE email = 'beatriz.santos@email.com'), '33344455566', '33344455566', '11977773333', '1992-11-05', 'NADA CONSTA', 'DEFICIÊNCIA VISUAL',  true),
+((SELECT id_usuario FROM usuario WHERE email = 'diego.lima@email.com'),     '44455566677', '44455566677', '11977774444', '1988-04-18', 'NADA CONSTA', 'NENHUMA',             true);
 
 -- ENDERECOS DOS MOTORISTAS
 INSERT INTO endereco (rua, numero, bairro, cidade, estado, cep, id_motorista) VALUES
