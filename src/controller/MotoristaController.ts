@@ -66,6 +66,27 @@ class MotoristaController {
       return res.status(500).json({ mensagem: "Erro ao atualizar perfil." });
     }
   }
+  static async alterarDisponibilidade(req: Request, res: Response): Promise<Response> {
+  try {
+    const idMotorista = (req as any).usuario.id;
+    const { disponivel } = req.body;
+
+    if (typeof disponivel !== "boolean") {
+      return res.status(400).json({ mensagem: "Campo 'disponivel' deve ser true ou false." });
+    }
+
+    const sucesso = await Motorista.alterarDisponibilidade(idMotorista, disponivel);
+    if (!sucesso) {
+      return res.status(400).json({ mensagem: "Erro ao alterar disponibilidade." });
+    }
+
+    return res.status(200).json({
+      mensagem: disponivel ? "Você está online! 🟢" : "Você está offline! 🔴"
+    });
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno." });
+  }
+}
 }
 
 export { MotoristaController };

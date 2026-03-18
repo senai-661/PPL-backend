@@ -68,7 +68,12 @@ router.get(
   AuthMiddleware.somenteMotorista,
   CorridaController.relatorio,
 );
-
+router.patch(
+  "/api/motorista/disponibilidade",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  MotoristaController.alterarDisponibilidade,
+);
 // ============================================
 // PASSAGEIRO
 // ============================================

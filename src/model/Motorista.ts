@@ -207,4 +207,19 @@ export class Motorista extends Usuario {
       return false;
     }
   }
+  static async alterarDisponibilidade(
+  idMotorista: number,
+  disponivel: boolean
+): Promise<boolean> {
+  try {
+    const res = await database.query(
+      `UPDATE motorista SET disponivel = $1 WHERE id_motorista = $2 RETURNING id_motorista;`,
+      [disponivel, idMotorista]
+    );
+    return res.rowCount !== null && res.rowCount > 0;
+  } catch (error) {
+    console.error(`Erro ao alterar disponibilidade: ${error}`);
+    return false;
+  }
+}
 }
