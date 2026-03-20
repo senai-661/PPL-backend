@@ -190,4 +190,19 @@ router.get(
   EnderecoController.listar,
 );
 
+// ============================================
+// PASSAGEIRO
+// ============================================
+router.get(
+  "/api/passageiros",
+  AuthMiddleware.verificarToken,
+  PassageiroController.listar,
+);
+router.get(
+  "/api/passageiro/corrida-atual",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  CorridaController.corridaAtual,
+);
+
 export { router };
