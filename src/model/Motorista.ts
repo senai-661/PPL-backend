@@ -223,62 +223,6 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
   } catch (error) {
     console.error(`Erro ao alterar disponibilidade: ${error}`);
     return false;
+    }
   }
-}
-  static async corridaAtualMotorista(idMotorista: number): Promise<any | null> {
-  const query = `
-    SELECT
-      c.*,
-      u_p.nome       AS passageiro_nome,
-      u_p.sobrenome  AS passageiro_sobrenome,
-      p.celular      AS passageiro_celular,
-      p.necessidades AS passageiro_necessidades,
-      v.modelo_veiculo,
-      v.placa,
-      v.tipo_veiculo
-    FROM corrida c
-    JOIN passageiro p    ON p.id_passageiro = c.id_passageiro
-    JOIN usuario u_p     ON u_p.id_usuario = p.id_usuario
-    LEFT JOIN veiculo v  ON v.id_veiculo = c.id_veiculo
-    WHERE c.id_motorista = $1
-      AND c.status_corrida IN ('Aceito', 'Em andamento')
-    ORDER BY c.data_corrida DESC
-    LIMIT 1;
-  `;
-
-  try {
-    const { rows } = await database.query(query, [idMotorista]);
-
-    if (rows.length === 0) return null;
-
-    const c = rows[0];
-
-    return {
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      statusCorrida: c.status_corrida,
-      passageiro: {
-        id: c.id_passageiro,
-        nome: c.passageiro_nome,
-        sobrenome: c.passageiro_sobrenome,
-        celular: c.passageiro_celular,
-        necessidades: c.passageiro_necessidades,
-      },
-      veiculo: c.id_veiculo
-        ? {
-            modelo: c.modelo_veiculo,
-            placa: c.placa,
-            tipo: c.tipo_veiculo,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error(`Erro ao buscar corrida atual do motorista ${idMotorista}:`, error);
-    return null;
-      }
-   }
 }
