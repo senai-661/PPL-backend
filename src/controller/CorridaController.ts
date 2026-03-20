@@ -218,6 +218,22 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
       next(error);
     }
   }
+  static async corridaAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+
+    const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+
+    if (!corrida) {
+      return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+    }
+
+    return res.status(200).json(corrida);
+  } catch (error) {
+    next(error);
+  }
+}
+  
 }
 
 export { CorridaController };
