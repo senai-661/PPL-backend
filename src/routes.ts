@@ -74,6 +74,19 @@ router.patch(
   AuthMiddleware.somenteMotorista,
   MotoristaController.alterarDisponibilidade,
 );
+
+router.get(
+  "/api/motorista/corrida-atual",
+    AuthMiddleware.verificarToken,
+    AuthMiddleware.somenteMotorista,
+    CorridaController.corridaAtualMotorista
+  );
+router.get(
+  "/api/motorista/resumo-dia",
+     AuthMiddleware.verificarToken,
+     AuthMiddleware.somenteMotorista,
+     CorridaController.resumoDiaMotorista
+    );
 // ============================================
 // PASSAGEIRO
 // ============================================
@@ -205,7 +218,5 @@ router.get(
   CorridaController.corridaAtual,
 );
 
-router.get("/api/motorista/corrida-atual", AuthMiddleware.verificarToken, AuthMiddleware.somenteMotorista, CorridaController.corridaAtualMotorista);
-router.get("/api/motorista/resumo-dia",    AuthMiddleware.verificarToken, AuthMiddleware.somenteMotorista, CorridaController.resumoDiaMotorista);
 
 export { router };

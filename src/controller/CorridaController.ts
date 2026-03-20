@@ -239,18 +239,9 @@ static async corridaAtualMotorista(
     next: NextFunction
 ): Promise<Response | void> {
     try {
-        const idUsuario = (req as any).usuario.id;
+        const idMotorista = (req as any).usuario.id;
 
-        const { rows } = await database.query(
-            `SELECT id_motorista FROM motorista WHERE id_usuario = $1;`,
-            [idUsuario]
-        );
-
-        if (rows.length === 0) {
-            return res.status(404).json({ mensagem: "Motorista não encontrado." });
-        }
-
-        const corrida = await Corrida.corridaAtualMotorista(rows[0].id_motorista);
+        const corrida = await Corrida.corridaAtualMotorista(idMotorista);
 
         if (!corrida) {
             return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
@@ -269,18 +260,9 @@ static async resumoDiaMotorista(
     next: NextFunction
 ): Promise<Response | void> {
     try {
-        const idUsuario = (req as any).usuario.id;
+        const idMotorista = (req as any).usuario.id;
 
-        const { rows } = await database.query(
-            `SELECT id_motorista FROM motorista WHERE id_usuario = $1;`,
-            [idUsuario]
-        );
-
-        if (rows.length === 0) {
-            return res.status(404).json({ mensagem: "Motorista não encontrado." });
-        }
-
-        const resumo = await Corrida.resumoDiaMotorista(rows[0].id_motorista);
+        const resumo = await Corrida.resumoDiaMotorista(idMotorista);
 
         if (!resumo) {
             return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
@@ -292,7 +274,6 @@ static async resumoDiaMotorista(
         next(error);
     }
 }
-  
 }
 
 export { CorridaController };
