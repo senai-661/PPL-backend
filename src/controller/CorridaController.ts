@@ -233,6 +233,65 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
     next(error);
   }
 }
+static async corridaAtualMotorista(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const idUsuario = (req as any).usuario.id;
+
+        const { rows } = await database.query(
+            `SELECT id_motorista FROM motorista WHERE id_usuario = $1;`,
+            [idUsuario]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ mensagem: "Motorista não encontrado." });
+        }
+
+        const corrida = await Corrida.corridaAtualMotorista(rows[0].id_motorista);
+
+        if (!corrida) {
+            return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+        }
+
+        return res.status(200).json(corrida);
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+static async resumoDiaMotorista(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const idUsuario = (req as any).usuario.id;
+
+        const { rows } = await database.query(
+            `SELECT id_motorista FROM motorista WHERE id_usuario = $1;`,
+            [idUsuario]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ mensagem: "Motorista não encontrado." });
+        }
+
+        const resumo = await Corrida.resumoDiaMotorista(rows[0].id_motorista);
+
+        if (!resumo) {
+            return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
+        }
+
+        return res.status(200).json(resumo);
+
+    } catch (error) {
+        next(error);
+    }
+}
   
 }
 
