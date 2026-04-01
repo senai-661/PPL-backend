@@ -218,6 +218,62 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
       next(error);
     }
   }
+  static async corridaAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+
+    const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+
+    if (!corrida) {
+      return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+    }
+
+    return res.status(200).json(corrida);
+  } catch (error) {
+    next(error);
+  }
+}
+static async corridaAtualMotorista(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const idMotorista = (req as any).usuario.id;
+
+        const corrida = await Corrida.corridaAtualMotorista(idMotorista);
+
+        if (!corrida) {
+            return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+        }
+
+        return res.status(200).json(corrida);
+
+    } catch (error) {
+        next(error);
+    }
+}
+
+static async resumoDiaMotorista(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<Response | void> {
+    try {
+        const idMotorista = (req as any).usuario.id;
+
+        const resumo = await Corrida.resumoDiaMotorista(idMotorista);
+
+        if (!resumo) {
+            return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
+        }
+
+        return res.status(200).json(resumo);
+
+    } catch (error) {
+        next(error);
+    }
+}
 }
 
 export { CorridaController };

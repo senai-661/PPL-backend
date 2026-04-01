@@ -223,6 +223,6 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
   } catch (error) {
     console.error(`Erro ao alterar disponibilidade: ${error}`);
     return false;
+    }
   }
-}
 }
