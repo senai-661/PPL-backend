@@ -8,8 +8,7 @@
 ![JWT](https://img.shields.io/badge/Auth-JWT-FB015B?style=flat-square&logo=jsonwebtokens&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
-[Sobre](#-sobre-o-projeto) • [Funcionalidades](#-funcionalidades) • [Rotas da API](#-rotas-da-api) • [Como rodar](#-como-rodar) • [Variáveis de Ambiente](#-variáveis-de-ambiente) • [Contribuindo](#-contribuindo)
-
+[Sobre](#-sobre-o-projeto) • [Funcionalidades](#-funcionalidades) •
 ---
 
 ## 📌 Sobre o projeto
