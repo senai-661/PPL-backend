@@ -217,6 +217,11 @@ router.get(
   AuthMiddleware.somentePassageiro,
   CorridaController.corridaAtual,
 );
-
+router.get(
+  "/api/passageiro/relatorio",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  PassageiroController.relatorio,
+);
 
 export { router };
