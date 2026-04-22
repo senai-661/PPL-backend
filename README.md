@@ -87,7 +87,7 @@ Trabalhamos em conformidade com as normas de acessibilidade nacionais e internac
 
 ## 👥 Time
 
-Desenvolvido com 💜 por alunos do **SENAI** como parte do **PPL — Partido de Programadores Liberais**.
+Desenvolvido por alunos do **SENAI** como parte do grupo **PPL — Partido de Programadores Liberais**.
 
 ---
 
