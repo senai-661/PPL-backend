@@ -724,6 +724,54 @@ static async resumoDiaMotorista(idMotorista: number): Promise<any | null> {
         return null;
     }
 }
+
+static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
+  try {
+    // Stats de corridas finalizadas
+    const statsRes = await database.query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_viagens,
+        COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
+       FROM corrida 
+       WHERE id_passageiro = $1;`,
+      [idPassageiro],
+    );
+
+    // Destino mais frequente (apenas corridas finalizadas)
+    const destinoRes = await database.query(
+      `SELECT destino_corrida, COUNT(*) as total
+       FROM corrida 
+       WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
+       GROUP BY destino_corrida
+       ORDER BY total DESC
+       LIMIT 1;`,
+      [idPassageiro],
+    );
+
+    // Data de cadastro do passageiro
+    const usuarioRes = await database.query(
+      `SELECT u.criado_em 
+       FROM usuario u
+       JOIN passageiro p ON p.id_usuario = u.id_usuario
+       WHERE p.id_passageiro = $1;`,
+      [idPassageiro],
+    );
+
+    const stats = statsRes.rows[0];
+    const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
+    const desde = usuarioRes.rows[0]?.criado_em || new Date();
+
+    return {
+      totalViagens: parseInt(stats.total_viagens) || 0,
+      totalGasto: parseFloat(stats.total_gasto) || 0,
+      destinoFavorito: destinoFavorito,
+      desde: desde,
+    };
+  } catch (error) {
+    console.error(`Erro ao gerar relatório do passageiro: ${error}`);
+    return null;
+  }
+}
 }
 
 export { Corrida };
