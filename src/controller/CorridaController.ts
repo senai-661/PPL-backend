@@ -116,48 +116,34 @@ static async solicitar(req: Request, res: Response, next: NextFunction): Promise
   }
 }
 
-  static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
     const idCorrida = parseInt(req.params.id as string, 10);
     const idMotorista = (req as any).usuario.id;
+
+    console.error('[DEBUG] Motorista ID:', idMotorista);
+    console.error('[DEBUG] Corrida ID:', idCorrida);
 
     const temCorridaAtiva = await Corrida.motoristaTemCorridaAtiva(idMotorista);
     if (temCorridaAtiva) {
       return res.status(400).json({ mensagem: "Você já está em uma corrida. Finalize ou cancele antes de aceitar outra." });
     }
 
-    const veiculo = await database.query(
-      `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
-      [idMotorista],
-    );
+    // VALIDACAO DE VEICULO REMOVIDA TEMPORARIAMENTE PARA TESTE
+    const idVeiculo = Number(req.body.idVeiculo);
 
-    if (veiculo.rows.length === 0) {
-      return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
-    }
-
-    const idVeiculo = veiculo.rows[0].id_veiculo;
     const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
 
     if (!sucesso) {
       return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
     }
 
+    console.error('[DEBUG] Corrida aceita com sucesso!');
     return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
   } catch (error) {
+    console.error('[DEBUG] Erro no aceitar:', error);
     next(error);
   }
-
-console.log(`[DEBUG] Motorista ID: ${Motorista}`);
-console.log(`[DEBUG] Query: SELECT id_veiculo FROM veiculo WHERE id_motorista = ${Motorista}`);
-
-const veiculo = await database.query(
-  `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
-  [Motorista],
-);
-
-console.log(`[DEBUG] Resultado veículo:`, veiculo.rows);
-
-
 }
 
   static async iniciar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
