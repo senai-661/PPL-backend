@@ -114,7 +114,9 @@ CREATE TABLE corrida (
     duracao_corrida INT NOT NULL DEFAULT 0 CHECK (duracao_corrida >= 0),
     motivo_cancelamento VARCHAR(200),
     status_corrida VARCHAR(20) NOT NULL DEFAULT 'Pendente'
-        CHECK (status_corrida IN ('Pendente', 'Aceito', 'Em andamento', 'Finalizada', 'Cancelada'))
+        CHECK (status_corrida IN ('Pendente', 'Aceito', 'Em andamento', 'Finalizada', 'Cancelada')),
+    num_passageiros INT NOT NULL DEFAULT 1 CHECK (num_passageiros >= 1),
+    observacoes TEXT
 );
 
 -- ============================================

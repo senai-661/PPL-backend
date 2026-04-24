@@ -206,27 +206,25 @@ class Corrida {
       return null;
     }
   }
-  static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
-    try {
-      const res = await database.query(
-        `INSERT INTO corrida 
-          (id_passageiro, origem_corrida, destino_corrida, tipo_corrida, preco, duracao_corrida, status_corrida)
-         VALUES ($1, $2, $3, $4, $5, 0, 'Pendente')
-         RETURNING id_corrida;`,
-        [
-          corrida.idPassageiro,
-          corrida.origemCorrida,
-          corrida.destinoCorrida,
-          corrida.tipoCorrida ?? "Convencional",
-          corrida.preco,
-        ],
-      );
-      return res.rows[0].id_corrida;
-    } catch (error) {
-      console.error(`Erro ao solicitar corrida: ${error}`);
-      return null;
-    }
-  }
+static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
+  const res = await database.query(
+    `INSERT INTO corrida 
+      (id_passageiro, origem_corrida, destino_corrida, tipo_corrida, preco, 
+       duracao_corrida, status_corrida, num_passageiros, observacoes)
+     VALUES ($1, $2, $3, $4, $5, 0, 'Pendente', $6, $7)
+     RETURNING id_corrida;`,
+    [
+      corrida.idPassageiro,
+      corrida.origemCorrida,
+      corrida.destinoCorrida,
+      corrida.tipoCorrida ?? "Convencional",
+      corrida.preco,
+      corrida.numPassageiros ?? 1,
+      corrida.observacoes ?? null,
+    ],
+  );
+  return res.rows[0].id_corrida;
+}
 
   static async aceitarCorrida(
     idCorrida: number,
