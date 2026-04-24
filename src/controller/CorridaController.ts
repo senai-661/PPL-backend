@@ -6,25 +6,52 @@ import { DatabaseModel } from "../model/DatabaseModel.js";
 const database = new DatabaseModel().pool;
 
 class CorridaController {
-static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const status = Array.isArray(req.query.status)
-      ? req.query.status[0] as string
-      : req.query.status as string | undefined;
-    const usuario = (req as any).usuario;
-    console.log("usuario do token:", usuario); 
-    console.log("status:", status);            
-    if (status) {
-      const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
-      
-      console.log("idMotorista:", idMotorista);
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const status = Array.isArray(req.query.status)
+        ? req.query.status[0] as string
+        : req.query.status as string | undefined;
+      const usuario = (req as any).usuario;
+      console.log("usuario do token:", usuario); 
+      console.log("status:", status);            
+      if (status) {
+        const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
+        
+        console.log("idMotorista:", idMotorista);
 
-      const corridas = await Corrida.listarPorStatus(status, idMotorista);
-      
-      console.log("corridas:", corridas);      
-      
-      return res.status(200).json(corridas ?? []);
+        const corridas = await Corrida.listarPorStatus(status, idMotorista);
+        
+        console.log("corridas:", corridas);      
+        
+        return res.status(200).json(corridas ?? []);
+      }
+    } catch (error) {
+      next(error);
     }
+  }
+
+  static async precoEstimado(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const {
+        latOrigem, lngOrigem,
+        latDestino, lngDestino,
+        tipoCorrida,
+      } = req.body;
+
+      if (!latOrigem || !lngOrigem || !latDestino || !lngDestino) {
+        return res.status(400).json({ mensagem: "Coordenadas de origem e destino são obrigatórias." });
+      }
+
+      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
+        latOrigem, lngOrigem, latDestino, lngDestino,
+        tipoCorrida ?? "Convencional"
+      );
+
+      return res.status(200).json({
+        preco,
+        distanciaKm,
+        duracaoEstimadaMin,
+      });
     } catch (error) {
       next(error);
     }
@@ -38,6 +65,8 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
         latOrigem, lngOrigem,
         latDestino, lngDestino,
         tipoCorrida,
+        numPassageiros,
+        observacoes,
       } = req.body;
 
       const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
@@ -57,6 +86,8 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
         duracaoCorrida: 0,
         motivoCancelamento: null,
         statusCorrida: "Pendente",
+        numPassageiros: numPassageiros ?? 1,
+        observacoes: observacoes ?? null,
       });
 
       if (!idGerado) {
@@ -218,62 +249,59 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
       next(error);
     }
   }
+
   static async corridaAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const idPassageiro = (req as any).usuario.id;
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
 
-    const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+      if (!corrida) {
+        return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      }
 
-    if (!corrida) {
-      return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      return res.status(200).json(corrida);
+    } catch (error) {
+      next(error);
     }
-
-    return res.status(200).json(corrida);
-  } catch (error) {
-    next(error);
   }
-}
-static async corridaAtualMotorista(
+
+  static async corridaAtualMotorista(
     req: Request,
     res: Response,
     next: NextFunction
-): Promise<Response | void> {
+  ): Promise<Response | void> {
     try {
-        const idMotorista = (req as any).usuario.id;
+      const idMotorista = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualMotorista(idMotorista);
 
-        const corrida = await Corrida.corridaAtualMotorista(idMotorista);
+      if (!corrida) {
+        return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      }
 
-        if (!corrida) {
-            return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
-        }
-
-        return res.status(200).json(corrida);
-
+      return res.status(200).json(corrida);
     } catch (error) {
-        next(error);
+      next(error);
     }
-}
+  }
 
-static async resumoDiaMotorista(
+  static async resumoDiaMotorista(
     req: Request,
     res: Response,
     next: NextFunction
-): Promise<Response | void> {
+  ): Promise<Response | void> {
     try {
-        const idMotorista = (req as any).usuario.id;
+      const idMotorista = (req as any).usuario.id;
+      const resumo = await Corrida.resumoDiaMotorista(idMotorista);
 
-        const resumo = await Corrida.resumoDiaMotorista(idMotorista);
+      if (!resumo) {
+        return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
+      }
 
-        if (!resumo) {
-            return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
-        }
-
-        return res.status(200).json(resumo);
-
+      return res.status(200).json(resumo);
     } catch (error) {
-        next(error);
+      next(error);
     }
-}
+  }
 }
 
 export { CorridaController };

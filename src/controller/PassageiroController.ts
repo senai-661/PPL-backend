@@ -1,6 +1,8 @@
 import { Passageiro } from "../model/Passageiro.js";
+import { Corrida } from "../model/Corrida.js";
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
+
 
 class PassageiroController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -72,6 +74,21 @@ class PassageiroController {
       next(error);
     }
   }
+  
+static async relatorio(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+    const dados = await Corrida.relatorioPassageiro(idPassageiro);
+
+    if (!dados) {
+      return res.status(500).json({ mensagem: "Erro ao gerar relatório." });
+    }
+
+    return res.status(200).json(dados);
+  } catch (error) {
+    next(error);
+  }
+}
 }
 
 export { PassageiroController };
