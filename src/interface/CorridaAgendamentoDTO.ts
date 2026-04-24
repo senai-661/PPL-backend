@@ -1,4 +1,4 @@
-export interface CorridaAgendamentoDTO {
+export interface CorridaDTO {
   idCorrida?: number;
 
   idPassageiro: number;
@@ -12,8 +12,11 @@ export interface CorridaAgendamentoDTO {
 
   preco: number;
 
-  dataAgendada: string; // <- ESSENCIAL
-  statusAgendamento?: string; // ex: PENDENTE, CONFIRMADA, CANCELADA
+  dataCorrida?: Date;
 
   duracao?: number;
+
+  statusAgendamento?: string;
+
+  dataAgendada?: Date | null;
 }
