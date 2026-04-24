@@ -215,6 +215,27 @@ static async cancelar(req: Request, res: Response, next: NextFunction): Promise<
   }
 }
 
+  static async cancelarAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+
+      if (!corrida) {
+        return res.status(404).json({ mensagem: "Nenhuma corrida pendente encontrada." });
+      }
+
+      const sucesso = await Corrida.cancelarCorrida(corrida.idCorrida, "Cancelada pelo passageiro");
+
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível cancelar a corrida." });
+      }
+
+      return res.status(200).json({ mensagem: "Corrida cancelada com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async historico(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const usuario = (req as any).usuario;
