@@ -2,7 +2,9 @@ import { Passageiro } from "../model/Passageiro.js";
 import { Corrida } from "../model/Corrida.js";
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
+import { DatabaseModel } from "../model/DatabaseModel.js";
 
+const database = new DatabaseModel().pool;
 
 class PassageiroController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -30,29 +32,46 @@ class PassageiroController {
     }
   }
 
-  static async perfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const idPassageiro = (req as any).usuario.id;
-      const passageiro = await Passageiro.buscarPorId(idPassageiro);
+ static async perfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+    const passageiro = await Passageiro.buscarPorId(idPassageiro);
 
-      if (!passageiro) {
-        return res.status(404).json({ mensagem: "Passageiro não encontrado." });
-      }
-
-      return res.status(200).json({
-        id: passageiro.getIdPassageiro(),
-        nome: passageiro.getNome(),
-        sobrenome: passageiro.getSobrenome(),
-        cpf: passageiro.getCpf(),
-        dataNascimento: passageiro.getDataNascimento(),
-        celular: passageiro.getCelular(),
-        email: passageiro.getEmail(),
-        necessidades: passageiro.getNecessidades(),
-      });
-    } catch (error) {
-      next(error);
+    if (!passageiro) {
+      return res.status(404).json({ mensagem: "Passageiro não encontrado." });
     }
+
+    // Buscar endereço do passageiro
+    const enderecoRes = await database.query(
+      `SELECT rua, numero, bairro, cidade, estado, cep, complemento
+       FROM endereco 
+       WHERE id_passageiro = $1
+       LIMIT 1;`,
+      [idPassageiro]
+    );
+
+    let enderecoCompleto = null;
+    if (enderecoRes.rows.length > 0) {
+      const e = enderecoRes.rows[0];
+      enderecoCompleto = `${e.rua}, ${e.numero} - ${e.bairro}, ${e.cidade} - ${e.estado}, CEP: ${e.cep}`;
+      if (e.complemento) enderecoCompleto += ` (${e.complemento})`;
+    }
+
+    return res.status(200).json({
+      id: passageiro.getIdPassageiro(),
+      nome: passageiro.getNome(),
+      sobrenome: passageiro.getSobrenome(),
+      cpf: passageiro.getCpf(),
+      dataNascimento: passageiro.getDataNascimento(),
+      celular: passageiro.getCelular(),
+      email: passageiro.getEmail(),
+      necessidades: passageiro.getNecessidades(),
+      endereco: enderecoCompleto,  
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   static async editarPerfil(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
