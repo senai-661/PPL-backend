@@ -770,6 +770,21 @@ static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
     return null;
   }
 }
+static async motoristaTemCorridaAtiva(idMotorista: number): Promise<boolean> {
+  try {
+    const res = await database.query(
+      `SELECT id_corrida FROM corrida 
+       WHERE id_motorista = $1 
+       AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
+       LIMIT 1;`,
+      [idMotorista]
+    );
+    return res.rows.length > 0;
+  } catch (error) {
+    console.error(`Erro ao verificar corrida ativa do motorista: ${error}`);
+    return false;
+  }
+}
 }
 
 export { Corrida };
