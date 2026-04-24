@@ -25,6 +25,7 @@ router.get("/api", (req: Request, res: Response) => {
 // ============================================
 router.post("/api/registrar", UsuarioController.registrar);
 router.post("/api/login",     UsuarioController.login);
+router.post("/api/preco-estimado", CorridaController.precoEstimado);
 
 // ============================================
 // PERFIL (GET + PATCH)
