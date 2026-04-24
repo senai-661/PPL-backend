@@ -121,28 +121,33 @@ static async aceitar(req: Request, res: Response, next: NextFunction): Promise<R
     const idCorrida = parseInt(req.params.id as string, 10);
     const idMotorista = (req as any).usuario.id;
 
-    console.error('[DEBUG] Motorista ID:', idMotorista);
-    console.error('[DEBUG] Corrida ID:', idCorrida);
+    console.error('[ACEITAR] Iniciando - Corrida:', idCorrida, 'Motorista:', idMotorista);
 
     const temCorridaAtiva = await Corrida.motoristaTemCorridaAtiva(idMotorista);
+    console.error('[ACEITAR] Tem corrida ativa?', temCorridaAtiva);
+
     if (temCorridaAtiva) {
       return res.status(400).json({ mensagem: "Você já está em uma corrida. Finalize ou cancele antes de aceitar outra." });
     }
 
-    // VALIDACAO DE VEICULO REMOVIDA TEMPORARIAMENTE PARA TESTE
+    // VALIDACAO DE VEICULO REMOVIDA TEMPORARIAMENTE
     const idVeiculo = Number(req.body.idVeiculo);
+    console.error('[ACEITAR] IdVeiculo:', idVeiculo);
 
+    console.error('[ACEITAR] Chamando Corrida.aceitarCorrida...');
     const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
+    console.error('[ACEITAR] Resultado sucesso:', sucesso);
 
     if (!sucesso) {
       return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
     }
 
-    console.error('[DEBUG] Corrida aceita com sucesso!');
+    console.error('[ACEITAR] Corrida aceita com sucesso!');
     return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
   } catch (error) {
-    console.error('[DEBUG] Erro no aceitar:', error);
-    next(error);
+    console.error('[ACEITAR] ERRO CAPTURADO:', error);
+    console.error('[ACEITAR] Stack trace:', error instanceof Error ? error.stack : 'Sem stack');
+    return res.status(500).json({ mensagem: "Erro interno do servidor", erro: String(error) });
   }
 }
 
