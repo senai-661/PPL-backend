@@ -139,6 +139,8 @@ CREATE TABLE avaliacao_corrida (
 INSERT INTO usuario (nome, sobrenome, email, senha, tipo_usuario) VALUES
 ('Pedro',  'Roque',      'roquelindo@gmail.com',    '$2b$10$7pkXvcT6WnwzH6O1FSC6hOgXwSFudlmw9XqWt9Sbi/nCodfaBIYDK', 'admin'),
 ('Pablo',  'Sponchiado', 'irmaodasarah@gmail.com',  '$2b$10$6Ykpx8J/F/4bDoljPhNE0eOue7F2LMfJCUBCgpeUpOW82DHQEjjye', 'admin');
+/* node -e "const bcrypt = require('bcrypt'); bcrypt.hash('senha', 10, (err, hash) => console.log(hash));" */
+/* INSERTS na tabela usuario como ADMIN somente direto pelo pgAdmin por questoes de segurança */ 
 
 INSERT INTO administrador (id_usuario) VALUES
 ((SELECT id_usuario FROM usuario WHERE email = 'roquelindo@gmail.com')),
