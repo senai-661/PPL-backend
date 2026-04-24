@@ -118,35 +118,33 @@ static async solicitar(req: Request, res: Response, next: NextFunction): Promise
 
 static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
-    const idCorrida = parseInt(req.params.id as string, 10);
+    const idCorrida = Number(req.params.id);
     const idMotorista = (req as any).usuario.id;
 
     console.error('[ACEITAR] Iniciando - Corrida:', idCorrida, 'Motorista:', idMotorista);
 
-    const temCorridaAtiva = await Corrida.motoristaTemCorridaAtiva(idMotorista);
-    console.error('[ACEITAR] Tem corrida ativa?', temCorridaAtiva);
-
-    if (temCorridaAtiva) {
-      return res.status(400).json({ mensagem: "Você já está em uma corrida. Finalize ou cancele antes de aceitar outra." });
+    if (isNaN(idCorrida) || idCorrida <= 0) {
+      return res.status(400).json({ mensagem: "ID da corrida inválido." });
     }
 
-    // VALIDACAO DE VEICULO REMOVIDA TEMPORARIAMENTE
-    const idVeiculo = Number(req.body.idVeiculo);
-    console.error('[ACEITAR] IdVeiculo:', idVeiculo);
+    const temCorridaAtiva = await Corrida.motoristaTemCorridaAtiva(idMotorista);
+    if (temCorridaAtiva) {
+      return res.status(400).json({ mensagem: "Você já está em uma corrida." });
+    }
 
-    console.error('[ACEITAR] Chamando Corrida.aceitarCorrida...');
-    const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
+    // Passa 0 como placeholder para idVeiculo temporariamente
+    const idVeiculoPlaceholder = 0;
+    const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculoPlaceholder);
+
     console.error('[ACEITAR] Resultado sucesso:', sucesso);
 
     if (!sucesso) {
       return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
     }
 
-    console.error('[ACEITAR] Corrida aceita com sucesso!');
     return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
   } catch (error) {
-    console.error('[ACEITAR] ERRO CAPTURADO:', error);
-    console.error('[ACEITAR] Stack trace:', error instanceof Error ? error.stack : 'Sem stack');
+    console.error('[ACEITAR] ERRO:', error);
     return res.status(500).json({ mensagem: "Erro interno do servidor", erro: String(error) });
   }
 }
