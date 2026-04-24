@@ -70,7 +70,7 @@ export class Passageiro extends Usuario {
     return res.rows[0].id_passageiro;
   } catch (error) {
     console.error(`Erro ao cadastrar passageiro: ${error}`);
-    return null;
+    throw error;
   }
 }
 

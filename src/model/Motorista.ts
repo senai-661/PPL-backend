@@ -88,7 +88,7 @@ export class Motorista extends Usuario {
     return res.rows[0].id_motorista;
   } catch (error) {
     console.error(`Erro ao cadastrar motorista: ${error}`);
-    return null;
+    throw error;
   }
 }
   static async buscarPorEmail(email: string): Promise<Motorista | null> {
