@@ -132,11 +132,20 @@ static async aceitar(req: Request, res: Response, next: NextFunction): Promise<R
       return res.status(400).json({ mensagem: "Você já está em uma corrida." });
     }
 
-    // Passa 0 como placeholder para idVeiculo temporariamente
-    const idVeiculoPlaceholder = 0;
-    const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculoPlaceholder);
+    // Busca o veículo do motorista
+    const veiculoRes = await database.query(
+      `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
+      [idMotorista]
+    );
 
-    console.error('[ACEITAR] Resultado sucesso:', sucesso);
+    if (veiculoRes.rows.length === 0) {
+      return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
+    }
+
+    const idVeiculo = veiculoRes.rows[0].id_veiculo;
+    console.error('[ACEITAR] idVeiculo encontrado:', idVeiculo);
+
+    const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
 
     if (!sucesso) {
       return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
@@ -145,7 +154,7 @@ static async aceitar(req: Request, res: Response, next: NextFunction): Promise<R
     return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
   } catch (error) {
     console.error('[ACEITAR] ERRO:', error);
-    return res.status(500).json({ mensagem: "Erro interno do servidor", erro: String(error) });
+    return res.status(500).json({ mensagem: "Erro interno do servidor" });
   }
 }
 
