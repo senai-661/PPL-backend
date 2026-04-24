@@ -57,55 +57,63 @@ class CorridaController {
     }
   }
 
-  static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const idPassageiro = (req as any).usuario.id;
-      const {
-        origemCorrida, destinoCorrida,
-        latOrigem, lngOrigem,
-        latDestino, lngDestino,
-        tipoCorrida,
-        numPassageiros,
-        observacoes,
-      } = req.body;
-
-      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
-        latOrigem, lngOrigem, latDestino, lngDestino,
-        tipoCorrida ?? "Convencional",
-      );
-
-      const idGerado = await Corrida.solicitarCorrida({
-        idPassageiro,
-        origemCorrida,
-        destinoCorrida,
-        tipoCorrida: tipoCorrida ?? "Convencional",
-        preco,
-        idMotorista: null,
-        idVeiculo: null,
-        dataCorrida: new Date(),
-        duracaoCorrida: 0,
-        motivoCancelamento: null,
-        statusCorrida: "Pendente",
-        numPassageiros: numPassageiros ?? 1,
-        observacoes: observacoes ?? null,
+static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+    
+    const temCorridaAtiva = await Corrida.passageiroTemCorridaAtiva(idPassageiro);
+    if (temCorridaAtiva) {
+      return res.status(400).json({ 
+        mensagem: "Você já possui uma corrida em andamento. Aguarde ou cancele antes de solicitar outra." 
       });
-
-      if (!idGerado) {
-        return res.status(400).json({ mensagem: "Erro ao solicitar corrida." });
-      }
-
-      return res.status(201).json({
-        mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
-        idCorrida: idGerado,
-        tipoCorrida: tipoCorrida ?? "Convencional",
-        preco,
-        distanciaKm,
-        duracaoEstimadaMin,
-      });
-    } catch (error) {
-      next(error);
     }
+    
+    const {
+      origemCorrida, destinoCorrida,
+      latOrigem, lngOrigem,
+      latDestino, lngDestino,
+      tipoCorrida,
+      numPassageiros,
+      observacoes,
+    } = req.body;
+
+    const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
+      latOrigem, lngOrigem, latDestino, lngDestino,
+      tipoCorrida ?? "Convencional",
+    );
+
+    const idGerado = await Corrida.solicitarCorrida({
+      idPassageiro,
+      origemCorrida,
+      destinoCorrida,
+      tipoCorrida: tipoCorrida ?? "Convencional",
+      preco,
+      idMotorista: null,
+      idVeiculo: null,
+      dataCorrida: new Date(),
+      duracaoCorrida: 0,
+      motivoCancelamento: null,
+      statusCorrida: "Pendente",
+      numPassageiros: numPassageiros ?? 1,
+      observacoes: observacoes ?? null,
+    });
+
+    if (!idGerado) {
+      return res.status(400).json({ mensagem: "Erro ao solicitar corrida." });
+    }
+
+    return res.status(201).json({
+      mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
+      idCorrida: idGerado,
+      tipoCorrida: tipoCorrida ?? "Convencional",
+      preco,
+      distanciaKm,
+      duracaoEstimadaMin,
+    });
+  } catch (error) {
+    next(error);
   }
+}
 
   static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
   try {
@@ -312,6 +320,7 @@ static async cancelar(req: Request, res: Response, next: NextFunction): Promise<
       next(error);
     }
   }
+  
 }
 
 export { CorridaController };
