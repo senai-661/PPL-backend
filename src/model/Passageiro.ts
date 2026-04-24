@@ -47,8 +47,8 @@ export class Passageiro extends Usuario {
  static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
   try {
     const idUsuario = await Usuario.criarUsuario(
-      passageiro.nome,      // ✅
-      passageiro.sobrenome, // ✅
+      passageiro.nome,      
+      passageiro.sobrenome, 
       passageiro.email,
       passageiro.senha,
       "passageiro"
@@ -172,4 +172,49 @@ export class Passageiro extends Usuario {
       return false;
     }
   }
+
+static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
+  try {
+    // Stats de corridas
+    const statsRes = await database.query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_finalizadas,
+        COUNT(*) AS total_corridas,
+        COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
+       FROM corrida 
+       WHERE id_passageiro = $1;`,
+      [idPassageiro],
+    );
+    // Destino mais frequente
+    const destinoRes = await database.query(
+      `SELECT destino_corrida, COUNT(*) as total
+       FROM corrida 
+       WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
+       GROUP BY destino_corrida
+       ORDER BY total DESC
+       LIMIT 1;`,
+      [idPassageiro],
+    );
+    // Data de cadastro (desde)
+    const usuarioRes = await database.query(
+      `SELECT u.criado_em 
+       FROM usuario u
+       JOIN passageiro p ON p.id_usuario = u.id_usuario
+       WHERE p.id_passageiro = $1;`,
+      [idPassageiro],
+    );
+    const stats = statsRes.rows[0];
+    const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
+    const desde = usuarioRes.rows[0]?.criado_em || new Date();
+    return {
+      totalViagens: parseInt(stats.total_finalizadas) || 0,
+      totalGasto: parseFloat(stats.total_gasto) || 0,
+      destinoFavorito: destinoFavorito,
+      desde: desde,
+    };
+  } catch (error) {
+    console.error(`Erro ao gerar relatório do passageiro: ${error}`);
+    return null;
+  }
+}
 }

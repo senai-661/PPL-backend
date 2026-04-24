@@ -25,6 +25,8 @@ router.get("/api", (req: Request, res: Response) => {
 // ============================================
 router.post("/api/registrar", UsuarioController.registrar);
 router.post("/api/login",     UsuarioController.login);
+router.post("/api/preco-estimado", CorridaController.precoEstimado);
+router.get("/api/autocomplete/enderecos", EnderecoController.buscarSugestoes);
 
 // ============================================
 // PERFIL (GET + PATCH)
@@ -203,6 +205,12 @@ router.get(
   EnderecoController.listar,
 );
 
+// Autocomplete de endereços (público)
+router.get(
+  "/api/enderecos/sugestoes",
+  EnderecoController.buscarSugestoes,
+);
+
 // ============================================
 // PASSAGEIRO
 // ============================================
@@ -217,6 +225,11 @@ router.get(
   AuthMiddleware.somentePassageiro,
   CorridaController.corridaAtual,
 );
-
+router.get(
+  "/api/passageiro/relatorio",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  PassageiroController.relatorio,
+);
 
 export { router };
