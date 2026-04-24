@@ -41,7 +41,7 @@ class PassageiroController {
       return res.status(404).json({ mensagem: "Passageiro não encontrado." });
     }
 
-    // Buscar endereço do passageiro
+   
     const enderecoRes = await database.query(
       `SELECT rua, numero, bairro, cidade, estado, cep, complemento
        FROM endereco 
