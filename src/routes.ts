@@ -112,6 +112,12 @@ router.get(
   AuthMiddleware.verificarToken,
   CorridaController.listar,
 );
+router.delete(
+  "/api/corridas/atual",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  CorridaController.cancelarAtual,
+);
 router.get(
   "/api/corridas/:id",
   AuthMiddleware.verificarToken,
