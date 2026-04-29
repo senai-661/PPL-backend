@@ -6,67 +6,48 @@ import { DatabaseModel } from "../model/DatabaseModel.js";
 const database = new DatabaseModel().pool;
 
 class CorridaController {
-static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const status = Array.isArray(req.query.status)
-      ? req.query.status[0] as string
-      : req.query.status as string | undefined;
-    const usuario = (req as any).usuario;
-    console.log("usuario do token:", usuario); 
-    console.log("status:", status);            
-    if (status) {
-      const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
-      
-      console.log("idMotorista:", idMotorista);
+  static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const status = Array.isArray(req.query.status)
+        ? req.query.status[0] as string
+        : req.query.status as string | undefined;
+      const usuario = (req as any).usuario;
+      console.log("usuario do token:", usuario); 
+      console.log("status:", status);            
+      if (status) {
+        const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
+        
+        console.log("idMotorista:", idMotorista);
 
-      const corridas = await Corrida.listarPorStatus(status, idMotorista);
-      
-      console.log("corridas:", corridas);      
-      
-      return res.status(200).json(corridas ?? []);
-    }
+        const corridas = await Corrida.listarPorStatus(status, idMotorista);
+        
+        console.log("corridas:", corridas);      
+        
+        return res.status(200).json(corridas ?? []);
+      }
     } catch (error) {
       next(error);
     }
   }
 
-  static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  static async precoEstimado(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const idPassageiro = (req as any).usuario.id;
       const {
-        origemCorrida, destinoCorrida,
         latOrigem, lngOrigem,
         latDestino, lngDestino,
         tipoCorrida,
       } = req.body;
 
-      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
-        latOrigem, lngOrigem, latDestino, lngDestino,
-        tipoCorrida ?? "Convencional",
-      );
-
-      const idGerado = await Corrida.solicitarCorrida({
-        idPassageiro,
-        origemCorrida,
-        destinoCorrida,
-        tipoCorrida: tipoCorrida ?? "Convencional",
-        preco,
-        idMotorista: null,
-        idVeiculo: null,
-        dataCorrida: new Date(),
-        duracaoCorrida: 0,
-        motivoCancelamento: null,
-        statusCorrida: "Pendente",
-      });
-
-      if (!idGerado) {
-        return res.status(400).json({ mensagem: "Erro ao solicitar corrida." });
+      if (!latOrigem || !lngOrigem || !latDestino || !lngDestino) {
+        return res.status(400).json({ mensagem: "Coordenadas de origem e destino são obrigatórias." });
       }
 
-      return res.status(201).json({
-        mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
-        idCorrida: idGerado,
-        tipoCorrida: tipoCorrida ?? "Convencional",
+      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
+        latOrigem, lngOrigem, latDestino, lngDestino,
+        tipoCorrida ?? "Convencional"
+      );
+
+      return res.status(200).json({
         preco,
         distanciaKm,
         duracaoEstimadaMin,
@@ -76,32 +57,95 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
     }
   }
 
-  static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const idCorrida = parseInt(req.params.id as string, 10);
-      const idMotorista = (req as any).usuario.id;
-
-      const veiculo = await database.query(
-        `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
-        [idMotorista],
-      );
-
-      if (veiculo.rows.length === 0) {
-        return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
-      }
-
-      const idVeiculo = veiculo.rows[0].id_veiculo;
-      const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
-
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
-      }
-
-      return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
-    } catch (error) {
-      next(error);
+static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idPassageiro = (req as any).usuario.id;
+    
+    const temCorridaAtiva = await Corrida.passageiroTemCorridaAtiva(idPassageiro);
+    if (temCorridaAtiva) {
+      return res.status(400).json({ 
+        mensagem: "Você já possui uma corrida em andamento. Aguarde ou cancele antes de solicitar outra." 
+      });
     }
+    
+    const {
+      origemCorrida, destinoCorrida,
+      latOrigem, lngOrigem,
+      latDestino, lngDestino,
+      tipoCorrida,
+      numPassageiros,
+      observacoes,
+    } = req.body;
+
+    const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
+      latOrigem, lngOrigem, latDestino, lngDestino,
+      tipoCorrida ?? "Convencional",
+    );
+
+    const idGerado = await Corrida.solicitarCorrida({
+      idPassageiro,
+      origemCorrida,
+      destinoCorrida,
+      tipoCorrida: tipoCorrida ?? "Convencional",
+      preco,
+      idMotorista: null,
+      idVeiculo: null,
+      dataCorrida: new Date(),
+      duracaoCorrida: 0,
+      motivoCancelamento: null,
+      statusCorrida: "Pendente",
+      numPassageiros: numPassageiros ?? 1,
+      observacoes: observacoes ?? null,
+    });
+
+    if (!idGerado) {
+      return res.status(400).json({ mensagem: "Erro ao solicitar corrida." });
+    }
+
+    return res.status(201).json({
+      mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
+      idCorrida: idGerado,
+      tipoCorrida: tipoCorrida ?? "Convencional",
+      preco,
+      distanciaKm,
+      duracaoEstimadaMin,
+    });
+  } catch (error) {
+    next(error);
   }
+}
+
+  static async aceitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idCorrida = parseInt(req.params.id as string, 10);
+    const idMotorista = (req as any).usuario.id;
+
+    const temCorridaAtiva = await Corrida.motoristaTemCorridaAtiva(idMotorista);
+    if (temCorridaAtiva) {
+      return res.status(400).json({ mensagem: "Você já está em uma corrida. Finalize ou cancele antes de aceitar outra." });
+    }
+
+    const veiculo = await database.query(
+      `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
+      [idMotorista],
+    );
+
+    if (veiculo.rows.length === 0) {
+      return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
+    }
+
+    const idVeiculo = veiculo.rows[0].id_veiculo;
+    const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
+
+    if (!sucesso) {
+      return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
+    }
+
+    return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
+  } catch (error) {
+    next(error);
+  }
+}
 
   static async iniciar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
@@ -150,17 +194,43 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
     }
   }
 
-  static async cancelar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-    try {
-      const idCorrida = parseInt(req.params.id as string, 10);
-      const { motivoCancelamento } = req.body;
+static async cancelar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+  try {
+    const idCorrida = parseInt(req.params.id as string, 10);
 
-      const sucesso = await Corrida.cancelarCorrida(idCorrida, motivoCancelamento ?? null);
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Corrida não pode ser cancelada." });
+    if (isNaN(idCorrida)) {
+      return res.status(400).json({ mensagem: "ID da corrida inválido." });
+    }
+
+    const { motivoCancelamento } = req.body;
+
+    const sucesso = await Corrida.cancelarCorrida(idCorrida, motivoCancelamento ?? null);
+    if (!sucesso) {
+      return res.status(400).json({ mensagem: "Corrida não pode ser cancelada." });
+    }
+
+    return res.status(200).json({ mensagem: "Corrida cancelada." });
+  } catch (error) {
+    next(error);
+  }
+}
+
+  static async cancelarAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+
+      if (!corrida) {
+        return res.status(404).json({ mensagem: "Nenhuma corrida pendente encontrada." });
       }
 
-      return res.status(200).json({ mensagem: "Corrida cancelada." });
+      const sucesso = await Corrida.cancelarCorrida(corrida.idCorrida, "Cancelada pelo passageiro");
+
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível cancelar a corrida." });
+      }
+
+      return res.status(200).json({ mensagem: "Corrida cancelada com sucesso." });
     } catch (error) {
       next(error);
     }
@@ -218,62 +288,60 @@ static async listar(req: Request, res: Response, next: NextFunction): Promise<Re
       next(error);
     }
   }
+
   static async corridaAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
-  try {
-    const idPassageiro = (req as any).usuario.id;
+    try {
+      const idPassageiro = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
 
-    const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+      if (!corrida) {
+        return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      }
 
-    if (!corrida) {
-      return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      return res.status(200).json(corrida);
+    } catch (error) {
+      next(error);
     }
-
-    return res.status(200).json(corrida);
-  } catch (error) {
-    next(error);
   }
-}
-static async corridaAtualMotorista(
+
+  static async corridaAtualMotorista(
     req: Request,
     res: Response,
     next: NextFunction
-): Promise<Response | void> {
+  ): Promise<Response | void> {
     try {
-        const idMotorista = (req as any).usuario.id;
+      const idMotorista = (req as any).usuario.id;
+      const corrida = await Corrida.corridaAtualMotorista(idMotorista);
 
-        const corrida = await Corrida.corridaAtualMotorista(idMotorista);
+      if (!corrida) {
+        return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
+      }
 
-        if (!corrida) {
-            return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
-        }
-
-        return res.status(200).json(corrida);
-
+      return res.status(200).json(corrida);
     } catch (error) {
-        next(error);
+      next(error);
     }
-}
+  }
 
-static async resumoDiaMotorista(
+  static async resumoDiaMotorista(
     req: Request,
     res: Response,
     next: NextFunction
-): Promise<Response | void> {
+  ): Promise<Response | void> {
     try {
-        const idMotorista = (req as any).usuario.id;
+      const idMotorista = (req as any).usuario.id;
+      const resumo = await Corrida.resumoDiaMotorista(idMotorista);
 
-        const resumo = await Corrida.resumoDiaMotorista(idMotorista);
+      if (!resumo) {
+        return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
+      }
 
-        if (!resumo) {
-            return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
-        }
-
-        return res.status(200).json(resumo);
-
+      return res.status(200).json(resumo);
     } catch (error) {
-        next(error);
+      next(error);
     }
-}
+  }
+  
 }
 
 export { CorridaController };

@@ -11,4 +11,6 @@ export interface CorridaDTO {
   duracaoCorrida: number;
   motivoCancelamento?: string | null;
   statusCorrida: "Pendente" | "Aceito" | "Em andamento" | "Finalizada" | "Cancelada";
+  numPassageiros?: number;
+  observacoes?: string;
 }
