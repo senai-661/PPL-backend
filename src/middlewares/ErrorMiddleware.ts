@@ -7,6 +7,7 @@ export function errorMiddleware(
   next: NextFunction
 ): Response {
   console.error(`[${req.method}] ${req.path} →`, error);
+  if (error && error.stack) console.error(error.stack);
 
   // PostgreSQL error codes
   if (error.code === "23505") {
@@ -45,6 +46,6 @@ export function errorMiddleware(
     });
   }
 
-  // Generic fallback
-  return res.status(500).json({ mensagem: "Erro interno no servidor." });
+  // Generic fallback (include error message for debugging)
+  return res.status(500).json({ mensagem: "Erro interno no servidor.", detalhes: error?.message || null });
 }
