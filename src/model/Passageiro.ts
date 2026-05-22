@@ -138,12 +138,21 @@ export class Passageiro extends Usuario {
     dados: Partial<PassageiroDTO>
   ): Promise<boolean> {
     try {
-      if (dados.email || dados.senha) {
+      const temCamposU = dados.nome || dados.sobrenome || dados.email || dados.senha;
+      const temCamposP = dados.cpf || dados.celular || dados.dataNascimento || dados.necessidades;
+
+      if (!temCamposU && !temCamposP) {
+        return false;
+      }
+
+      if (temCamposU) {
         const camposU: string[] = [];
         const valoresU: any[] = [];
         let i = 1;
-        if (dados.email) { camposU.push(`email = $${i++}`); valoresU.push(dados.email); }
-        if (dados.senha) { camposU.push(`senha = $${i++}`); valoresU.push(dados.senha); }
+        if (dados.nome)      { camposU.push(`nome = $${i++}`);      valoresU.push(dados.nome.toUpperCase()); }
+        if (dados.sobrenome) { camposU.push(`sobrenome = $${i++}`); valoresU.push(dados.sobrenome.toUpperCase()); }
+        if (dados.email)     { camposU.push(`email = $${i++}`);     valoresU.push(dados.email); }
+        if (dados.senha)     { camposU.push(`senha = $${i++}`);     valoresU.push(dados.senha); }
         valoresU.push(idPassageiro);
         await database.query(
           `UPDATE usuario SET ${camposU.join(", ")}
@@ -152,13 +161,15 @@ export class Passageiro extends Usuario {
         );
       }
 
-      const camposP: string[] = [];
-      const valoresP: any[] = [];
-      let j = 1;
-      if (dados.celular)      { camposP.push(`celular = $${j++}`);      valoresP.push(dados.celular); }
-      if (dados.necessidades) { camposP.push(`necessidades = $${j++}`); valoresP.push(dados.necessidades); }
+      if (temCamposP) {
+        const camposP: string[] = [];
+        const valoresP: any[] = [];
+        let j = 1;
+        if (dados.cpf)            { camposP.push(`cpf = $${j++}`);            valoresP.push(dados.cpf); }
+        if (dados.celular)        { camposP.push(`celular = $${j++}`);        valoresP.push(dados.celular); }
+        if (dados.dataNascimento) { camposP.push(`data_nascimento = $${j++}`); valoresP.push(dados.dataNascimento); }
+        if (dados.necessidades)   { camposP.push(`necessidades = $${j++}`);   valoresP.push(dados.necessidades); }
 
-      if (camposP.length > 0) {
         valoresP.push(idPassageiro);
         await database.query(
           `UPDATE passageiro SET ${camposP.join(", ")} WHERE id_passageiro = $${j};`,
