@@ -204,6 +204,18 @@ router.get(
   AuthMiddleware.somenteAdmin,
   AdminController.dashboard,
 );
+router.patch(
+  "/api/admin/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.atualizarPassageiro,
+);
+router.patch(
+  "/api/admin/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.atualizarMotorista,
+);
 router.get(
   "/api/enderecos",
   AuthMiddleware.verificarToken,

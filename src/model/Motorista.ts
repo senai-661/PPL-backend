@@ -176,12 +176,21 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
     dados: Partial<MotoristaDTO>
   ): Promise<boolean> {
     try {
-      if (dados.email || dados.senha) {
+      const temCamposU = dados.nome || dados.sobrenome || dados.email || dados.senha;
+      const temCamposM = dados.cpf || dados.cnh || dados.celular || dados.dataNascimento || dados.antecedentesCriminais || dados.especializacao || (dados as any).disponivel !== undefined;
+
+      if (!temCamposU && !temCamposM) {
+        return false;
+      }
+
+      if (temCamposU) {
         const camposU: string[] = [];
         const valoresU: any[] = [];
         let i = 1;
-        if (dados.email) { camposU.push(`email = $${i++}`); valoresU.push(dados.email); }
-        if (dados.senha) { camposU.push(`senha = $${i++}`); valoresU.push(dados.senha); }
+        if (dados.nome)      { camposU.push(`nome = $${i++}`);      valoresU.push(dados.nome.toUpperCase()); }
+        if (dados.sobrenome) { camposU.push(`sobrenome = $${i++}`); valoresU.push(dados.sobrenome.toUpperCase()); }
+        if (dados.email)     { camposU.push(`email = $${i++}`);     valoresU.push(dados.email); }
+        if (dados.senha)     { camposU.push(`senha = $${i++}`);     valoresU.push(dados.senha); }
         valoresU.push(idMotorista);
         await database.query(
           `UPDATE usuario SET ${camposU.join(", ")}
@@ -190,13 +199,18 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
         );
       }
 
-      const camposM: string[] = [];
-      const valoresM: any[] = [];
-      let j = 1;
-      if (dados.celular)        { camposM.push(`celular = $${j++}`);        valoresM.push(dados.celular); }
-      if (dados.especializacao) { camposM.push(`especializacao = $${j++}`); valoresM.push(dados.especializacao); }
+      if (temCamposM) {
+        const camposM: string[] = [];
+        const valoresM: any[] = [];
+        let j = 1;
+        if (dados.cpf)                   { camposM.push(`cpf = $${j++}`);                   valoresM.push(dados.cpf); }
+        if (dados.cnh)                   { camposM.push(`cnh = $${j++}`);                   valoresM.push(dados.cnh); }
+        if (dados.celular)               { camposM.push(`celular = $${j++}`);               valoresM.push(dados.celular); }
+        if (dados.dataNascimento)        { camposM.push(`data_nascimento = $${j++}`);        valoresM.push(dados.dataNascimento); }
+        if (dados.antecedentesCriminais) { camposM.push(`antecedentes_criminais = $${j++}`); valoresM.push(dados.antecedentesCriminais.toUpperCase()); }
+        if (dados.especializacao)        { camposM.push(`especializacao = $${j++}`);        valoresM.push(dados.especializacao.toUpperCase()); }
+        if ((dados as any).disponivel !== undefined) { camposM.push(`disponivel = $${j++}`); valoresM.push((dados as any).disponivel); }
 
-      if (camposM.length > 0) {
         valoresM.push(idMotorista);
         await database.query(
           `UPDATE motorista SET ${camposM.join(", ")} WHERE id_motorista = $${j};`,
