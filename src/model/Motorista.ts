@@ -59,38 +59,40 @@ export class Motorista extends Usuario {
   public setEspecializacao(v: string): void { this.especializacao = v; }
   public setDisponivel(v: boolean): void { this.disponivel = v; }
 
-  static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
-    try {
-      const idUsuario = await Usuario.criarUsuario(
+  static async cadastrarMotorista(motorista: MotoristaDTO, endereco?: any): Promise<number | null> {
+  try {
+    const res = await database.query(
+      `SELECT sp_cadastrar_motorista(
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19
+       ) AS id;`,
+      [
         motorista.nome,
         motorista.sobrenome,
         motorista.email,
         motorista.senha,
-        "motorista"
-      );
-      if (!idUsuario) return null;
-      const res = await database.query(
-        `INSERT INTO motorista
-          (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id_motorista;`,
-        [
-          idUsuario,
-          motorista.cpf,
-          motorista.cnh,
-          motorista.celular,
-          motorista.dataNascimento,
-          motorista.antecedentesCriminais.toUpperCase(),
-          (motorista.especializacao ?? "Nenhuma").toUpperCase(),
-        ]
-      );
-      return res.rows[0].id_motorista;
-    } catch (error) {
-      console.error(`Erro ao cadastrar motorista: ${error}`);
-      return null;
-    }
+        motorista.cpf,
+        motorista.cnh,
+        motorista.celular,
+        motorista.dataNascimento,
+        motorista.antecedentesCriminais,
+        motorista.especializacao ?? 'Nenhuma',
+        endereco?.rua ?? null,
+        endereco?.numero ?? null,
+        endereco?.bairro ?? null,
+        endereco?.cidade ?? null,
+        endereco?.estado ?? null,
+        endereco?.cep ?? null,
+        endereco?.complemento ?? null,
+        null,
+        null,
+      ]
+    );
+    return res.rows[0]?.id ?? null;
+  } catch (error) {
+    console.error(`Erro ao cadastrar motorista: ${error}`);
+    throw error;
   }
-
+  }
   static async buscarPorEmail(email: string): Promise<Motorista | null> {
     try {
       const res = await database.query(
@@ -163,12 +165,21 @@ export class Motorista extends Usuario {
     dados: Partial<MotoristaDTO>
   ): Promise<boolean> {
     try {
-      if (dados.email || dados.senha) {
+      const temCamposU = dados.nome || dados.sobrenome || dados.email || dados.senha;
+      const temCamposM = dados.cpf || dados.cnh || dados.celular || dados.dataNascimento || dados.antecedentesCriminais || dados.especializacao || (dados as any).disponivel !== undefined;
+
+      if (!temCamposU && !temCamposM) {
+        return false;
+      }
+
+      if (temCamposU) {
         const camposU: string[] = [];
         const valoresU: any[] = [];
         let i = 1;
-        if (dados.email) { camposU.push(`email = $${i++}`); valoresU.push(dados.email); }
-        if (dados.senha) { camposU.push(`senha = $${i++}`); valoresU.push(dados.senha); }
+        if (dados.nome)      { camposU.push(`nome = $${i++}`);      valoresU.push(dados.nome.toUpperCase()); }
+        if (dados.sobrenome) { camposU.push(`sobrenome = $${i++}`); valoresU.push(dados.sobrenome.toUpperCase()); }
+        if (dados.email)     { camposU.push(`email = $${i++}`);     valoresU.push(dados.email); }
+        if (dados.senha)     { camposU.push(`senha = $${i++}`);     valoresU.push(dados.senha); }
         valoresU.push(idMotorista);
         await database.query(
           `UPDATE usuario SET ${camposU.join(", ")}
@@ -177,13 +188,18 @@ export class Motorista extends Usuario {
         );
       }
 
-      const camposM: string[] = [];
-      const valoresM: any[] = [];
-      let j = 1;
-      if (dados.celular)        { camposM.push(`celular = $${j++}`);        valoresM.push(dados.celular); }
-      if (dados.especializacao) { camposM.push(`especializacao = $${j++}`); valoresM.push(dados.especializacao); }
+      if (temCamposM) {
+        const camposM: string[] = [];
+        const valoresM: any[] = [];
+        let j = 1;
+        if (dados.cpf)                   { camposM.push(`cpf = $${j++}`);                   valoresM.push(dados.cpf); }
+        if (dados.cnh)                   { camposM.push(`cnh = $${j++}`);                   valoresM.push(dados.cnh); }
+        if (dados.celular)               { camposM.push(`celular = $${j++}`);               valoresM.push(dados.celular); }
+        if (dados.dataNascimento)        { camposM.push(`data_nascimento = $${j++}`);        valoresM.push(dados.dataNascimento); }
+        if (dados.antecedentesCriminais) { camposM.push(`antecedentes_criminais = $${j++}`); valoresM.push(dados.antecedentesCriminais.toUpperCase()); }
+        if (dados.especializacao)        { camposM.push(`especializacao = $${j++}`);        valoresM.push(dados.especializacao.toUpperCase()); }
+        if ((dados as any).disponivel !== undefined) { camposM.push(`disponivel = $${j++}`); valoresM.push((dados as any).disponivel); }
 
-      if (camposM.length > 0) {
         valoresM.push(idMotorista);
         await database.query(
           `UPDATE motorista SET ${camposM.join(", ")} WHERE id_motorista = $${j};`,

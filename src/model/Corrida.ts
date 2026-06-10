@@ -135,26 +135,24 @@ class Corrida {
       return null;
     }
   }
-
-  static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
-    const res = await database.query(
-      `INSERT INTO corrida 
-        (id_passageiro, origem_corrida, destino_corrida, tipo_corrida, preco, 
-         duracao_corrida, status_corrida, num_passageiros, observacoes)
-       VALUES ($1, $2, $3, $4, $5, 0, 'Pendente', $6, $7)
-       RETURNING id_corrida;`,
-      [
-        corrida.idPassageiro,
-        corrida.origemCorrida,
-        corrida.destinoCorrida,
-        corrida.tipoCorrida ?? "Convencional",
-        corrida.preco,
-        corrida.numPassageiros ?? 1,
-        corrida.observacoes ?? null,
-      ],
-    );
-    return res.rows[0].id_corrida;
-  }
+static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
+  const res = await database.query(
+    `SELECT sp_criar_corrida($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS id;`,
+    [
+      corrida.idPassageiro,
+      corrida.origemCorrida,
+      corrida.destinoCorrida,
+      corrida.preco,
+      corrida.idMotorista ?? null,
+      corrida.idVeiculo ?? null,
+      corrida.tipoCorrida ?? "Convencional",
+      corrida.duracaoCorrida ?? 0,
+      corrida.numPassageiros ?? 1,
+      corrida.observacoes ?? null,
+    ],
+  );
+  return res.rows[0]?.id ?? null;
+}
 
   static async aceitarCorrida(
     idCorrida: number,
@@ -201,58 +199,25 @@ class Corrida {
   }
 
   static async finalizarCorrida(
-    idCorrida: number,
-    duracaoCorrida: number,
-  ): Promise<boolean> {
-    try {
-      const res = await database.query(
-        `UPDATE corrida
-         SET status_corrida = 'Finalizada', duracao_corrida = $1
-         WHERE id_corrida = $2 AND status_corrida = 'Em andamento'
-         RETURNING id_corrida, id_motorista;`,
-        [duracaoCorrida, idCorrida]
-      );
-
-      if (res.rowCount === null || res.rowCount === 0) return false;
-      const idMotorista = res.rows[0].id_motorista;
-      if (idMotorista) {
-        await database.query(
-          `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
-          [idMotorista]
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error(`Erro ao finalizar corrida: ${error}`);
-      return false;
-    }
+  idCorrida: number,
+  duracaoCorrida: number,
+): Promise<boolean> {
+  try {
+    // Use stored procedure to finalize and free driver
+    const r = await database.query(`SELECT sp_finalizar_corrida($1) AS ok;`, [idCorrida]);
+    return !!(r.rows[0] && r.rows[0].ok);
+  } catch (error) {
+    console.error(`Erro ao finalizar corrida: ${error}`);
+    return false;
   }
-
+}
   static async cancelarCorrida(
     idCorrida: number,
     motivoCancelamento: string | null,
   ): Promise<boolean> {
     try {
-      const res = await database.query(
-        `UPDATE corrida
-         SET status_corrida = 'Cancelada', motivo_cancelamento = $1
-         WHERE id_corrida = $2 AND status_corrida IN ('Pendente', 'Aceito')
-         RETURNING id_corrida, id_motorista;`,
-        [motivoCancelamento ?? null, idCorrida],
-      );
-
-      if (res.rowCount === null || res.rowCount === 0) return false;
-
-      const idMotorista = res.rows[0].id_motorista;
-      if (idMotorista) {
-        await database.query(
-          `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
-          [idMotorista],
-        );
-      }
-
-      return true;
+      const r = await database.query(`SELECT sp_cancelar_corrida($1, $2) AS ok;`, [idCorrida, motivoCancelamento ?? null]);
+      return !!(r.rows[0] && r.rows[0].ok);
     } catch (error) {
       console.error(`Erro ao cancelar corrida: ${error}`);
       return false;
