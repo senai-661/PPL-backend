@@ -38,7 +38,7 @@ export class Motorista extends Usuario {
     this.dataNascimento = dataNascimento;
     this.antecedentesCriminais = antecedentesCriminais;
     this.especializacao = especializacao;
-    this.disponivel = disponivel; 
+    this.disponivel = disponivel;
   }
 
   public getIdMotorista(): number { return this.idMotorista; }
@@ -48,8 +48,7 @@ export class Motorista extends Usuario {
   public getDataNascimento(): Date { return this.dataNascimento; }
   public getAntecedentesCriminais(): string { return this.antecedentesCriminais; }
   public getEspecializacao(): string { return this.especializacao; }
-  public getDisponivel(): boolean {return this.disponivel;}
-  
+  public getDisponivel(): boolean { return this.disponivel; }
 
   public setIdMotorista(v: number): void { this.idMotorista = v; }
   public setCpf(v: string): void { this.cpf = v; }
@@ -58,47 +57,45 @@ export class Motorista extends Usuario {
   public setDataNascimento(v: Date): void { this.dataNascimento = v; }
   public setAntecedentesCriminais(v: string): void { this.antecedentesCriminais = v; }
   public setEspecializacao(v: string): void { this.especializacao = v; }
-  public setDisponivel(v: boolean): void {this.disponivel = v;}
+  public setDisponivel(v: boolean): void { this.disponivel = v; }
 
   static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
-  try {
-    const idUsuario = await Usuario.criarUsuario(
-      motorista.nome,      
-      motorista.sobrenome, 
-      motorista.email,
-      motorista.senha,
-      "motorista"
-    );
-    if (!idUsuario) return null;
-    const res = await database.query(
-      `INSERT INTO motorista
-        (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id_motorista;`,
-      [
-        idUsuario,
-        motorista.cpf,
-        motorista.cnh,
-        motorista.celular,
-        motorista.dataNascimento,
-        motorista.antecedentesCriminais.toUpperCase(),
-        (motorista.especializacao ?? "Nenhuma").toUpperCase(),
-      ]
-    );
-    return res.rows[0].id_motorista;
-  } catch (error) {
-    console.error(`Erro ao cadastrar motorista: ${error}`);
-    return null;
+    try {
+      const idUsuario = await Usuario.criarUsuario(
+        motorista.nome,
+        motorista.sobrenome,
+        motorista.email,
+        motorista.senha,
+        "motorista"
+      );
+      if (!idUsuario) return null;
+      const res = await database.query(
+        `INSERT INTO motorista
+          (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id_motorista;`,
+        [
+          idUsuario,
+          motorista.cpf,
+          motorista.cnh,
+          motorista.celular,
+          motorista.dataNascimento,
+          motorista.antecedentesCriminais.toUpperCase(),
+          (motorista.especializacao ?? "Nenhuma").toUpperCase(),
+        ]
+      );
+      return res.rows[0].id_motorista;
+    } catch (error) {
+      console.error(`Erro ao cadastrar motorista: ${error}`);
+      return null;
+    }
   }
-}
+
   static async buscarPorEmail(email: string): Promise<Motorista | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, m.id_motorista, m.cpf, m.cnh, m.celular,
-                m.data_nascimento, m.antecedentes_criminais, m.especializacao
-         FROM usuario u
-         JOIN motorista m ON m.id_usuario = u.id_usuario
-         WHERE u.email = $1;`,
+        `SELECT * FROM vw_motoristas_detalhados
+         WHERE email = $1;`,
         [email]
       );
       if (res.rows.length === 0) return null;
@@ -114,43 +111,31 @@ export class Motorista extends Usuario {
     }
   }
 
-static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
-  try {
-    const res = await database.query(
-      `SELECT u.*, m.id_motorista, m.cpf, m.cnh, m.celular,
-              m.data_nascimento, m.antecedentes_criminais, m.especializacao,
-              m.disponivel
-       FROM usuario u
-       JOIN motorista m ON m.id_usuario = u.id_usuario
-       WHERE m.id_motorista = $1;`,
-      [idMotorista]
-    );
-    if (res.rows.length === 0) return null;
-    const r = res.rows[0];
-    return new Motorista(
-      r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
-      r.id_motorista, r.cpf, r.cnh, r.celular,
-      r.data_nascimento, r.antecedentes_criminais, r.especializacao,
-      r.disponivel,
-    );
-  } catch (error) {
-    console.error(`Erro ao buscar motorista por id: ${error}`);
-    return null;
+  static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM vw_motoristas_detalhados
+         WHERE id_motorista = $1;`,
+        [idMotorista]
+      );
+      if (res.rows.length === 0) return null;
+      const r = res.rows[0];
+      return new Motorista(
+        r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
+        r.id_motorista, r.cpf, r.cnh, r.celular,
+        r.data_nascimento, r.antecedentes_criminais, r.especializacao,
+        r.disponivel,
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar motorista por id: ${error}`);
+      return null;
+    }
   }
-}
 
   static async listarMotoristas(): Promise<Array<any> | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, m.id_motorista, m.cpf, m.cnh, m.celular,
-                m.data_nascimento, m.antecedentes_criminais, m.especializacao,
-                ROUND(AVG(ac.nota), 1) as media_avaliacao,
-                COUNT(ac.id_avaliacao) as total_avaliacoes
-         FROM usuario u
-         JOIN motorista m ON m.id_usuario = u.id_usuario
-         LEFT JOIN corrida c ON c.id_motorista = m.id_motorista
-         LEFT JOIN avaliacao_corrida ac ON ac.id_corrida = c.id_corrida
-         GROUP BY u.id_usuario, m.id_motorista;`
+        `SELECT * FROM vw_motoristas_detalhados;`
       );
       return res.rows.map((r) => ({
         idMotorista: r.id_motorista,
@@ -162,8 +147,10 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
         celular: r.celular,
         dataNascimento: r.data_nascimento,
         especializacao: r.especializacao,
-        mediaAvaliacao: r.media_avaliacao ? parseFloat(r.media_avaliacao) : null,
-        totalAvaliacoes: parseInt(r.total_avaliacoes),
+        disponivel: r.disponivel,
+        placa: r.placa,
+        tipoVeiculo: r.tipo_veiculo,
+        modeloVeiculo: r.modelo_veiculo,
       }));
     } catch (error) {
       console.error(`Erro ao listar motoristas: ${error}`);
@@ -210,19 +197,20 @@ static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
       return false;
     }
   }
+
   static async alterarDisponibilidade(
-  idMotorista: number,
-  disponivel: boolean
-): Promise<boolean> {
-  try {
-    const res = await database.query(
-      `UPDATE motorista SET disponivel = $1 WHERE id_motorista = $2 RETURNING id_motorista;`,
-      [disponivel, idMotorista]
-    );
-    return res.rowCount !== null && res.rowCount > 0;
-  } catch (error) {
-    console.error(`Erro ao alterar disponibilidade: ${error}`);
-    return false;
+    idMotorista: number,
+    disponivel: boolean
+  ): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `UPDATE motorista SET disponivel = $1 WHERE id_motorista = $2 RETURNING id_motorista;`,
+        [disponivel, idMotorista]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao alterar disponibilidade: ${error}`);
+      return false;
     }
   }
 }
