@@ -68,26 +68,15 @@ export class UsuarioController {
       let idGerado: number | null = null;
 
       if (tipo === "passageiro") {
-        idGerado = await Passageiro.cadastrarPassageiro(dados);
+        idGerado = await Passageiro.cadastrarPassageiro(dados, endereco);
       } else {
-        idGerado = await Motorista.cadastrarMotorista(dados);
+        idGerado = await Motorista.cadastrarMotorista(dados, endereco);
       }
 
       if (!idGerado) {
         return res.status(400).json({ mensagem: `Erro ao cadastrar ${tipo}.` });
       }
-
-      if (endereco) {
-        const enderecoSucesso = await EnderecoController.cadastrarParaUsuario(
-          idGerado, tipo, endereco,
-        );
-
-        if (!enderecoSucesso) {
-          return res.status(201).json({
-            mensagem: `${tipo} cadastrado, mas houve um erro ao salvar o endereço.`,
-          });
-        }
-      }
+      // O endereço já é tratado pela stored procedure quando fornecido
 
       return res.status(201).json({ mensagem: `${tipo} cadastrado com sucesso!` });
     } catch (error) {

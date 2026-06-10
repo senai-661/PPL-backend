@@ -112,6 +112,12 @@ router.get(
   AuthMiddleware.verificarToken,
   CorridaController.listar,
 );
+router.delete(
+  "/api/corridas/atual",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  CorridaController.cancelarAtual,
+);
 router.get(
   "/api/corridas/:id",
   AuthMiddleware.verificarToken,
@@ -197,6 +203,18 @@ router.get(
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.dashboard,
+);
+router.patch(
+  "/api/admin/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.atualizarPassageiro,
+);
+router.patch(
+  "/api/admin/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.atualizarMotorista,
 );
 router.get(
   "/api/enderecos",
