@@ -1,11 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { Usuario } from "../model/Usuario.js";
 import { AuthService } from "../services/AuthService.js";
-import { DatabaseModel } from "../model/DatabaseModel.js";
 import bcrypt from "bcrypt";
- 
-const database = new DatabaseModel().pool;
- 
+import { Passageiro } from "../model/Passageiro.js";
+import { Motorista } from "../model/Motorista.js";
+
 export class UsuarioController {
  
   static async login(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -53,7 +52,6 @@ export class UsuarioController {
       next(error);
     }
   }
- 
   static async registrar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { tipo, endereco, ...dados } = req.body;
@@ -62,61 +60,26 @@ export class UsuarioController {
         return res.status(400).json({ mensagem: "Tipo inválido. Use 'passageiro' ou 'motorista'." });
       }
  
-      const salt = await bcrypt.genSalt(10);
-      const senhaHash = await bcrypt.hash(dados.senha, salt);
- 
-      if (tipo === "passageiro") {
-        await database.query(
-          `CALL sp_cadastrar_passageiro(
-            $1, $2, $3, $4, $5, $6, $7, $8,
-            $9, $10, $11, $12, $13, $14, $15, NULL
-          )`,
-          [
-            dados.nome,
-            dados.sobrenome,
-            dados.email,
-            senhaHash,
-            dados.cpf,
-            dados.celular,
-            dados.dataNascimento,
-            dados.necessidades ?? [],
-            endereco?.rua        ?? null,
-            endereco?.numero     ?? null,
-            endereco?.bairro     ?? null,
-            endereco?.cidade     ?? null,
-            endereco?.estado     ?? null,
-            endereco?.cep        ?? null,
-            endereco?.complemento ?? null,
-          ],
-        );
-      } else {
-        await database.query(
-          `CALL sp_cadastrar_motorista(
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-            $11, $12, $13, $14, $15, $16, $17, NULL
-          )`,
-          [
-            dados.nome,
-            dados.sobrenome,
-            dados.email,
-            senhaHash,
-            dados.cpf,
-            dados.cnh,
-            dados.celular,
-            dados.dataNascimento,
-            dados.antecedentesCriminais,
-            dados.especializacao ?? "Nenhuma",
-            endereco?.rua         ?? null,
-            endereco?.numero      ?? null,
-            endereco?.bairro      ?? null,
-            endereco?.cidade      ?? null,
-            endereco?.estado      ?? null,
-            endereco?.cep         ?? null,
-            endereco?.complemento ?? null,
-          ],
-        );
+      if (!dados.senha) {
+        return res.status(400).json({ mensagem: "Senha é obrigatória." });
       }
  
+      const salt = await bcrypt.genSalt(10);
+      const senhaHash = await bcrypt.hash(dados.senha, salt);
+      dados.senha = senhaHash;
+      let idGerado: number | undefined;
+ 
+      if (tipo === "passageiro") {
+        idGerado = await Passageiro.cadastrarPassageiro(dados, endereco);
+      } else {
+        idGerado = await Motorista.cadastrarMotorista(dados, endereco);
+      }
+
+      if (!idGerado) {
+        return res.status(400).json({ mensagem: `Erro ao cadastrar ${tipo}.` });
+      }
+      // O endereço já é tratado pela stored procedure quando fornecido
+
       return res.status(201).json({ mensagem: `${tipo} cadastrado com sucesso!` });
     } catch (error: any) {
       // Erros de validação lançados pela SP chegam aqui
