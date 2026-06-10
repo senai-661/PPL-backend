@@ -44,33 +44,33 @@ export class Passageiro extends Usuario {
   public setDataNascimento(v: Date): void { this.dataNascimento = v; }
   public setNecessidades(v: string[]): void { this.necessidades = v; }
 
- static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
+ static async cadastrarPassageiro(passageiro: PassageiroDTO, endereco?: any): Promise<number | null> {
   try {
-    const idUsuario = await Usuario.criarUsuario(
-      passageiro.nome,      
-      passageiro.sobrenome, 
-      passageiro.email,
-      passageiro.senha,
-      "passageiro"
-    );
-
-    if (!idUsuario) return null;
-
     const res = await database.query(
-      `INSERT INTO passageiro (id_usuario, cpf, celular, data_nascimento, necessidades)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id_passageiro;`,
+      `SELECT sp_cadastrar_passageiro(
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       ) AS id;`,
       [
-        idUsuario,
+        passageiro.nome,
+        passageiro.sobrenome,
+        passageiro.email,
+        passageiro.senha,
         passageiro.cpf,
         passageiro.celular,
         passageiro.dataNascimento,
         passageiro.necessidades ?? [],
+        endereco?.rua ?? null,
+        endereco?.numero ?? null,
+        endereco?.bairro ?? null,
+        endereco?.cidade ?? null,
+        endereco?.estado ?? null,
+        endereco?.cep ?? null,
       ]
     );
-    return res.rows[0].id_passageiro;
+    return res.rows[0]?.id ?? null;
   } catch (error) {
     console.error(`Erro ao cadastrar passageiro: ${error}`);
-    return null;
+    throw error;
   }
 }
 

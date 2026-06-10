@@ -60,35 +60,38 @@ export class Motorista extends Usuario {
   public setEspecializacao(v: string): void { this.especializacao = v; }
   public setDisponivel(v: boolean): void {this.disponivel = v;}
 
-  static async cadastrarMotorista(motorista: MotoristaDTO): Promise<number | null> {
+  static async cadastrarMotorista(motorista: MotoristaDTO, endereco?: any): Promise<number | null> {
   try {
-    const idUsuario = await Usuario.criarUsuario(
-      motorista.nome,      
-      motorista.sobrenome, 
-      motorista.email,
-      motorista.senha,
-      "motorista"
-    );
-    if (!idUsuario) return null;
     const res = await database.query(
-      `INSERT INTO motorista
-        (id_usuario, cpf, cnh, celular, data_nascimento, antecedentes_criminais, especializacao)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id_motorista;`,
+      `SELECT sp_cadastrar_motorista(
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19
+       ) AS id;`,
       [
-        idUsuario,
+        motorista.nome,
+        motorista.sobrenome,
+        motorista.email,
+        motorista.senha,
         motorista.cpf,
         motorista.cnh,
         motorista.celular,
         motorista.dataNascimento,
-        motorista.antecedentesCriminais.toUpperCase(),
-        (motorista.especializacao ?? "Nenhuma").toUpperCase(),
+        motorista.antecedentesCriminais,
+        motorista.especializacao ?? 'Nenhuma',
+        endereco?.rua ?? null,
+        endereco?.numero ?? null,
+        endereco?.bairro ?? null,
+        endereco?.cidade ?? null,
+        endereco?.estado ?? null,
+        endereco?.cep ?? null,
+        endereco?.complemento ?? null,
+        null,
+        null,
       ]
     );
-    return res.rows[0].id_motorista;
+    return res.rows[0]?.id ?? null;
   } catch (error) {
     console.error(`Erro ao cadastrar motorista: ${error}`);
-    return null;
+    throw error;
   }
 }
   static async buscarPorEmail(email: string): Promise<Motorista | null> {
