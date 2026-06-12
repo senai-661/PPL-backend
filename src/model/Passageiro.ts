@@ -44,33 +44,33 @@ export class Passageiro extends Usuario {
   public setDataNascimento(v: Date): void { this.dataNascimento = v; }
   public setNecessidades(v: string[]): void { this.necessidades = v; }
 
- static async cadastrarPassageiro(passageiro: PassageiroDTO): Promise<number | null> {
+ static async cadastrarPassageiro(passageiro: PassageiroDTO, endereco?: any): Promise<number | null> {
   try {
-    const idUsuario = await Usuario.criarUsuario(
-      passageiro.nome,      
-      passageiro.sobrenome, 
-      passageiro.email,
-      passageiro.senha,
-      "passageiro"
-    );
-
-    if (!idUsuario) return null;
-
     const res = await database.query(
-      `INSERT INTO passageiro (id_usuario, cpf, celular, data_nascimento, necessidades)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id_passageiro;`,
+      `SELECT sp_cadastrar_passageiro(
+         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+       ) AS id;`,
       [
-        idUsuario,
+        passageiro.nome,
+        passageiro.sobrenome,
+        passageiro.email,
+        passageiro.senha,
         passageiro.cpf,
         passageiro.celular,
         passageiro.dataNascimento,
         passageiro.necessidades ?? [],
+        endereco?.rua ?? null,
+        endereco?.numero ?? null,
+        endereco?.bairro ?? null,
+        endereco?.cidade ?? null,
+        endereco?.estado ?? null,
+        endereco?.cep ?? null,
       ]
     );
-    return res.rows[0].id_passageiro;
+    return res.rows[0]?.id ?? null;
   } catch (error) {
     console.error(`Erro ao cadastrar passageiro: ${error}`);
-    return null;
+    throw error;
   }
 }
 
@@ -138,12 +138,21 @@ export class Passageiro extends Usuario {
     dados: Partial<PassageiroDTO>
   ): Promise<boolean> {
     try {
-      if (dados.email || dados.senha) {
+      const temCamposU = dados.nome || dados.sobrenome || dados.email || dados.senha;
+      const temCamposP = dados.cpf || dados.celular || dados.dataNascimento || dados.necessidades;
+
+      if (!temCamposU && !temCamposP) {
+        return false;
+      }
+
+      if (temCamposU) {
         const camposU: string[] = [];
         const valoresU: any[] = [];
         let i = 1;
-        if (dados.email) { camposU.push(`email = $${i++}`); valoresU.push(dados.email); }
-        if (dados.senha) { camposU.push(`senha = $${i++}`); valoresU.push(dados.senha); }
+        if (dados.nome)      { camposU.push(`nome = $${i++}`);      valoresU.push(dados.nome.toUpperCase()); }
+        if (dados.sobrenome) { camposU.push(`sobrenome = $${i++}`); valoresU.push(dados.sobrenome.toUpperCase()); }
+        if (dados.email)     { camposU.push(`email = $${i++}`);     valoresU.push(dados.email); }
+        if (dados.senha)     { camposU.push(`senha = $${i++}`);     valoresU.push(dados.senha); }
         valoresU.push(idPassageiro);
         await database.query(
           `UPDATE usuario SET ${camposU.join(", ")}
@@ -152,13 +161,15 @@ export class Passageiro extends Usuario {
         );
       }
 
-      const camposP: string[] = [];
-      const valoresP: any[] = [];
-      let j = 1;
-      if (dados.celular)      { camposP.push(`celular = $${j++}`);      valoresP.push(dados.celular); }
-      if (dados.necessidades) { camposP.push(`necessidades = $${j++}`); valoresP.push(dados.necessidades); }
+      if (temCamposP) {
+        const camposP: string[] = [];
+        const valoresP: any[] = [];
+        let j = 1;
+        if (dados.cpf)            { camposP.push(`cpf = $${j++}`);            valoresP.push(dados.cpf); }
+        if (dados.celular)        { camposP.push(`celular = $${j++}`);        valoresP.push(dados.celular); }
+        if (dados.dataNascimento) { camposP.push(`data_nascimento = $${j++}`); valoresP.push(dados.dataNascimento); }
+        if (dados.necessidades)   { camposP.push(`necessidades = $${j++}`);   valoresP.push(dados.necessidades); }
 
-      if (camposP.length > 0) {
         valoresP.push(idPassageiro);
         await database.query(
           `UPDATE passageiro SET ${camposP.join(", ")} WHERE id_passageiro = $${j};`,
