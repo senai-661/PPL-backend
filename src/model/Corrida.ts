@@ -45,79 +45,31 @@ class Corrida {
     this.statusCorrida = _statusCorrida;
   }
 
-  public getIdCorrida(): number {
-    return this.idCorrida;
-  }
-  public getIdPassageiro(): number {
-    return this.idPassageiro;
-  }
-  public getIdMotorista(): number | null {
-    return this.idMotorista;
-  }
-  public getIdVeiculo(): number | null {
-    return this.idVeiculo;
-  }
-  public getOrigemCorrida(): string {
-    return this.origemCorrida;
-  }
-  public getDestinoCorrida(): string {
-    return this.destinoCorrida;
-  }
-  public getTipoCorrida(): string {
-    return this.tipoCorrida;
-  }
-  public getPreco(): number {
-    return this.preco;
-  }
-  public getDataCorrida(): Date {
-    return this.dataCorrida;
-  }
-  public getDuracaoCorrida(): number {
-    return this.duracaoCorrida;
-  }
-  public getMotivoCancelamento(): string | null {
-    return this.motivoCancelamento;
-  }
-  public getStatusCorrida(): string {
-    return this.statusCorrida;
-  }
+  public getIdCorrida(): number { return this.idCorrida; }
+  public getIdPassageiro(): number { return this.idPassageiro; }
+  public getIdMotorista(): number | null { return this.idMotorista; }
+  public getIdVeiculo(): number | null { return this.idVeiculo; }
+  public getOrigemCorrida(): string { return this.origemCorrida; }
+  public getDestinoCorrida(): string { return this.destinoCorrida; }
+  public getTipoCorrida(): string { return this.tipoCorrida; }
+  public getPreco(): number { return this.preco; }
+  public getDataCorrida(): Date { return this.dataCorrida; }
+  public getDuracaoCorrida(): number { return this.duracaoCorrida; }
+  public getMotivoCancelamento(): string | null { return this.motivoCancelamento; }
+  public getStatusCorrida(): string { return this.statusCorrida; }
 
-  public setIdCorrida(v: number): void {
-    this.idCorrida = v;
-  }
-  public setIdPassageiro(v: number): void {
-    this.idPassageiro = v;
-  }
-  public setIdMotorista(v: number | null): void {
-    this.idMotorista = v;
-  }
-  public setIdVeiculo(v: number | null): void {
-    this.idVeiculo = v;
-  }
-  public setOrigemCorrida(v: string): void {
-    this.origemCorrida = v;
-  }
-  public setDestinoCorrida(v: string): void {
-    this.destinoCorrida = v;
-  }
-  public setTipoCorrida(v: string): void {
-    this.tipoCorrida = v;
-  }
-  public setPreco(v: number): void {
-    this.preco = v;
-  }
-  public setDataCorrida(v: Date): void {
-    this.dataCorrida = v;
-  }
-  public setDuracaoCorrida(v: number): void {
-    this.duracaoCorrida = v;
-  }
-  public setMotivoCancelamento(v: string | null): void {
-    this.motivoCancelamento = v;
-  }
-  public setStatusCorrida(v: string): void {
-    this.statusCorrida = v;
-  }
+  public setIdCorrida(v: number): void { this.idCorrida = v; }
+  public setIdPassageiro(v: number): void { this.idPassageiro = v; }
+  public setIdMotorista(v: number | null): void { this.idMotorista = v; }
+  public setIdVeiculo(v: number | null): void { this.idVeiculo = v; }
+  public setOrigemCorrida(v: string): void { this.origemCorrida = v; }
+  public setDestinoCorrida(v: string): void { this.destinoCorrida = v; }
+  public setTipoCorrida(v: string): void { this.tipoCorrida = v; }
+  public setPreco(v: number): void { this.preco = v; }
+  public setDataCorrida(v: Date): void { this.dataCorrida = v; }
+  public setDuracaoCorrida(v: number): void { this.duracaoCorrida = v; }
+  public setMotivoCancelamento(v: string | null): void { this.motivoCancelamento = v; }
+  public setStatusCorrida(v: string): void { this.statusCorrida = v; }
 
   private static fromRow(c: any): Corrida {
     return new Corrida(
@@ -135,32 +87,12 @@ class Corrida {
       c.status_corrida,
     );
   }
+
   static async buscarPorId(idCorrida: number): Promise<any | null> {
     try {
       const res = await database.query(
-        `SELECT
-        c.*,
-        -- Passenger info
-        u_p.nome       AS passageiro_nome,
-        u_p.sobrenome  AS passageiro_sobrenome,
-        p.celular      AS passageiro_celular,
-        p.necessidades AS passageiro_necessidades,
-        -- Driver info
-        u_m.nome       AS motorista_nome,
-        u_m.sobrenome  AS motorista_sobrenome,
-        m.celular      AS motorista_celular,
-        m.especializacao,
-        -- Vehicle info
-        v.modelo_veiculo,
-        v.placa,
-        v.tipo_veiculo
-       FROM corrida c
-       JOIN passageiro p     ON p.id_passageiro = c.id_passageiro
-       JOIN usuario u_p      ON u_p.id_usuario = p.id_usuario
-       LEFT JOIN motorista m ON m.id_motorista = c.id_motorista
-       LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
-       LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
-       WHERE c.id_corrida = $1;`,
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE id_corrida = $1;`,
         [idCorrida],
       );
 
@@ -181,15 +113,12 @@ class Corrida {
           id: c.id_passageiro,
           nome: c.passageiro_nome,
           sobrenome: c.passageiro_sobrenome,
-          celular: c.passageiro_celular,
-          necessidades: c.passageiro_necessidades,
         },
         motorista: c.id_motorista
           ? {
               id: c.id_motorista,
               nome: c.motorista_nome,
               sobrenome: c.motorista_sobrenome,
-              celular: c.motorista_celular,
               especializacao: c.especializacao,
             }
           : null,
@@ -233,15 +162,14 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     try {
       const res = await database.query(
         `UPDATE corrida
-       SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
-       WHERE id_corrida = $3 AND status_corrida = 'Pendente'
-       RETURNING id_corrida;`,
+         SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
+         WHERE id_corrida = $3 AND status_corrida = 'Pendente'
+         RETURNING id_corrida;`,
         [idMotorista, idVeiculo, idCorrida],
       );
 
       if (res.rowCount === null || res.rowCount === 0) return false;
 
-      // Driver goes offline automatically after accepting
       await database.query(
         `UPDATE motorista SET disponivel = false WHERE id_motorista = $1;`,
         [idMotorista],
@@ -298,7 +226,7 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
 
   static async listarCorridas(): Promise<Array<Corrida> | null> {
     try {
-      const res = await database.query(`SELECT * FROM corrida;`);
+      const res = await database.query(`SELECT * FROM vw_corridas_detalhadas;`);
       return res.rows.map(Corrida.fromRow);
     } catch (error) {
       console.error(`Erro ao listar corridas: ${error}`);
@@ -306,36 +234,53 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     }
   }
 
-static async listarPorStatus(
-  status: string,
-  idMotorista?: number,
-): Promise<Array<any> | null> {
-  try {
-    if (status === "Pendente" && idMotorista) {
-      const res = await database.query(
-        `SELECT 
-          c.*,
-          u_p.nome       AS passageiro_nome,
-          u_p.sobrenome  AS passageiro_sobrenome,
-          p.celular      AS passageiro_celular,
-          p.necessidades AS passageiro_necessidades
-         FROM corrida c
-         JOIN passageiro p ON p.id_passageiro = c.id_passageiro
-         JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
-         JOIN motorista m  ON m.id_motorista = $1
-         WHERE c.status_corrida = 'Pendente'
-         AND m.disponivel = true
-         AND (
-           array_length(p.necessidades, 1) IS NULL
-           OR (
-             ('Cadeirante' = ANY(p.necessidades) AND m.especializacao ILIKE 'mobilidade reduzida')
-             OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao ILIKE 'libras')
-             OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao ILIKE 'deficiência visual')
+  static async listarPorStatus(
+    status: string,
+    idMotorista?: number,
+  ): Promise<Array<any> | null> {
+    try {
+      if (status === "Pendente" && idMotorista) {
+        const res = await database.query(
+          `SELECT
+            vw.*
+           FROM vw_corridas_detalhadas vw
+           JOIN motorista m ON m.id_motorista = $1
+           JOIN passageiro p ON p.id_passageiro = vw.id_passageiro
+           WHERE vw.status_corrida = 'Pendente'
+           AND m.disponivel = true
+           AND (
+             array_length(p.necessidades, 1) IS NULL
+             OR (
+               ('Cadeirante' = ANY(p.necessidades) AND m.especializacao ILIKE 'mobilidade reduzida')
+               OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao ILIKE 'libras')
+               OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao ILIKE 'deficiência visual')
+             )
            )
-         )
-         ORDER BY c.data_corrida ASC;`,
-        [idMotorista],  
-      );              
+           ORDER BY vw.data_corrida ASC;`,
+          [idMotorista],
+        );
+        return res.rows.map((c) => ({
+          idCorrida: c.id_corrida,
+          origemCorrida: c.origem_corrida,
+          destinoCorrida: c.destino_corrida,
+          tipoCorrida: c.tipo_corrida,
+          preco: c.preco,
+          dataCorrida: c.data_corrida,
+          statusCorrida: c.status_corrida,
+          passageiro: {
+            id: c.id_passageiro,
+            nome: c.passageiro_nome,
+            sobrenome: c.passageiro_sobrenome,
+          },
+        }));
+      }
+
+      const res = await database.query(
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE status_corrida = $1
+         ORDER BY data_corrida DESC;`,
+        [status],
+      );
       return res.rows.map((c) => ({
         idCorrida: c.id_corrida,
         origemCorrida: c.origem_corrida,
@@ -343,83 +288,35 @@ static async listarPorStatus(
         tipoCorrida: c.tipo_corrida,
         preco: c.preco,
         dataCorrida: c.data_corrida,
+        duracaoCorrida: c.duracao_corrida,
+        motivoCancelamento: c.motivo_cancelamento,
         statusCorrida: c.status_corrida,
-        passageiro: {
-          id: c.id_passageiro,
-          nome: c.passageiro_nome,
-          sobrenome: c.passageiro_sobrenome,
-          celular: c.passageiro_celular,
-          necessidades: c.passageiro_necessidades,
-        },
+        motorista: c.id_motorista ? {
+          id: c.id_motorista,
+          nome: c.motorista_nome,
+          sobrenome: c.motorista_sobrenome,
+          especializacao: c.especializacao,
+        } : null,
+        veiculo: c.id_veiculo ? {
+          modelo: c.modelo_veiculo,
+          placa: c.placa,
+          tipo: c.tipo_veiculo,
+        } : null,
       }));
+    } catch (error) {
+      console.error(`Erro ao listar corridas por status: ${error}`);
+      return null;
     }
-    const res = await database.query(
-      `SELECT 
-        c.*,
-        u_m.nome       AS motorista_nome,
-        u_m.sobrenome  AS motorista_sobrenome,
-        m.celular      AS motorista_celular,
-        m.especializacao,
-        v.modelo_veiculo,
-        v.placa,
-        v.tipo_veiculo
-       FROM corrida c
-       LEFT JOIN motorista m  ON m.id_motorista = c.id_motorista
-       LEFT JOIN usuario u_m  ON u_m.id_usuario = m.id_usuario
-       LEFT JOIN veiculo v    ON v.id_veiculo = c.id_veiculo
-       WHERE c.status_corrida = $1
-       ORDER BY c.data_corrida DESC;`,
-      [status],
-    );
-    return res.rows.map((c) => ({
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      duracaoCorrida: c.duracao_corrida,
-      motivoCancelamento: c.motivo_cancelamento,
-      statusCorrida: c.status_corrida,
-      motorista: c.id_motorista ? {
-        id: c.id_motorista,
-        nome: c.motorista_nome,
-        sobrenome: c.motorista_sobrenome,
-        celular: c.motorista_celular,
-        especializacao: c.especializacao,
-      } : null,
-      veiculo: c.id_veiculo ? {
-        modelo: c.modelo_veiculo,
-        placa: c.placa,
-        tipo: c.tipo_veiculo,
-      } : null,
-    }));
-  } catch (error) {
-    console.error(`Erro ao listar corridas por status: ${error}`);
-    return null;
   }
-}
 
   static async historicoPorPassageiro(
     idPassageiro: number,
   ): Promise<Array<any> | null> {
     try {
       const res = await database.query(
-        `SELECT 
-        c.*,
-        u_m.nome      AS motorista_nome,
-        u_m.sobrenome AS motorista_sobrenome,
-        m.celular     AS motorista_celular,
-        m.especializacao,
-        v.modelo_veiculo,
-        v.placa,
-        v.tipo_veiculo
-       FROM corrida c
-       LEFT JOIN motorista m ON m.id_motorista = c.id_motorista
-       LEFT JOIN usuario u_m ON u_m.id_usuario = m.id_usuario
-       LEFT JOIN veiculo v   ON v.id_veiculo = c.id_veiculo
-       WHERE c.id_passageiro = $1
-       ORDER BY c.data_corrida DESC;`,
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE id_passageiro = $1
+         ORDER BY data_corrida DESC;`,
         [idPassageiro],
       );
 
@@ -438,7 +335,6 @@ static async listarPorStatus(
               id: c.id_motorista,
               nome: c.motorista_nome,
               sobrenome: c.motorista_sobrenome,
-              celular: c.motorista_celular,
               especializacao: c.especializacao,
             }
           : null,
@@ -461,17 +357,9 @@ static async listarPorStatus(
   ): Promise<Array<any> | null> {
     try {
       const res = await database.query(
-        `SELECT 
-        c.*,
-        u_p.nome       AS passageiro_nome,
-        u_p.sobrenome  AS passageiro_sobrenome,
-        p.celular      AS passageiro_celular,
-        p.necessidades AS passageiro_necessidades
-       FROM corrida c
-       JOIN passageiro p ON p.id_passageiro = c.id_passageiro
-       JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
-       WHERE c.id_motorista = $1
-       ORDER BY c.data_corrida DESC;`,
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE id_motorista = $1
+         ORDER BY data_corrida DESC;`,
         [idMotorista],
       );
 
@@ -489,8 +377,6 @@ static async listarPorStatus(
           id: c.id_passageiro,
           nome: c.passageiro_nome,
           sobrenome: c.passageiro_sobrenome,
-          celular: c.passageiro_celular,
-          necessidades: c.passageiro_necessidades,
         },
       }));
     } catch (error) {
@@ -498,6 +384,7 @@ static async listarPorStatus(
       return null;
     }
   }
+
   static async relatorioMotorista(idMotorista: number): Promise<any | null> {
     try {
       const statsRes = await database.query(
@@ -514,11 +401,10 @@ static async listarPorStatus(
 
       const avaliacaoRes = await database.query(
         `SELECT
-          ROUND(AVG(ac.nota), 1) AS media_avaliacao,
-          COUNT(ac.id_avaliacao) AS total_avaliacoes
-         FROM avaliacao_corrida ac
-         JOIN corrida c ON c.id_corrida = ac.id_corrida
-         WHERE c.id_motorista = $1;`,
+          ROUND(AVG(nota), 1) AS media_avaliacao,
+          COUNT(id_avaliacao) AS total_avaliacoes
+         FROM vw_avaliacoes_detalhadas
+         WHERE id_motorista = $1;`,
         [idMotorista],
       );
 
@@ -559,213 +445,182 @@ static async listarPorStatus(
   }
 
   static async corridaAtualPassageiro(idPassageiro: number): Promise<any | null> {
-  const query = `
-    SELECT
-      c.*,
-      u_m.nome       AS motorista_nome,
-      u_m.sobrenome  AS motorista_sobrenome,
-      m.celular      AS motorista_celular,
-      m.especializacao,
-      v.modelo_veiculo,
-      v.placa,
-      v.tipo_veiculo
-    FROM corrida c
-    LEFT JOIN motorista m  ON m.id_motorista = c.id_motorista
-    LEFT JOIN usuario u_m  ON u_m.id_usuario = m.id_usuario
-    LEFT JOIN veiculo v    ON v.id_veiculo = c.id_veiculo
-    WHERE c.id_passageiro = $1
-      AND c.status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
-    ORDER BY c.data_corrida DESC
-    LIMIT 1;
-  `;
-
-  try {
-    const { rows } = await database.query(query, [idPassageiro]);
-
-    if (rows.length === 0) return null;
-
-    const c = rows[0];
-
-    return {
-      idCorrida: c.id_corrida,
-      origemCorrida: c.origem_corrida,
-      destinoCorrida: c.destino_corrida,
-      tipoCorrida: c.tipo_corrida,
-      preco: c.preco,
-      dataCorrida: c.data_corrida,
-      statusCorrida: c.status_corrida,
-      motorista: c.id_motorista
-        ? {
-            id: c.id_motorista,
-            nome: c.motorista_nome,
-            sobrenome: c.motorista_sobrenome,
-            celular: c.motorista_celular,
-            especializacao: c.especializacao,
-          }
-        : null,
-      veiculo: c.id_veiculo
-        ? {
-            modelo: c.modelo_veiculo,
-            placa: c.placa,
-            tipo: c.tipo_veiculo,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error(`Erro ao buscar corrida atual do passageiro ${idPassageiro}:`, error);
-    return null;
-  }
- }
- static async corridaAtualMotorista(idMotorista: number): Promise<any | null> {
-    const query = `
-        SELECT
-            c.*,
-            u_p.nome       AS passageiro_nome,
-            u_p.sobrenome  AS passageiro_sobrenome,
-            p.celular      AS passageiro_celular,
-            p.necessidades AS passageiro_necessidades
-        FROM corrida c
-        JOIN passageiro p ON p.id_passageiro = c.id_passageiro
-        JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
-        WHERE c.id_motorista = $1
-          AND c.status_corrida IN ('Aceito', 'Em andamento')
-        ORDER BY c.data_corrida DESC
-        LIMIT 1;
-    `;
-
     try {
-        const { rows } = await database.query(query, [idMotorista]);
+      const res = await database.query(
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE id_passageiro = $1
+           AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
+         ORDER BY data_corrida DESC
+         LIMIT 1;`,
+        [idPassageiro],
+      );
 
-        if (rows.length === 0) return null;
+      if (res.rows.length === 0) return null;
+      const c = res.rows[0];
 
-        const c = rows[0];
-
-        return {
-            idCorrida:          c.id_corrida,
-            origemCorrida:      c.origem_corrida,
-            destinoCorrida:     c.destino_corrida,
-            tipoCorrida:        c.tipo_corrida,
-            preco:              c.preco,
-            dataCorrida:        c.data_corrida,
-            statusCorrida:      c.status_corrida,
-            passageiro: {
-                id:           c.id_passageiro,
-                nome:         c.passageiro_nome,
-                sobrenome:    c.passageiro_sobrenome,
-                celular:      c.passageiro_celular,
-                necessidades: c.passageiro_necessidades
+      return {
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        statusCorrida: c.status_corrida,
+        motorista: c.id_motorista
+          ? {
+              id: c.id_motorista,
+              nome: c.motorista_nome,
+              sobrenome: c.motorista_sobrenome,
+              especializacao: c.especializacao,
             }
-        };
+          : null,
+        veiculo: c.id_veiculo
+          ? {
+              modelo: c.modelo_veiculo,
+              placa: c.placa,
+              tipo: c.tipo_veiculo,
+            }
+          : null,
+      };
     } catch (error) {
-        console.error(`Erro ao buscar corrida atual do motorista ${idMotorista}:`, error);
-        return null;
+      console.error(`Erro ao buscar corrida atual do passageiro ${idPassageiro}:`, error);
+      return null;
     }
-}
+  }
 
-static async resumoDiaMotorista(idMotorista: number): Promise<any | null> {
-    const query = `
-        SELECT
-            COUNT(*) FILTER (WHERE status_corrida = 'Aceito')                           AS corridas_aceitas,
-            COUNT(*) FILTER (WHERE status_corrida = 'Finalizada')                       AS corridas_finalizadas,
-            COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0)        AS total_ganho
-        FROM corrida
-        WHERE id_motorista = $1
-          AND DATE(data_corrida) = CURRENT_DATE;
-    `;
-
+  static async corridaAtualMotorista(idMotorista: number): Promise<any | null> {
     try {
-        const { rows } = await database.query(query, [idMotorista]);
+      const res = await database.query(
+        `SELECT * FROM vw_corridas_detalhadas
+         WHERE id_motorista = $1
+           AND status_corrida IN ('Aceito', 'Em andamento')
+         ORDER BY data_corrida DESC
+         LIMIT 1;`,
+        [idMotorista],
+      );
 
-        const r = rows[0];
+      if (res.rows.length === 0) return null;
+      const c = res.rows[0];
 
-        return {
-            corridasAceitas:     parseInt(r.corridas_aceitas),
-            corridasFinalizadas: parseInt(r.corridas_finalizadas),
-            totalGanho:          parseFloat(r.total_ganho)
-        };
+      return {
+        idCorrida: c.id_corrida,
+        origemCorrida: c.origem_corrida,
+        destinoCorrida: c.destino_corrida,
+        tipoCorrida: c.tipo_corrida,
+        preco: c.preco,
+        dataCorrida: c.data_corrida,
+        statusCorrida: c.status_corrida,
+        passageiro: {
+          id: c.id_passageiro,
+          nome: c.passageiro_nome,
+          sobrenome: c.passageiro_sobrenome,
+        },
+      };
     } catch (error) {
-        console.error(`Erro ao buscar resumo do dia do motorista ${idMotorista}:`, error);
-        return null;
+      console.error(`Erro ao buscar corrida atual do motorista ${idMotorista}:`, error);
+      return null;
     }
-}
-
-static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
-  try {
-    // Stats de corridas finalizadas
-    const statsRes = await database.query(
-      `SELECT
-        COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_viagens,
-        COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
-       FROM corrida 
-       WHERE id_passageiro = $1;`,
-      [idPassageiro],
-    );
-
-    // Destino mais frequente (apenas corridas finalizadas)
-    const destinoRes = await database.query(
-      `SELECT destino_corrida, COUNT(*) as total
-       FROM corrida 
-       WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
-       GROUP BY destino_corrida
-       ORDER BY total DESC
-       LIMIT 1;`,
-      [idPassageiro],
-    );
-
-    // Data de cadastro do passageiro
-    const usuarioRes = await database.query(
-      `SELECT u.criado_em 
-       FROM usuario u
-       JOIN passageiro p ON p.id_usuario = u.id_usuario
-       WHERE p.id_passageiro = $1;`,
-      [idPassageiro],
-    );
-
-    const stats = statsRes.rows[0];
-    const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
-    const desde = usuarioRes.rows[0]?.criado_em || new Date();
-
-    return {
-      totalViagens: parseInt(stats.total_viagens) || 0,
-      totalGasto: parseFloat(stats.total_gasto) || 0,
-      destinoFavorito: destinoFavorito,
-      desde: desde,
-    };
-  } catch (error) {
-    console.error(`Erro ao gerar relatório do passageiro: ${error}`);
-    return null;
   }
-}
-static async motoristaTemCorridaAtiva(idMotorista: number): Promise<boolean> {
-  try {
-    const res = await database.query(
-      `SELECT id_corrida FROM corrida 
-       WHERE id_motorista = $1 
-       AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
-       LIMIT 1;`,
-      [idMotorista]
-    );
-    return res.rows.length > 0;
-  } catch (error) {
-    console.error(`Erro ao verificar corrida ativa do motorista: ${error}`);
-    return false;
+
+  static async resumoDiaMotorista(idMotorista: number): Promise<any | null> {
+    try {
+      const { rows } = await database.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status_corrida = 'Aceito')                    AS corridas_aceitas,
+          COUNT(*) FILTER (WHERE status_corrida = 'Finalizada')                AS corridas_finalizadas,
+          COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_ganho
+         FROM corrida
+         WHERE id_motorista = $1
+           AND DATE(data_corrida) = CURRENT_DATE;`,
+        [idMotorista],
+      );
+
+      const r = rows[0];
+      return {
+        corridasAceitas: parseInt(r.corridas_aceitas),
+        corridasFinalizadas: parseInt(r.corridas_finalizadas),
+        totalGanho: parseFloat(r.total_ganho),
+      };
+    } catch (error) {
+      console.error(`Erro ao buscar resumo do dia do motorista ${idMotorista}:`, error);
+      return null;
+    }
   }
-}
-static async passageiroTemCorridaAtiva(idPassageiro: number): Promise<boolean> {
-  try {
-    const res = await database.query(
-      `SELECT id_corrida FROM corrida 
-       WHERE id_passageiro = $1 
-       AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
-       LIMIT 1;`,
-      [idPassageiro]
-    );
-    return res.rows.length > 0;
-  } catch (error) {
-    console.error(`Erro ao verificar corrida ativa do passageiro: ${error}`);
-    return false;
+
+  static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
+    try {
+      const statsRes = await database.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_viagens,
+          COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
+         FROM corrida
+         WHERE id_passageiro = $1;`,
+        [idPassageiro],
+      );
+
+      const destinoRes = await database.query(
+        `SELECT destino_corrida, COUNT(*) as total
+         FROM corrida
+         WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
+         GROUP BY destino_corrida
+         ORDER BY total DESC
+         LIMIT 1;`,
+        [idPassageiro],
+      );
+
+      const usuarioRes = await database.query(
+        `SELECT criado_em FROM vw_passageiros_detalhados
+         WHERE id_passageiro = $1;`,
+        [idPassageiro],
+      );
+
+      const stats = statsRes.rows[0];
+      const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
+      const desde = usuarioRes.rows[0]?.criado_em || new Date();
+
+      return {
+        totalViagens: parseInt(stats.total_viagens) || 0,
+        totalGasto: parseFloat(stats.total_gasto) || 0,
+        destinoFavorito: destinoFavorito,
+        desde: desde,
+      };
+    } catch (error) {
+      console.error(`Erro ao gerar relatório do passageiro: ${error}`);
+      return null;
+    }
   }
-}
+
+  static async motoristaTemCorridaAtiva(idMotorista: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `SELECT id_corrida FROM corrida
+         WHERE id_motorista = $1
+         AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
+         LIMIT 1;`,
+        [idMotorista]
+      );
+      return res.rows.length > 0;
+    } catch (error) {
+      console.error(`Erro ao verificar corrida ativa do motorista: ${error}`);
+      return false;
+    }
+  }
+
+  static async passageiroTemCorridaAtiva(idPassageiro: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `SELECT id_corrida FROM corrida
+         WHERE id_passageiro = $1
+         AND status_corrida IN ('Pendente', 'Aceito', 'Em andamento')
+         LIMIT 1;`,
+        [idPassageiro]
+      );
+      return res.rows.length > 0;
+    } catch (error) {
+      console.error(`Erro ao verificar corrida ativa do passageiro: ${error}`);
+      return false;
+    }
+  }
 }
 
 export { Corrida };
