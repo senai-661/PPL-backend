@@ -72,15 +72,12 @@ export class Passageiro extends Usuario {
     console.error(`Erro ao cadastrar passageiro: ${error}`);
     throw error;
   }
-}
-
+ }
   static async buscarPorEmail(email: string): Promise<Passageiro | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
-         FROM usuario u
-         JOIN passageiro p ON p.id_usuario = u.id_usuario
-         WHERE u.email = $1;`,
+        `SELECT * FROM vw_passageiros_detalhados
+         WHERE email = $1;`,
         [email]
       );
       if (res.rows.length === 0) return null;
@@ -98,10 +95,8 @@ export class Passageiro extends Usuario {
   static async buscarPorId(idPassageiro: number): Promise<Passageiro | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
-         FROM usuario u
-         JOIN passageiro p ON p.id_usuario = u.id_usuario
-         WHERE p.id_passageiro = $1;`,
+        `SELECT * FROM vw_passageiros_detalhados
+         WHERE id_passageiro = $1;`,
         [idPassageiro]
       );
       if (res.rows.length === 0) return null;
@@ -119,9 +114,7 @@ export class Passageiro extends Usuario {
   static async listarPassageiros(): Promise<Array<Passageiro> | null> {
     try {
       const res = await database.query(
-        `SELECT u.*, p.id_passageiro, p.cpf, p.celular, p.data_nascimento, p.necessidades
-         FROM usuario u
-         JOIN passageiro p ON p.id_usuario = u.id_usuario;`
+        `SELECT * FROM vw_passageiros_detalhados;`
       );
       return res.rows.map((r) => new Passageiro(
         r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
@@ -184,48 +177,47 @@ export class Passageiro extends Usuario {
     }
   }
 
-static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
-  try {
-    // Stats de corridas
-    const statsRes = await database.query(
-      `SELECT
-        COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_finalizadas,
-        COUNT(*) AS total_corridas,
-        COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
-       FROM corrida 
-       WHERE id_passageiro = $1;`,
-      [idPassageiro],
-    );
-    // Destino mais frequente
-    const destinoRes = await database.query(
-      `SELECT destino_corrida, COUNT(*) as total
-       FROM corrida 
-       WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
-       GROUP BY destino_corrida
-       ORDER BY total DESC
-       LIMIT 1;`,
-      [idPassageiro],
-    );
-    // Data de cadastro (desde)
-    const usuarioRes = await database.query(
-      `SELECT u.criado_em 
-       FROM usuario u
-       JOIN passageiro p ON p.id_usuario = u.id_usuario
-       WHERE p.id_passageiro = $1;`,
-      [idPassageiro],
-    );
-    const stats = statsRes.rows[0];
-    const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
-    const desde = usuarioRes.rows[0]?.criado_em || new Date();
-    return {
-      totalViagens: parseInt(stats.total_finalizadas) || 0,
-      totalGasto: parseFloat(stats.total_gasto) || 0,
-      destinoFavorito: destinoFavorito,
-      desde: desde,
-    };
-  } catch (error) {
-    console.error(`Erro ao gerar relatório do passageiro: ${error}`);
-    return null;
+  static async relatorioPassageiro(idPassageiro: number): Promise<any | null> {
+    try {
+      // Stats de corridas
+      const statsRes = await database.query(
+        `SELECT
+          COUNT(*) FILTER (WHERE status_corrida = 'Finalizada') AS total_finalizadas,
+          COUNT(*) AS total_corridas,
+          COALESCE(SUM(preco) FILTER (WHERE status_corrida = 'Finalizada'), 0) AS total_gasto
+         FROM corrida
+         WHERE id_passageiro = $1;`,
+        [idPassageiro],
+      );
+      // Destino mais frequente
+      const destinoRes = await database.query(
+        `SELECT destino_corrida, COUNT(*) as total
+         FROM corrida
+         WHERE id_passageiro = $1 AND status_corrida = 'Finalizada'
+         GROUP BY destino_corrida
+         ORDER BY total DESC
+         LIMIT 1;`,
+        [idPassageiro],
+      );
+      // Data de cadastro (desde)
+      const usuarioRes = await database.query(
+        `SELECT criado_em FROM vw_passageiros_detalhados
+         WHERE id_passageiro = $1;`,
+        [idPassageiro],
+      );
+      const stats = statsRes.rows[0];
+      const destinoFavorito = destinoRes.rows[0]?.destino_corrida || null;
+      const desde = usuarioRes.rows[0]?.criado_em || new Date();
+      return {
+        totalViagens: parseInt(stats.total_finalizadas) || 0,
+        totalGasto: parseFloat(stats.total_gasto) || 0,
+        destinoFavorito: destinoFavorito,
+        desde: desde,
+      };
+    } catch (error) {
+      console.error(`Erro ao gerar relatório do passageiro: ${error}`);
+      return null;
+    }
   }
 }
-}
+
