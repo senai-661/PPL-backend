@@ -233,10 +233,21 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
   ): Promise<boolean> {
     try {
       const res = await database.query(
-        `UPDATE corrida
+        `UPDATE corrida c
        SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
-       WHERE id_corrida = $3 AND status_corrida = 'Pendente'
-       RETURNING id_corrida;`,
+       FROM motorista m, passageiro p
+       WHERE c.id_corrida = $3
+         AND c.status_corrida = 'Pendente'
+         AND m.id_motorista = $1
+         AND m.disponivel = true
+         AND p.id_passageiro = c.id_passageiro
+         AND (
+           cardinality(p.necessidades) = 0
+           OR ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'MOBILIDADE REDUZIDA')
+           OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
+           OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'DEFICIÊNCIA VISUAL')
+         )
+       RETURNING c.id_corrida;`,
         [idMotorista, idVeiculo, idCorrida],
       );
 
