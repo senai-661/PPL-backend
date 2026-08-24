@@ -13,7 +13,19 @@ class VeiculoController extends Veiculo {
 
   static async cadastro(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const dadosVeiculo = req.body;
+      const idMotorista = (req as any).usuario.id;
+      const { placa, tipoVeiculo, modeloVeiculo } = req.body;
+
+      if (!placa || !tipoVeiculo || !modeloVeiculo) {
+        return res.status(400).json({ mensagem: "Placa, tipo e modelo do veículo são obrigatórios." });
+      }
+
+      const dadosVeiculo = {
+        idMotorista,
+        placa,
+        tipoVeiculo,
+        modeloVeiculo,
+      };
       const respostaModelo = await Veiculo.cadastrarVeiculo(dadosVeiculo);
 
       if (respostaModelo) {

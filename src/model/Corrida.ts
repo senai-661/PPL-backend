@@ -109,6 +109,7 @@ class Corrida {
         duracaoCorrida: c.duracao_corrida,
         motivoCancelamento: c.motivo_cancelamento,
         statusCorrida: c.status_corrida,
+        dataInicioCorrida: c.data_inicio_corrida,
         passageiro: {
           id: c.id_passageiro,
           nome: c.passageiro_nome,
@@ -161,10 +162,21 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
   ): Promise<boolean> {
     try {
       const res = await database.query(
-        `UPDATE corrida
-         SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
-         WHERE id_corrida = $3 AND status_corrida = 'Pendente'
-         RETURNING id_corrida;`,
+        `UPDATE corrida c
+       SET id_motorista = $1, id_veiculo = $2, status_corrida = 'Aceito'
+       FROM motorista m, passageiro p
+       WHERE c.id_corrida = $3
+         AND c.status_corrida = 'Pendente'
+         AND m.id_motorista = $1
+         AND m.disponivel = true
+         AND p.id_passageiro = c.id_passageiro
+         AND (
+           cardinality(p.necessidades) = 0
+           OR ('Cadeirante' = ANY(p.necessidades) AND m.especializacao = 'MOBILIDADE REDUZIDA')
+           OR ('Deficiência Auditiva' = ANY(p.necessidades) AND m.especializacao = 'LIBRAS')
+           OR ('Deficiência Visual' = ANY(p.necessidades) AND m.especializacao = 'DEFICIÊNCIA VISUAL')
+         )
+       RETURNING c.id_corrida;`,
         [idMotorista, idVeiculo, idCorrida],
       );
 
@@ -182,14 +194,19 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     }
   }
 
-  static async iniciarCorrida(idCorrida: number): Promise<boolean> {
+  static async iniciarCorrida(
+    idCorrida: number,
+    idMotorista: number,
+  ): Promise<boolean> {
     try {
       const res = await database.query(
         `UPDATE corrida
-         SET status_corrida = 'Em andamento'
-         WHERE id_corrida = $1 AND status_corrida = 'Aceito'
+         SET status_corrida = 'Em andamento', data_inicio_corrida = CURRENT_TIMESTAMP
+         WHERE id_corrida = $1
+           AND id_motorista = $2
+           AND status_corrida = 'Aceito'
          RETURNING id_corrida;`,
-        [idCorrida],
+        [idCorrida, idMotorista],
       );
       return res.rowCount !== null && res.rowCount > 0;
     } catch (error) {
@@ -201,11 +218,29 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
   static async finalizarCorrida(
   idCorrida: number,
   duracaoCorrida: number,
+  idMotorista: number,
 ): Promise<boolean> {
   try {
-    // Use stored procedure to finalize and free driver
-    const r = await database.query(`SELECT sp_finalizar_corrida($1) AS ok;`, [idCorrida]);
-    return !!(r.rows[0] && r.rows[0].ok);
+    const res = await database.query(
+      `UPDATE corrida
+       SET status_corrida = 'Finalizada', duracao_corrida = $1
+       WHERE id_corrida = $2
+         AND id_motorista = $3
+         AND status_corrida = 'Em andamento'
+       RETURNING id_corrida, id_motorista;`,  
+      [duracaoCorrida, idCorrida, idMotorista]
+    );
+
+    if (res.rowCount === null || res.rowCount === 0) return false;
+    const motoristaFinalizadoId = res.rows[0].id_motorista;
+    if (motoristaFinalizadoId) {
+      await database.query(
+        `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
+        [motoristaFinalizadoId]
+      );
+    }
+
+    return true;
   } catch (error) {
     console.error(`Erro ao finalizar corrida: ${error}`);
     return false;
@@ -455,8 +490,60 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
         [idPassageiro],
       );
 
-      if (res.rows.length === 0) return null;
-      const c = res.rows[0];
+  try {
+    const { rows } = await database.query(query, [idPassageiro]);
+
+    if (rows.length === 0) return null;
+
+    const c = rows[0];
+
+    return {
+      idCorrida: c.id_corrida,
+      origemCorrida: c.origem_corrida,
+      destinoCorrida: c.destino_corrida,
+      tipoCorrida: c.tipo_corrida,
+      preco: c.preco,
+      dataCorrida: c.data_corrida,
+      statusCorrida: c.status_corrida,
+      dataInicioCorrida: c.data_inicio_corrida,
+      motorista: c.id_motorista
+        ? {
+            id: c.id_motorista,
+            nome: c.motorista_nome,
+            sobrenome: c.motorista_sobrenome,
+            celular: c.motorista_celular,
+            especializacao: c.especializacao,
+          }
+        : null,
+      veiculo: c.id_veiculo
+        ? {
+            modelo: c.modelo_veiculo,
+            placa: c.placa,
+            tipo: c.tipo_veiculo,
+          }
+        : null,
+    };
+  } catch (error) {
+    console.error(`Erro ao buscar corrida atual do passageiro ${idPassageiro}:`, error);
+    return null;
+  }
+ }
+ static async corridaAtualMotorista(idMotorista: number): Promise<any | null> {
+    const query = `
+        SELECT
+            c.*,
+            u_p.nome       AS passageiro_nome,
+            u_p.sobrenome  AS passageiro_sobrenome,
+            p.celular      AS passageiro_celular,
+            p.necessidades AS passageiro_necessidades
+        FROM corrida c
+        JOIN passageiro p ON p.id_passageiro = c.id_passageiro
+        JOIN usuario u_p  ON u_p.id_usuario = p.id_usuario
+        WHERE c.id_motorista = $1
+          AND c.status_corrida IN ('Aceito', 'Em andamento')
+        ORDER BY c.data_corrida DESC
+        LIMIT 1;
+    `;
 
       return {
         idCorrida: c.id_corrida,

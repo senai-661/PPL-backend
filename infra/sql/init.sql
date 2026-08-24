@@ -43,7 +43,8 @@ CREATE TABLE passageiro (
     cpf CHAR(11) UNIQUE NOT NULL CHECK (length(cpf) = 11),
     celular VARCHAR(20) NOT NULL,
     data_nascimento DATE NOT NULL,
-    necessidades TEXT[] DEFAULT '{}'
+    necessidades TEXT[] NOT NULL DEFAULT '{}'
+        CHECK (necessidades <@ ARRAY['Cadeirante', 'Deficiência Auditiva', 'Deficiência Visual']::TEXT[])
 );
 
 -- ============================================
@@ -58,7 +59,8 @@ CREATE TABLE motorista (
     celular VARCHAR(20) NOT NULL,
     data_nascimento DATE NOT NULL,
     antecedentes_criminais VARCHAR(40) NOT NULL,
-    especializacao VARCHAR(50) NOT NULL DEFAULT 'Nenhuma',
+    especializacao VARCHAR(50) NOT NULL DEFAULT 'NENHUMA'
+        CHECK (especializacao IN ('NENHUMA', 'MOBILIDADE REDUZIDA', 'LIBRAS', 'DEFICIÊNCIA VISUAL')),
     disponivel BOOLEAN DEFAULT false
 );
 
@@ -111,6 +113,7 @@ CREATE TABLE corrida (
         CHECK (tipo_corrida IN ('Convencional', 'EconoComigo', 'Premium')),
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     data_corrida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_inicio_corrida TIMESTAMP,
     duracao_corrida INT NOT NULL DEFAULT 0 CHECK (duracao_corrida >= 0),
     motivo_cancelamento VARCHAR(200),
     status_corrida VARCHAR(20) NOT NULL DEFAULT 'Pendente'
