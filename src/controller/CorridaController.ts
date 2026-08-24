@@ -206,6 +206,18 @@ static async cancelar(req: Request, res: Response, next: NextFunction): Promise<
       return res.status(400).json({ mensagem: "ID da corrida inválido." });
     }
 
+    const corrida = await Corrida.buscarPorId(idCorrida);
+    const usuario = (req as any).usuario;
+
+    const ehPassageiroDaCorrida =
+      usuario.tipo === "passageiro" && corrida?.passageiro?.id === usuario.id;
+    const ehMotoristaDaCorrida =
+      usuario.tipo === "motorista" && corrida?.motorista?.id === usuario.id;
+
+    if (!ehPassageiroDaCorrida && !ehMotoristaDaCorrida) {
+      return res.status(403).json({ mensagem: "Você não tem permissão para cancelar esta corrida." });
+    }
+
     const { motivoCancelamento } = req.body;
 
     const sucesso = await Corrida.cancelarCorrida(idCorrida, motivoCancelamento ?? null);
@@ -285,6 +297,16 @@ static async cancelar(req: Request, res: Response, next: NextFunction): Promise<
 
       if (!corrida) {
         return res.status(404).json({ mensagem: "Corrida não encontrada." });
+      }
+
+      const usuario = (req as any).usuario;
+      const ehPassageiroDaCorrida =
+        usuario.tipo === "passageiro" && corrida.passageiro.id === usuario.id;
+      const ehMotoristaDaCorrida =
+        usuario.tipo === "motorista" && corrida.motorista?.id === usuario.id;
+
+      if (!ehPassageiroDaCorrida && !ehMotoristaDaCorrida) {
+        return res.status(403).json({ mensagem: "Você não tem permissão para acessar esta corrida." });
       }
 
       return res.status(200).json(corrida);
