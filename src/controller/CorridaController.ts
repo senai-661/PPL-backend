@@ -131,7 +131,7 @@ static async solicitar(req: Request, res: Response, next: NextFunction): Promise
     );
 
     if (veiculo.rows.length === 0) {
-      return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado." });
+      return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado.", semVeiculo: true });
     }
 
     const idVeiculo = veiculo.rows[0].id_veiculo;
