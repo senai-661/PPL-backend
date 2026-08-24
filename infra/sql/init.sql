@@ -111,6 +111,7 @@ CREATE TABLE corrida (
         CHECK (tipo_corrida IN ('Convencional', 'EconoComigo', 'Premium')),
     preco DECIMAL(10,2) NOT NULL CHECK (preco >= 0),
     data_corrida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_inicio_corrida TIMESTAMP,
     duracao_corrida INT NOT NULL DEFAULT 0 CHECK (duracao_corrida >= 0),
     motivo_cancelamento VARCHAR(200),
     status_corrida VARCHAR(20) NOT NULL DEFAULT 'Pendente'

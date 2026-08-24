@@ -150,7 +150,8 @@ static async solicitar(req: Request, res: Response, next: NextFunction): Promise
   static async iniciar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
-      const sucesso = await Corrida.iniciarCorrida(idCorrida);
+      const idMotorista = (req as any).usuario.id;
+      const sucesso = await Corrida.iniciarCorrida(idCorrida, idMotorista);
 
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Corrida não encontrada ou não foi aceita ainda." });
@@ -165,22 +166,25 @@ static async solicitar(req: Request, res: Response, next: NextFunction): Promise
   static async finalizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
+      const idMotorista = (req as any).usuario.id;
 
       const corridaRes = await database.query(
-        `SELECT data_corrida FROM corrida WHERE id_corrida = $1;`,
-        [idCorrida],
+        `SELECT COALESCE(data_inicio_corrida, data_corrida) AS data_inicio_corrida
+         FROM corrida
+         WHERE id_corrida = $1 AND id_motorista = $2;`,
+        [idCorrida, idMotorista],
       );
 
       if (corridaRes.rows.length === 0) {
         return res.status(404).json({ mensagem: "Corrida não encontrada." });
       }
 
-      const dataInicio: Date = corridaRes.rows[0].data_corrida;
+      const dataInicio: Date = corridaRes.rows[0].data_inicio_corrida;
       const duracaoCorrida = Math.ceil(
         (new Date().getTime() - dataInicio.getTime()) / 60000,
       );
 
-      const sucesso = await Corrida.finalizarCorrida(idCorrida, duracaoCorrida);
+      const sucesso = await Corrida.finalizarCorrida(idCorrida, duracaoCorrida, idMotorista);
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Corrida não está em andamento." });
       }

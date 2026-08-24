@@ -255,14 +255,19 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
     }
   }
 
-  static async iniciarCorrida(idCorrida: number): Promise<boolean> {
+  static async iniciarCorrida(
+    idCorrida: number,
+    idMotorista: number,
+  ): Promise<boolean> {
     try {
       const res = await database.query(
         `UPDATE corrida
-         SET status_corrida = 'Em andamento'
-         WHERE id_corrida = $1 AND status_corrida = 'Aceito'
+         SET status_corrida = 'Em andamento', data_inicio_corrida = CURRENT_TIMESTAMP
+         WHERE id_corrida = $1
+           AND id_motorista = $2
+           AND status_corrida = 'Aceito'
          RETURNING id_corrida;`,
-        [idCorrida],
+        [idCorrida, idMotorista],
       );
       return res.rowCount !== null && res.rowCount > 0;
     } catch (error) {
@@ -274,22 +279,25 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
   static async finalizarCorrida(
   idCorrida: number,
   duracaoCorrida: number,
+  idMotorista: number,
 ): Promise<boolean> {
   try {
     const res = await database.query(
       `UPDATE corrida
        SET status_corrida = 'Finalizada', duracao_corrida = $1
-       WHERE id_corrida = $2 AND status_corrida = 'Em andamento'
+       WHERE id_corrida = $2
+         AND id_motorista = $3
+         AND status_corrida = 'Em andamento'
        RETURNING id_corrida, id_motorista;`,  
-      [duracaoCorrida, idCorrida]
+      [duracaoCorrida, idCorrida, idMotorista]
     );
 
     if (res.rowCount === null || res.rowCount === 0) return false;
-    const idMotorista = res.rows[0].id_motorista;
-    if (idMotorista) {
+    const motoristaFinalizadoId = res.rows[0].id_motorista;
+    if (motoristaFinalizadoId) {
       await database.query(
         `UPDATE motorista SET disponivel = true WHERE id_motorista = $1;`,
-        [idMotorista]
+        [motoristaFinalizadoId]
       );
     }
 
