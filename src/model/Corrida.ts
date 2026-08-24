@@ -177,6 +177,7 @@ class Corrida {
         duracaoCorrida: c.duracao_corrida,
         motivoCancelamento: c.motivo_cancelamento,
         statusCorrida: c.status_corrida,
+        dataInicioCorrida: c.data_inicio_corrida,
         passageiro: {
           id: c.id_passageiro,
           nome: c.passageiro_nome,
@@ -647,6 +648,7 @@ static async listarPorStatus(
       preco: c.preco,
       dataCorrida: c.data_corrida,
       statusCorrida: c.status_corrida,
+      dataInicioCorrida: c.data_inicio_corrida,
       motorista: c.id_motorista
         ? {
             id: c.id_motorista,
