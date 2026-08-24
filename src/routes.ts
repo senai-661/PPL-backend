@@ -24,9 +24,13 @@ router.get("/api", (req: Request, res: Response) => {
 // ROTAS PÚBLICAS (sem token)
 // ============================================
 router.post("/api/registrar", UsuarioController.registrar);
-router.post("/api/login",     UsuarioController.login);
+router.post("/api/login", UsuarioController.login);
 router.post("/api/preco-estimado", CorridaController.precoEstimado);
-router.get("/api/autocomplete/enderecos", EnderecoController.buscarSugestoes);
+
+router.get(
+  "/api/autocomplete/enderecos",
+  EnderecoController.buscarSugestoes
+);
 
 // ============================================
 // PERFIL (GET + PATCH)
@@ -35,25 +39,28 @@ router.get(
   "/api/passageiro/perfil",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  PassageiroController.perfil,
+  PassageiroController.perfil
 );
+
 router.patch(
   "/api/passageiro/perfil",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  PassageiroController.editarPerfil,
+  PassageiroController.editarPerfil
 );
+
 router.get(
   "/api/motorista/perfil",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  MotoristaController.perfil,
+  MotoristaController.perfil
 );
+
 router.patch(
   "/api/motorista/perfil",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  MotoristaController.editarPerfil,
+  MotoristaController.editarPerfil
 );
 
 // ============================================
@@ -62,117 +69,136 @@ router.patch(
 router.get(
   "/api/motoristas",
   AuthMiddleware.verificarToken,
-  MotoristaController.listar,
+  MotoristaController.listar
 );
+
+// 🔥 NOVA ROTA
+router.get(
+  "/api/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  MotoristaController.buscarPorId
+);
+
 router.get(
   "/api/motorista/relatorio",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  CorridaController.relatorio,
+  CorridaController.relatorio
 );
+
 router.patch(
   "/api/motorista/disponibilidade",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  MotoristaController.alterarDisponibilidade,
+  MotoristaController.alterarDisponibilidade
 );
 
 router.get(
   "/api/motorista/corrida-atual",
-    AuthMiddleware.verificarToken,
-    AuthMiddleware.somenteMotorista,
-    CorridaController.corridaAtualMotorista
-  );
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  CorridaController.corridaAtualMotorista
+);
+
 router.get(
   "/api/motorista/resumo-dia",
-     AuthMiddleware.verificarToken,
-     AuthMiddleware.somenteMotorista,
-     CorridaController.resumoDiaMotorista
-    );
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  CorridaController.resumoDiaMotorista
+);
+
 // ============================================
 // PASSAGEIRO
 // ============================================
 router.get(
   "/api/passageiros",
   AuthMiddleware.verificarToken,
-  PassageiroController.listar,
+  PassageiroController.listar
 );
 
 // ============================================
 // CORRIDAS
-// ⚠️ Static routes MUST come before dynamic (:id) routes
 // ============================================
 router.get(
   "/api/corridas/historico",
   AuthMiddleware.verificarToken,
-  CorridaController.historico,
+  CorridaController.historico
 );
+
 router.get(
   "/api/corridas",
   AuthMiddleware.verificarToken,
-  CorridaController.listar,
+  CorridaController.listar
 );
+
 router.delete(
   "/api/corridas/atual",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  CorridaController.cancelarAtual,
+  CorridaController.cancelarAtual
 );
+
 router.get(
   "/api/corridas/:id",
   AuthMiddleware.verificarToken,
-  CorridaController.buscarPorId,
+  CorridaController.buscarPorId
 );
+
 router.post(
   "/api/corridas",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  CorridaController.solicitar,
+  CorridaController.solicitar
 );
+
 router.patch(
   "/api/corridas/:id/aceitar",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  CorridaController.aceitar,
+  CorridaController.aceitar
 );
+
 router.patch(
   "/api/corridas/:id/iniciar",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  CorridaController.iniciar,
+  CorridaController.iniciar
 );
+
 router.patch(
   "/api/corridas/:id/finalizar",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  CorridaController.finalizar,
+  CorridaController.finalizar
 );
+
 router.patch(
   "/api/corridas/:id/cancelar",
   AuthMiddleware.verificarToken,
-  CorridaController.cancelar,
+  CorridaController.cancelar
 );
 
 // ============================================
 // AVALIAÇÕES
-// ⚠️ /minhas must come before /:id if you add one later
 // ============================================
 router.get(
   "/api/avaliacoes/minhas",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteMotorista,
-  AvaliacaoController.minhas,
+  AvaliacaoController.minhas
 );
+
 router.get(
   "/api/avaliacoes",
   AuthMiddleware.verificarToken,
-  AvaliacaoController.listar,
+  AvaliacaoController.listar
 );
+
 router.post(
   "/api/avaliacoes",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  AvaliacaoController.avaliar,
+  AvaliacaoController.avaliar
 );
 
 // ============================================
@@ -181,8 +207,9 @@ router.post(
 router.get(
   "/api/veiculos",
   AuthMiddleware.verificarToken,
-  VeiculoController.listar,
+  VeiculoController.listar
 );
+
 router.post(
   "/api/cadastro/veiculos",
   AuthMiddleware.verificarToken,
@@ -197,13 +224,14 @@ router.get(
   "/api/admin/listar",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
-  AdminController.listar,
+  AdminController.listar
 );
+
 router.get(
   "/api/admin/dashboard",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
-  AdminController.dashboard,
+  AdminController.dashboard
 );
 router.patch(
   "/api/admin/passageiros/:id",
@@ -221,34 +249,29 @@ router.get(
   "/api/enderecos",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
-  EnderecoController.listar,
+  EnderecoController.listar
 );
 
-// Autocomplete de endereços (público)
 router.get(
   "/api/enderecos/sugestoes",
-  EnderecoController.buscarSugestoes,
+  EnderecoController.buscarSugestoes
 );
 
 // ============================================
 // PASSAGEIRO
 // ============================================
 router.get(
-  "/api/passageiros",
-  AuthMiddleware.verificarToken,
-  PassageiroController.listar,
-);
-router.get(
   "/api/passageiro/corrida-atual",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  CorridaController.corridaAtual,
+  CorridaController.corridaAtual
 );
+
 router.get(
   "/api/passageiro/relatorio",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  PassageiroController.relatorio,
+  PassageiroController.relatorio
 );
 
 export { router };
