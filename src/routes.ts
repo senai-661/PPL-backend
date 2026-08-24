@@ -186,6 +186,7 @@ router.get(
 router.post(
   "/api/cadastro/veiculos",
   AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
   VeiculoController.cadastro,
 );
 

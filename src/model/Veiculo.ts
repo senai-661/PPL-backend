@@ -87,7 +87,7 @@ class Veiculo {
 
       const respostaBD = await database.query(queryInsertVeiculo, [
         veiculo.idMotorista,
-        veiculo.placa.toUpperCase(),
+        veiculo.placa.replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
         veiculo.tipoVeiculo.toUpperCase(),
         veiculo.modeloVeiculo.toUpperCase(),
       ]);
