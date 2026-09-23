@@ -11,7 +11,19 @@ import { AdminController } from "./controller/AdminController.js";
 import { EnderecoController } from "./controller/EnderecoController.js";
 import { AuthMiddleware } from "./middlewares/AuthMiddleware.js";
 
+// ✅ ADICIONADO (AGENDAMENTO)
+import { CorridaAgendamentoController } from "./controller/CorridaAgendamentoController.js";
+import { DatabaseModel } from "./model/DatabaseModel.js";
+import { CorridaModel } from "./model/CorridaAgendamento.js";
+
 const router = Router();
+
+// ============================================
+// INSTÂNCIAS (ADICIONADO SEM MEXER NO RESTO)
+// ============================================
+const db = new DatabaseModel();
+const corridaModel = new CorridaModel(db);
+const corridaAgendamentoController = new CorridaAgendamentoController(corridaModel);
 
 // ============================================
 // ROTA INICIAL
@@ -78,7 +90,6 @@ router.get(
   AuthMiddleware.verificarToken,
   MotoristaController.buscarPorId
 );
-
 router.get(
   "/api/motorista/relatorio",
   AuthMiddleware.verificarToken,
@@ -137,7 +148,6 @@ router.delete(
   AuthMiddleware.somentePassageiro,
   CorridaController.cancelarAtual
 );
-
 router.get(
   "/api/corridas/:id",
   AuthMiddleware.verificarToken,
@@ -151,6 +161,23 @@ router.post(
   CorridaController.solicitar
 );
 
+// ============================================
+// ✅ CORRIDAS AGENDADAS
+// ============================================
+router.post(
+  "/api/corridas-agendadas",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somentePassageiro,
+  (req: Request, res: Response) =>
+    corridaAgendamentoController.criar(req, res)
+);
+
+router.get(
+  "/api/corridas-agendadas",
+  AuthMiddleware.verificarToken,
+  (req: Request, res: Response) =>
+    corridaAgendamentoController.listar(req, res)
+);
 router.patch(
   "/api/corridas/:id/aceitar",
   AuthMiddleware.verificarToken,
@@ -244,6 +271,7 @@ router.patch(
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarMotorista,
 );
+
 router.get(
   "/api/enderecos",
   AuthMiddleware.verificarToken,
@@ -251,13 +279,14 @@ router.get(
   EnderecoController.listar
 );
 
+// autocomplete público
 router.get(
   "/api/enderecos/sugestoes",
   EnderecoController.buscarSugestoes
 );
 
 // ============================================
-// PASSAGEIRO
+// PASSAGEIRO - CORRIDA ATUAL E RELATÓRIO
 // ============================================
 router.get(
   "/api/passageiro/corrida-atual",
