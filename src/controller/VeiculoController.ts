@@ -25,6 +25,52 @@ class VeiculoController extends Veiculo {
       next(error);
     }
   }
+
+  static async atualizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idVeiculo = parseInt(req.params.id as string);
+      if (isNaN(idVeiculo)) {
+        return res.status(400).json({ mensagem: "ID do veículo inválido." });
+      }
+
+      const veiculo = await Veiculo.buscarPorId(idVeiculo);
+      if (!veiculo) {
+        return res.status(404).json({ mensagem: "Veículo não encontrado." });
+      }
+
+      const sucesso = await Veiculo.editarVeiculo(idVeiculo, req.body);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
+      }
+
+      return res.status(200).json({ mensagem: "Veículo atualizado com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async excluir(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idVeiculo = parseInt(req.params.id as string);
+      if (isNaN(idVeiculo)) {
+        return res.status(400).json({ mensagem: "ID do veículo inválido." });
+      }
+
+      const veiculo = await Veiculo.buscarPorId(idVeiculo);
+      if (!veiculo) {
+        return res.status(404).json({ mensagem: "Veículo não encontrado." });
+      }
+
+      const sucesso = await Veiculo.excluirVeiculo(idVeiculo);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível excluir o veículo." });
+      }
+
+      return res.status(200).json({ mensagem: "Veículo excluído com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export { VeiculoController };

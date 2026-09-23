@@ -78,6 +78,29 @@ class Veiculo {
     }
   }
 
+  static async buscarPorId(idVeiculo: number): Promise<Veiculo | null> {
+    try {
+      const querySelectVeiculo = `SELECT * FROM veiculo WHERE id_veiculo = $1;`;
+      const respostaBD = await database.query(querySelectVeiculo, [idVeiculo]);
+
+      if (respostaBD.rows.length === 0) {
+        return null;
+      }
+
+      const veiculoBD = respostaBD.rows[0];
+      return new Veiculo(
+        veiculoBD.id_veiculo,
+        veiculoBD.id_motorista,
+        veiculoBD.placa,
+        veiculoBD.tipo_veiculo,
+        veiculoBD.modelo_veiculo,
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar veículo por id: ${error}`);
+      return null;
+    }
+  }
+
   static async cadastrarVeiculo(veiculo: VeiculoDTO): Promise<boolean> {
     try {
       const queryInsertVeiculo = `INSERT INTO veiculo (id_motorista, placa, tipo_veiculo, modelo_veiculo)
@@ -96,6 +119,76 @@ class Veiculo {
     } catch (error) {
       console.error(`Erro ao cadastrar veículo: ${error}`);
       return false;
+    }
+  }
+
+  static async editarVeiculo(idVeiculo: number, dados: Partial<VeiculoDTO>): Promise<boolean> {
+    try {
+      const campos: string[] = [];
+      const valores: any[] = [];
+      let indice = 1;
+
+      if (dados.idMotorista !== undefined) {
+        campos.push(`id_motorista = $${indice++}`);
+        valores.push(dados.idMotorista);
+      }
+
+      if (dados.placa) {
+        campos.push(`placa = $${indice++}`);
+        valores.push(dados.placa.toUpperCase());
+      }
+
+      if (dados.tipoVeiculo) {
+        campos.push(`tipo_veiculo = $${indice++}`);
+        valores.push(dados.tipoVeiculo.toUpperCase());
+      }
+
+      if (dados.modeloVeiculo) {
+        campos.push(`modelo_veiculo = $${indice++}`);
+        valores.push(dados.modeloVeiculo.toUpperCase());
+      }
+
+      if (campos.length === 0) {
+        return false;
+      }
+
+      valores.push(idVeiculo);
+      await database.query(
+        `UPDATE veiculo SET ${campos.join(', ')} WHERE id_veiculo = $${indice};`,
+        valores,
+      );
+
+      return true;
+    } catch (error) {
+      console.error(`Erro ao editar veículo: ${error}`);
+      return false;
+    }
+  }
+
+  static async excluirVeiculo(idVeiculo: number): Promise<boolean> {
+    const client = await database.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      await client.query(
+        `DELETE FROM corrida WHERE id_veiculo = $1;`,
+        [idVeiculo],
+      );
+
+      const respostaBD = await client.query(
+        `DELETE FROM veiculo WHERE id_veiculo = $1 RETURNING id_veiculo;`,
+        [idVeiculo],
+      );
+
+      await client.query('COMMIT');
+      return (respostaBD.rowCount ?? 0) > 0;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(`Erro ao excluir veículo: ${error}`);
+      return false;
+    } finally {
+      client.release();
     }
   }
 }

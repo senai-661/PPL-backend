@@ -265,11 +265,35 @@ router.patch(
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarPassageiro,
 );
+router.delete(
+  "/api/admin/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.excluirPassageiro,
+);
 router.patch(
   "/api/admin/motoristas/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarMotorista,
+);
+router.delete(
+  "/api/admin/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.excluirMotorista,
+);
+router.patch(
+  "/api/admin/veiculos/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.atualizarVeiculo,
+);
+router.delete(
+  "/api/admin/veiculos/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.excluirVeiculo,
 );
 
 router.get(
