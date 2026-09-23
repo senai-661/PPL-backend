@@ -84,6 +84,65 @@ class AvaliacaoController {
       next(error);
     }
   }
+
+  static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const avaliacao = await Avaliacao.buscarPorId(idAvaliacao);
+      if (!avaliacao) {
+        return res.status(404).json({ mensagem: "Avaliação não encontrada." });
+      }
+
+      return res.status(200).json(avaliacao);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async atualizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const { nota, comentario } = req.body;
+      if (!nota || nota < 1 || nota > 5) {
+        return res.status(400).json({ mensagem: "Nota deve ser entre 1 e 5." });
+      }
+
+      const sucesso = await Avaliacao.atualizarAvaliacao(idAvaliacao, nota, comentario);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível atualizar a avaliação." });
+      }
+
+      return res.status(200).json({ mensagem: "Avaliação atualizada com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async remover(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const sucesso = await Avaliacao.deletarAvaliacao(idAvaliacao);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Avaliação não encontrada ou não pôde ser excluída." });
+      }
+
+      return res.status(200).json({ mensagem: "Avaliação excluída com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
-export { AvaliacaoController };
+export { AvaliacaoController };

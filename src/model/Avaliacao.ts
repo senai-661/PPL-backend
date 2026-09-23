@@ -154,6 +154,50 @@ class Avaliacao {
       return null;
     }
   }
+
+  static async buscarPorId(idAvaliacao: number): Promise<any | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM vw_avaliacoes_detalhadas WHERE id_avaliacao = $1;`,
+        [idAvaliacao]
+      );
+      if (res.rows.length === 0) return null;
+      return res.rows[0];
+    } catch (error) {
+      console.error(`Erro ao buscar avaliação por ID: ${error}`);
+      return null;
+    }
+  }
+
+  static async atualizarAvaliacao(
+    idAvaliacao: number,
+    nota: number,
+    comentario?: string
+  ): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `UPDATE avaliacao_corrida SET nota = $1, comentario = $2 WHERE id_avaliacao = $3;`,
+        [nota, comentario ?? null, idAvaliacao]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao atualizar avaliação: ${error}`);
+      return false;
+    }
+  }
+
+  static async deletarAvaliacao(idAvaliacao: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `DELETE FROM avaliacao_corrida WHERE id_avaliacao = $1;`,
+        [idAvaliacao]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao deletar avaliação: ${error}`);
+      return false;
+    }
+  }
 }
 
-export { Avaliacao };
+export { Avaliacao };

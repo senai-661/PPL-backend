@@ -62,6 +62,46 @@ export class UsuarioController {
         return res.status(400).json({ mensagem: "Tipo inválido. Use 'passageiro' ou 'motorista'." });
       }
 
+      const camposObrigatorios = [
+        "nome", "sobrenome", "cpf", "dataNascimento", "celular", "email", "senha",
+      ];
+      if (tipo === "motorista") {
+        camposObrigatorios.push("cnh", "antecedentesCriminais");
+      }
+
+      if (camposObrigatorios.some((campo) => !dados[campo]?.toString().trim())) {
+        return res.status(400).json({ mensagem: "Preencha todos os campos obrigatórios." });
+      }
+
+      if (!/^\d{11}$/.test(dados.cpf)) {
+        return res.status(400).json({ mensagem: "CPF deve conter 11 dígitos." });
+      }
+
+      if (tipo === "motorista" && !/^\d{11}$/.test(dados.cnh)) {
+        return res.status(400).json({ mensagem: "CNH deve conter 11 dígitos." });
+      }
+
+      if (dados.senha.length < 6) {
+        return res.status(400).json({ mensagem: "A senha deve ter ao menos 6 caracteres." });
+      }
+
+      const necessidadesValidas = ["Cadeirante", "Deficiência Auditiva", "Deficiência Visual"];
+      if (
+        dados.necessidades !== undefined &&
+        (!Array.isArray(dados.necessidades) ||
+          dados.necessidades.some((necessidade: string) => !necessidadesValidas.includes(necessidade)))
+      ) {
+        return res.status(400).json({ mensagem: "Necessidade de acessibilidade inválida." });
+      }
+
+      const especializacoesValidas = ["NENHUMA", "MOBILIDADE REDUZIDA", "LIBRAS", "DEFICIÊNCIA VISUAL"];
+      if (tipo === "motorista") {
+        dados.especializacao = (dados.especializacao || "NENHUMA").toUpperCase();
+        if (!especializacoesValidas.includes(dados.especializacao)) {
+          return res.status(400).json({ mensagem: "Especialização inválida." });
+        }
+      }
+
       const salt = await bcrypt.genSalt(10);
       dados.senha = await bcrypt.hash(dados.senha, salt);
 

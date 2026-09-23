@@ -118,6 +118,12 @@ router.get(
   CorridaController.resumoDiaMotorista
 );
 
+router.delete(
+  "/api/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  MotoristaController.remover
+);
+
 // ============================================
 // PASSAGEIRO
 // ============================================
@@ -126,6 +132,19 @@ router.get(
   AuthMiddleware.verificarToken,
   PassageiroController.listar
 );
+
+router.get(
+  "/api/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  PassageiroController.buscarPorId
+);
+
+router.delete(
+  "/api/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  PassageiroController.remover
+);
+
 
 // ============================================
 // CORRIDAS
@@ -205,6 +224,12 @@ router.patch(
   CorridaController.cancelar
 );
 
+router.delete(
+  "/api/corridas/:id",
+  AuthMiddleware.verificarToken,
+  CorridaController.remover
+);
+
 // ============================================
 // AVALIAÇÕES
 // ============================================
@@ -221,11 +246,29 @@ router.get(
   AvaliacaoController.listar
 );
 
+router.get(
+  "/api/avaliacoes/:id",
+  AuthMiddleware.verificarToken,
+  AvaliacaoController.buscarPorId
+);
+
 router.post(
   "/api/avaliacoes",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
   AvaliacaoController.avaliar
+);
+
+router.patch(
+  "/api/avaliacoes/:id",
+  AuthMiddleware.verificarToken,
+  AvaliacaoController.atualizar
+);
+
+router.delete(
+  "/api/avaliacoes/:id",
+  AuthMiddleware.verificarToken,
+  AvaliacaoController.remover
 );
 
 // ============================================
@@ -237,10 +280,36 @@ router.get(
   VeiculoController.listar
 );
 
+router.get(
+  "/api/veiculos/:id",
+  AuthMiddleware.verificarToken,
+  VeiculoController.buscarPorId
+);
+
+router.get(
+  "/api/motorista/veiculo",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteMotorista,
+  VeiculoController.veiculoDoMotorista
+);
+
 router.post(
   "/api/cadastro/veiculos",
   AuthMiddleware.verificarToken,
-  VeiculoController.cadastro
+  AuthMiddleware.somenteMotorista,
+  VeiculoController.cadastro,
+);
+
+router.patch(
+  "/api/veiculos/:id",
+  AuthMiddleware.verificarToken,
+  VeiculoController.atualizar
+);
+
+router.delete(
+  "/api/veiculos/:id",
+  AuthMiddleware.verificarToken,
+  VeiculoController.remover
 );
 
 // ============================================
@@ -265,19 +334,65 @@ router.patch(
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarPassageiro,
 );
+router.delete(
+  "/api/admin/passageiros/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.removerPassageiro,
+);
 router.patch(
   "/api/admin/motoristas/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarMotorista,
 );
+router.delete(
+  "/api/admin/motoristas/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  AdminController.removerMotorista,
+);
+router.delete(
+  "/api/admin/corridas/:id",
+  AuthMiddleware.verificarToken,
+  AuthMiddleware.somenteAdmin,
+  CorridaController.remover
+);
 
+// ============================================
+// ENDEREÇOS
+// ============================================
 router.get(
   "/api/enderecos",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   EnderecoController.listar
 );
+
+router.get(
+  "/api/enderecos/:id",
+  AuthMiddleware.verificarToken,
+  EnderecoController.buscarPorId
+);
+
+router.post(
+  "/api/enderecos",
+  AuthMiddleware.verificarToken,
+  EnderecoController.criar
+);
+
+router.patch(
+  "/api/enderecos/:id",
+  AuthMiddleware.verificarToken,
+  EnderecoController.atualizar
+);
+
+router.delete(
+  "/api/enderecos/:id",
+  AuthMiddleware.verificarToken,
+  EnderecoController.remover
+);
+
 
 // autocomplete público
 router.get(

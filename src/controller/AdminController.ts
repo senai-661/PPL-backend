@@ -97,4 +97,40 @@ export class AdminController {
       next(error);
     }
   }
-}
+
+  static async removerPassageiro(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idPassageiro = parseInt(req.params.id as string, 10);
+      if (isNaN(idPassageiro)) {
+        return res.status(400).json({ mensagem: "ID do passageiro inválido." });
+      }
+
+      const sucesso = await Passageiro.deletarPassageiro(idPassageiro);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Passageiro não encontrado ou não pôde ser excluído." });
+      }
+
+      return res.status(200).json({ mensagem: "Passageiro excluído com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async removerMotorista(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idMotorista = parseInt(req.params.id as string, 10);
+      if (isNaN(idMotorista)) {
+        return res.status(400).json({ mensagem: "ID do motorista inválido." });
+      }
+
+      const sucesso = await Motorista.deletarMotorista(idMotorista);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Motorista não encontrado ou não pôde ser excluído." });
+      }
+
+      return res.status(200).json({ mensagem: "Motorista excluído com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+}

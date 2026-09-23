@@ -219,5 +219,19 @@ export class Passageiro extends Usuario {
       return null;
     }
   }
+
+  static async deletarPassageiro(idPassageiro: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `DELETE FROM usuario WHERE id_usuario = (SELECT id_usuario FROM passageiro WHERE id_passageiro = $1);`,
+        [idPassageiro]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao deletar passageiro: ${error}`);
+      return false;
+    }
+  }
 }
+
 
