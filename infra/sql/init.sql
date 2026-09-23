@@ -135,6 +135,21 @@ CREATE TABLE avaliacao_corrida (
 );
 
 -- ============================================
+-- CORRIDAS_AGENDADAS
+-- ============================================
+CREATE TABLE IF NOT EXISTS corridas_agendadas (
+    id_agendamento INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_passageiro INT NOT NULL REFERENCES passageiro(id_passageiro) ON DELETE CASCADE,
+    origem_corrida VARCHAR(200) NOT NULL,
+    destino_corrida VARCHAR(200) NOT NULL,
+    tipo_corrida VARCHAR(50) DEFAULT 'NORMAL',
+    data_agendada TIMESTAMP NOT NULL,
+    status_agendamento VARCHAR(50) DEFAULT 'PENDENTE',
+    preco DECIMAL(10,2) NOT NULL DEFAULT 28.00,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
 -- INSERTS
 -- ============================================
 
