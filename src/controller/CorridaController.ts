@@ -367,7 +367,25 @@ static async cancelar(req: Request, res: Response, next: NextFunction): Promise<
       next(error);
     }
   }
-  
+
+  static async remover(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idCorrida = parseInt(req.params.id as string, 10);
+      if (isNaN(idCorrida)) {
+        return res.status(400).json({ mensagem: "ID da corrida inválido." });
+      }
+
+      const sucesso = await Corrida.deletarCorrida(idCorrida);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Corrida não encontrada ou não pôde ser excluída." });
+      }
+
+      return res.status(200).json({ mensagem: "Corrida excluída com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export { CorridaController };
+

@@ -658,6 +658,19 @@ static async solicitarCorrida(corrida: CorridaDTO): Promise<number | null> {
       return false;
     }
   }
+
+  static async deletarCorrida(idCorrida: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `DELETE FROM corrida WHERE id_corrida = $1;`,
+        [idCorrida]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao deletar corrida: ${error}`);
+      return false;
+    }
+  }
 }
 
-export { Corrida };
+export { Corrida };

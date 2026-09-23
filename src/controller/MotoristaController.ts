@@ -9,6 +9,30 @@ class MotoristaController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
+      const { idMotorista } = req.query;
+      if (idMotorista) {
+        const id = Number(idMotorista);
+        if (!isNaN(id)) {
+          const motorista = await Motorista.buscarPorId(id);
+          if (!motorista) {
+            return res.status(404).json({ mensagem: "Motorista não encontrado." });
+          }
+          return res.status(200).json({
+            idMotorista: motorista.getIdMotorista(),
+            nome: motorista.getNome(),
+            sobrenome: motorista.getSobrenome(),
+            cpf: motorista.getCpf(),
+            cnh: motorista.getCnh(),
+            dataNascimento: motorista.getDataNascimento(),
+            celular: motorista.getCelular(),
+            email: motorista.getEmail(),
+            antecedentesCriminais: motorista.getAntecedentesCriminais(),
+            especializacao: motorista.getEspecializacao(),
+            disponivel: motorista.getDisponivel(),
+          });
+        }
+      }
+
       const motoristas = await Motorista.listarMotoristas();
 
       if (!motoristas || motoristas.length === 0) {
@@ -20,6 +44,7 @@ class MotoristaController {
       next(error);
     }
   }
+
 
   // 🔥 NOVO MÉTODO
   static async buscarPorId(
@@ -166,6 +191,28 @@ class MotoristaController {
       next(error);
     }
   }
+
+  static async remover(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const idMotorista = Number(req.params.id);
+      if (isNaN(idMotorista)) {
+        return res.status(400).json({ mensagem: "ID do motorista inválido." });
+      }
+
+      const sucesso = await Motorista.deletarMotorista(idMotorista);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Motorista não encontrado ou não pôde ser excluído." });
+      }
+
+      return res.status(200).json({ mensagem: "Motorista excluído com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
-export { MotoristaController };
+export { MotoristaController };

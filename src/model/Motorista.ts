@@ -229,4 +229,18 @@ export class Motorista extends Usuario {
       return false;
     }
   }
+
+  static async deletarMotorista(idMotorista: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `DELETE FROM usuario WHERE id_usuario = (SELECT id_usuario FROM motorista WHERE id_motorista = $1);`,
+        [idMotorista]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao deletar motorista: ${error}`);
+      return false;
+    }
+  }
 }
+
