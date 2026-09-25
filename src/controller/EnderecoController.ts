@@ -83,4 +83,91 @@ export class EnderecoController {
       return false;
     }
   }
-}
+
+  static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idEndereco = parseInt(req.params.id as string, 10);
+      if (isNaN(idEndereco)) {
+        return res.status(400).json({ mensagem: "ID do endereço inválido." });
+      }
+
+      const endereco = await Endereco.buscarPorId(idEndereco);
+      if (!endereco) {
+        return res.status(404).json({ mensagem: "Endereço não encontrado." });
+      }
+
+      return res.status(200).json(endereco);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async criar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const { rua, numero, bairro, cidade, estado, cep, complemento, idMotorista, idPassageiro } = req.body;
+
+      if (!rua || !numero || !bairro || !cidade || !estado || !cep) {
+        return res.status(400).json({ mensagem: "Campos obrigatórios de endereço faltando." });
+      }
+
+      const enderecoDTO: EnderecoDTO = {
+        rua,
+        numero,
+        bairro,
+        cidade,
+        estado,
+        cep,
+        complemento: complemento || null,
+        id_motorista: idMotorista || null,
+        id_passageiro: idPassageiro || null,
+      };
+
+      const novoEndereco = new Endereco(enderecoDTO);
+      const sucesso = await Endereco.cadastro(novoEndereco);
+
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Erro ao cadastrar endereço." });
+      }
+
+      return res.status(201).json({ mensagem: "Endereço cadastrado com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async atualizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idEndereco = parseInt(req.params.id as string, 10);
+      if (isNaN(idEndereco)) {
+        return res.status(400).json({ mensagem: "ID do endereço inválido." });
+      }
+
+      const sucesso = await Endereco.atualizar(idEndereco, req.body);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível atualizar o endereço." });
+      }
+
+      return res.status(200).json({ mensagem: "Endereço atualizado com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async remover(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idEndereco = parseInt(req.params.id as string, 10);
+      if (isNaN(idEndereco)) {
+        return res.status(400).json({ mensagem: "ID do endereço inválido." });
+      }
+
+      const sucesso = await Endereco.deletar(idEndereco);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Endereço não encontrado ou não pôde ser excluído." });
+      }
+
+      return res.status(200).json({ mensagem: "Endereço excluído com sucesso." });
+    } catch (error) {
+      next(error);
+    }
+  }
+}

@@ -40,7 +40,8 @@ export function errorMiddleware(
   res: Response,
   next: NextFunction,
 ): Response {
-  console.error(`[${req.method}] ${req.path} ->`, error);
+  console.error(`[${req.method}] ${req.path}`, error);
+  if (error && error.stack) console.error(error.stack);
 
   if (error.code === "23505") {
     return res.status(409).json({
@@ -80,5 +81,5 @@ export function errorMiddleware(
     });
   }
 
-  return res.status(500).json({ mensagem: "Erro interno no servidor." });
+  return res.status(500).json({ mensagem: "Erro interno no servidor.", detalhes: error?.message || null });
 }

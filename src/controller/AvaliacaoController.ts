@@ -1,9 +1,6 @@
 import { Avaliacao } from "../model/Avaliacao.js";
 import type { Request, Response, NextFunction } from "express";
-import { DatabaseModel } from "../model/DatabaseModel.js";
- 
-const database = new DatabaseModel().pool;
- 
+
 class AvaliacaoController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
@@ -13,32 +10,50 @@ class AvaliacaoController {
       next(error);
     }
   }
- 
+
   static async avaliar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const { idCorrida, nota, comentario } = req.body;
       const idPassageiro = (req as any).usuario.id;
- 
-      // Todas as validações e o insert estão na SP
-      await database.query(
-        `CALL sp_avaliar_corrida($1, $2, $3, $4, NULL)`,
-        [idCorrida, idPassageiro, nota, comentario ?? null],
-      );
- 
-      return res.status(201).json({ mensagem: "Avaliação registrada com sucesso!" });
-    } catch (error: any) {
-      if (error.message) {
-        return res.status(400).json({ mensagem: error.message });
+
+      if (!nota || nota < 1 || nota > 5) {
+        return res.status(400).json({ mensagem: "Nota deve ser entre 1 e 5." });
       }
+
+      const validacao = await Avaliacao.validarCorrida(idCorrida, idPassageiro);
+      if (validacao === "not_found") {
+        return res.status(404).json({ mensagem: "Corrida não encontrada." });
+      }
+      if (validacao === "not_finished") {
+        return res.status(400).json({ mensagem: "A corrida ainda não foi finalizada." });
+      }
+      if (validacao === "not_owner") {
+        return res.status(403).json({
+          mensagem: "Você não tem permissão para avaliar uma corrida que não é sua.",
+        });
+      }
+
+      const jaAvaliada = await Avaliacao.jaAvaliada(idCorrida);
+      if (jaAvaliada) {
+        return res.status(400).json({ mensagem: "Essa corrida já foi avaliada." });
+      }
+
+      const sucesso = await Avaliacao.criarAvaliacao({ idCorrida, nota, comentario });
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Erro ao cadastrar avaliação." });
+      }
+
+      return res.status(201).json({ mensagem: "Avaliação registrada com sucesso!" });
+    } catch (error) {
       next(error);
     }
   }
- 
+
   static async minhas(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
       const avaliacoes = await Avaliacao.historicoPorMotorista(idMotorista);
- 
+
       if (!avaliacoes || avaliacoes.length === 0) {
         return res.status(200).json({
           mediaGeral: null,
@@ -46,9 +61,9 @@ class AvaliacaoController {
           avaliacoes: [],
         });
       }
- 
+
       const media = avaliacoes.reduce((sum: number, a: any) => sum + a.nota, 0) / avaliacoes.length;
- 
+
       return res.status(200).json({
         mediaGeral: parseFloat(media.toFixed(1)),
         totalAvaliacoes: avaliacoes.length,
@@ -69,6 +84,65 @@ class AvaliacaoController {
       next(error);
     }
   }
+
+  static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const avaliacao = await Avaliacao.buscarPorId(idAvaliacao);
+      if (!avaliacao) {
+        return res.status(404).json({ mensagem: "Avaliação não encontrada." });
+      }
+
+      return res.status(200).json(avaliacao);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async atualizar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const { nota, comentario } = req.body;
+      if (!nota || nota < 1 || nota > 5) {
+        return res.status(400).json({ mensagem: "Nota deve ser entre 1 e 5." });
+      }
+
+      const sucesso = await Avaliacao.atualizarAvaliacao(idAvaliacao, nota, comentario);
+      if (!sucesso) {
+        return res.status(400).json({ mensagem: "Não foi possível atualizar a avaliação." });
+      }
+
+      return res.status(200).json({ mensagem: "Avaliação atualizada com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async remover(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
+    try {
+      const idAvaliacao = parseInt(req.params.id as string, 10);
+      if (isNaN(idAvaliacao)) {
+        return res.status(400).json({ mensagem: "ID da avaliação inválido." });
+      }
+
+      const sucesso = await Avaliacao.deletarAvaliacao(idAvaliacao);
+      if (!sucesso) {
+        return res.status(404).json({ mensagem: "Avaliação não encontrada ou não pôde ser excluída." });
+      }
+
+      return res.status(200).json({ mensagem: "Avaliação excluída com sucesso!" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
- 
+
 export { AvaliacaoController };
