@@ -1,12 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
-import { Endereco } from "../model/Endereco.js";
-import type { EnderecoDTO } from "../interface/EnderecoDTO.js";
 import { EnderecoService } from "../services/EnderecoService.js";
+import type { EnderecoDTO } from "../interface/EnderecoDTO.js";
 
 export class EnderecoController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const enderecos = await Endereco.listarTodos();
+      const enderecos = await EnderecoService.listarTodos();
       if (!enderecos) {
         return res.status(200).json([]);
       }
@@ -57,27 +56,13 @@ export class EnderecoController {
     }
   }
 
-  // Internal method — keeps try/catch since it has no next()
   static async cadastrarParaUsuario(
     idUsuario: number,
     tipo: "motorista" | "passageiro",
     dados: any,
   ): Promise<boolean> {
     try {
-      const enderecoDTO: EnderecoDTO = {
-        rua: dados.rua,
-        numero: dados.numero,
-        bairro: dados.bairro,
-        cidade: dados.cidade,
-        estado: dados.estado,
-        cep: dados.cep,
-        complemento: dados.complemento,
-        id_motorista: tipo === "motorista" ? idUsuario : null,
-        id_passageiro: tipo === "passageiro" ? idUsuario : null,
-      };
-
-      const novoEndereco = new Endereco(enderecoDTO);
-      return await Endereco.cadastro(novoEndereco);
+      return await EnderecoService.cadastrarParaUsuario(idUsuario, tipo, dados);
     } catch (error) {
       console.error("Falha no cadastro de endereço:", error);
       return false;
@@ -91,13 +76,16 @@ export class EnderecoController {
         return res.status(400).json({ mensagem: "ID do endereço inválido." });
       }
 
-      const endereco = await Endereco.buscarPorId(idEndereco);
+      const endereco = await EnderecoService.buscarPorId(idEndereco);
       if (!endereco) {
         return res.status(404).json({ mensagem: "Endereço não encontrado." });
       }
 
       return res.status(200).json(endereco);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }
@@ -117,20 +105,22 @@ export class EnderecoController {
         cidade,
         estado,
         cep,
-        complemento: complemento || null,
-        id_motorista: idMotorista || null,
-        id_passageiro: idPassageiro || null,
+        complemento: complemento ?? null,
+        id_motorista: idMotorista ?? null,
+        id_passageiro: idPassageiro ?? null,
       };
 
-      const novoEndereco = new Endereco(enderecoDTO);
-      const sucesso = await Endereco.cadastro(novoEndereco);
+      const sucesso = await EnderecoService.criar(enderecoDTO);
 
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Erro ao cadastrar endereço." });
       }
 
       return res.status(201).json({ mensagem: "Endereço cadastrado com sucesso." });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }
@@ -142,13 +132,16 @@ export class EnderecoController {
         return res.status(400).json({ mensagem: "ID do endereço inválido." });
       }
 
-      const sucesso = await Endereco.atualizar(idEndereco, req.body);
+      const sucesso = await EnderecoService.atualizar(idEndereco, req.body);
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Não foi possível atualizar o endereço." });
       }
 
       return res.status(200).json({ mensagem: "Endereço atualizado com sucesso." });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }
@@ -160,14 +153,17 @@ export class EnderecoController {
         return res.status(400).json({ mensagem: "ID do endereço inválido." });
       }
 
-      const sucesso = await Endereco.deletar(idEndereco);
+      const sucesso = await EnderecoService.remover(idEndereco);
       if (!sucesso) {
         return res.status(404).json({ mensagem: "Endereço não encontrado ou não pôde ser excluído." });
       }
 
       return res.status(200).json({ mensagem: "Endereço excluído com sucesso." });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }
-}
+}

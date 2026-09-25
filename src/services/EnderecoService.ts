@@ -1,4 +1,6 @@
 import axios from "axios";
+import { EnderecoRepository } from "../repository/EnderecoRepository.js";
+import type { EnderecoDTO } from "../interface/EnderecoDTO.js";
 
 interface NominatimAddress {
   road?: string;
@@ -131,5 +133,56 @@ export class EnderecoService {
       console.error("Erro ao buscar coordenadas:", error);
       return null;
     }
+  }
+
+  static async listarTodos(): Promise<any[] | null> {
+    return await EnderecoRepository.listarTodos();
+  }
+
+  static async buscarPorId(idEndereco: number): Promise<any | null> {
+    if (isNaN(idEndereco)) {
+      throw new Error("ID do endereço inválido.");
+    }
+    return await EnderecoRepository.buscarPorId(idEndereco);
+  }
+
+  static async criar(dados: EnderecoDTO): Promise<boolean> {
+    if (!dados.rua || !dados.numero || !dados.bairro || !dados.cidade || !dados.estado || !dados.cep) {
+      throw new Error("Campos obrigatórios de endereço faltando.");
+    }
+    return await EnderecoRepository.cadastro(dados);
+  }
+
+  static async cadastrarParaUsuario(
+    idUsuario: number,
+    tipo: "motorista" | "passageiro",
+    dados: any,
+  ): Promise<boolean> {
+    const enderecoDTO: EnderecoDTO = {
+      rua: dados.rua,
+      numero: dados.numero,
+      bairro: dados.bairro,
+      cidade: dados.cidade,
+      estado: dados.estado,
+      cep: dados.cep,
+      complemento: dados.complemento ?? null,
+      id_motorista: tipo === "motorista" ? idUsuario : null,
+      id_passageiro: tipo === "passageiro" ? idUsuario : null,
+    };
+    return await EnderecoRepository.cadastro(enderecoDTO);
+  }
+
+  static async atualizar(idEndereco: number, dados: Partial<EnderecoDTO>): Promise<boolean> {
+    if (isNaN(idEndereco)) {
+      throw new Error("ID do endereço inválido.");
+    }
+    return await EnderecoRepository.atualizar(idEndereco, dados);
+  }
+
+  static async remover(idEndereco: number): Promise<boolean> {
+    if (isNaN(idEndereco)) {
+      throw new Error("ID do endereço inválido.");
+    }
+    return await EnderecoRepository.deletar(idEndereco);
   }
 }
