@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { Admin } from "../models/Admin.js";
 import { Passageiro } from "../models/Passageiro.js";
+import { PassageiroRepository } from "../repositories/PassageiroRepository.js";
 import { Motorista } from "../models/Motorista.js";
 import bcrypt from "bcrypt";
 
@@ -45,7 +46,7 @@ export class AdminController {
         return res.status(400).json({ mensagem: "ID do passageiro inválido." });
       }
 
-      const passageiro = await Passageiro.buscarPorId(idPassageiro);
+      const passageiro = await PassageiroRepository.buscarPorId(idPassageiro);
       if (!passageiro) {
         return res.status(404).json({ mensagem: "Passageiro não encontrado." });
       }
@@ -57,7 +58,7 @@ export class AdminController {
         dados.senha = await bcrypt.hash(dados.senha, salt);
       }
 
-      const sucesso = await Passageiro.editarPerfil(idPassageiro, dados);
+      const sucesso = await PassageiroRepository.editarPerfil(idPassageiro, dados);
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
       }
@@ -105,7 +106,7 @@ export class AdminController {
         return res.status(400).json({ mensagem: "ID do passageiro inválido." });
       }
 
-      const sucesso = await Passageiro.deletarPassageiro(idPassageiro);
+      const sucesso = await PassageiroRepository.deletarPassageiro(idPassageiro);
       if (!sucesso) {
         return res.status(404).json({ mensagem: "Passageiro não encontrado ou não pôde ser excluído." });
       }
