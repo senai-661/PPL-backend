@@ -1,9 +1,5 @@
-import { Corrida } from "../model/Corrida.js";
-import { calcularPreco } from "../services/CalcularPreco.js";
 import type { Request, Response, NextFunction } from "express";
-import { DatabaseModel } from "../model/DatabaseModel.js";
-
-const database = new DatabaseModel().pool;
+import { CorridaService } from "../services/CorridaService.js";
 
 class CorridaController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
@@ -13,11 +9,9 @@ class CorridaController {
         : req.query.status as string | undefined;
       const usuario = (req as any).usuario;
 
-      if (status) {
-        const idMotorista = usuario.tipo === "motorista" ? usuario.id : undefined;
-        const corridas = await Corrida.listarPorStatus(status, idMotorista);
-        return res.status(200).json(corridas ?? []);
-      }
+      const idMotorista = usuario?.tipo === "motorista" ? usuario.id : undefined;
+      const corridas = await CorridaService.listar(status, idMotorista);
+      return res.status(200).json(corridas);
     } catch (error) {
       next(error);
     }
@@ -25,19 +19,12 @@ class CorridaController {
 
   static async precoEstimado(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const { latOrigem, lngOrigem, latDestino, lngDestino, tipoCorrida } = req.body;
-
-      if (!latOrigem || !lngOrigem || !latDestino || !lngDestino) {
-        return res.status(400).json({ mensagem: "Coordenadas de origem e destino são obrigatórias." });
+      const resultado = await CorridaService.precoEstimado(req.body);
+      return res.status(200).json(resultado);
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
       }
-
-      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
-        latOrigem, lngOrigem, latDestino, lngDestino,
-        tipoCorrida ?? "Convencional",
-      );
-
-      return res.status(200).json({ preco, distanciaKm, duracaoEstimadaMin });
-    } catch (error) {
       next(error);
     }
   }
@@ -45,45 +32,8 @@ class CorridaController {
   static async solicitar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
-
-      const {
-        origemCorrida, destinoCorrida,
-        latOrigem, lngOrigem,
-        latDestino, lngDestino,
-        tipoCorrida,
-        numPassageiros,
-        observacoes,
-      } = req.body;
-
-      const { preco, distanciaKm, duracaoEstimadaMin } = calcularPreco(
-        latOrigem, lngOrigem, latDestino, lngDestino,
-        tipoCorrida ?? "Convencional",
-      );
-
-      // Validações e insert delegados para a SP
-      const resultado = await database.query(
-        `CALL sp_solicitar_corrida($1, $2, $3, $4, $5, $6, $7, NULL)`,
-        [
-          idPassageiro,
-          origemCorrida,
-          destinoCorrida,
-          tipoCorrida ?? "Convencional",
-          preco,
-          numPassageiros ?? 1,
-          observacoes ?? null,
-        ],
-      );
-
-      const idCorrida = resultado.rows[0]?.p_id_corrida;
-
-      return res.status(201).json({
-        mensagem: "Corrida solicitada com sucesso! Aguardando motorista.",
-        idCorrida,
-        tipoCorrida: tipoCorrida ?? "Convencional",
-        preco,
-        distanciaKm,
-        duracaoEstimadaMin,
-      });
+      const resultado = await CorridaService.solicitar(idPassageiro, req.body);
+      return res.status(201).json(resultado);
     } catch (error: any) {
       if (error.message) {
         return res.status(400).json({ mensagem: error.message });
@@ -97,23 +47,15 @@ class CorridaController {
       const idCorrida = parseInt(req.params.id as string, 10);
       const idMotorista = (req as any).usuario.id;
 
-      const veiculo = await database.query(
-        `SELECT id_veiculo FROM veiculo WHERE id_motorista = $1 LIMIT 1;`,
-        [idMotorista],
-      );
-
-      if (veiculo.rows.length === 0) {
-        return res.status(400).json({ mensagem: "Motorista não possui veículo cadastrado.", semVeiculo: true });
+      const resultado = await CorridaService.aceitar(idCorrida, idMotorista);
+      if (!resultado.sucesso) {
+        if (resultado.semVeiculo) {
+          return res.status(400).json({ mensagem: resultado.mensagem, semVeiculo: true });
+        }
+        return res.status(400).json({ mensagem: resultado.mensagem });
       }
 
-      const idVeiculo = veiculo.rows[0].id_veiculo;
-      const sucesso = await Corrida.aceitarCorrida(idCorrida, idMotorista, idVeiculo);
-
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Corrida não encontrada ou não está pendente." });
-      }
-
-      return res.status(200).json({ mensagem: "Corrida aceita! Aguardando início." });
+      return res.status(200).json({ mensagem: resultado.mensagem });
     } catch (error) {
       next(error);
     }
@@ -123,7 +65,7 @@ class CorridaController {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
       const idMotorista = (req as any).usuario.id;
-      const sucesso = await Corrida.iniciarCorrida(idCorrida, idMotorista);
+      const sucesso = await CorridaService.iniciar(idCorrida, idMotorista);
 
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Corrida não encontrada ou não foi aceita ainda." });
@@ -140,30 +82,14 @@ class CorridaController {
       const idCorrida = parseInt(req.params.id as string, 10);
       const idMotorista = (req as any).usuario.id;
 
-      const corridaRes = await database.query(
-        `SELECT COALESCE(data_inicio_corrida, data_corrida) AS data_inicio_corrida
-         FROM corrida
-         WHERE id_corrida = $1 AND id_motorista = $2;`,
-        [idCorrida, idMotorista],
-      );
-
-      if (corridaRes.rows.length === 0) {
-        return res.status(404).json({ mensagem: "Corrida não encontrada." });
-      }
-
-      const dataInicio: Date = corridaRes.rows[0].data_inicio_corrida;
-      const duracaoCorrida = Math.ceil(
-        (new Date().getTime() - dataInicio.getTime()) / 60000,
-      );
-
-      const sucesso = await Corrida.finalizarCorrida(idCorrida, duracaoCorrida, idMotorista);
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Corrida não está em andamento." });
+      const resultado = await CorridaService.finalizar(idCorrida, idMotorista);
+      if (!resultado.sucesso) {
+        return res.status(resultado.statusHttp || 400).json({ mensagem: resultado.mensagem });
       }
 
       return res.status(200).json({
-        mensagem: "Corrida finalizada com sucesso!",
-        duracaoCorrida: `${duracaoCorrida} minutos`,
+        mensagem: resultado.mensagem,
+        duracaoCorrida: resultado.duracaoCorrida,
       });
     } catch (error: any) {
       if (error.message) {
@@ -176,31 +102,15 @@ class CorridaController {
   static async cancelar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
-
-      if (isNaN(idCorrida)) {
-        return res.status(400).json({ mensagem: "ID da corrida inválido." });
-      }
-
-      const corrida = await Corrida.buscarPorId(idCorrida);
       const usuario = (req as any).usuario;
-
-      const ehPassageiroDaCorrida =
-        usuario.tipo === "passageiro" && corrida?.passageiro?.id === usuario.id;
-      const ehMotoristaDaCorrida =
-        usuario.tipo === "motorista" && corrida?.motorista?.id === usuario.id;
-
-      if (!ehPassageiroDaCorrida && !ehMotoristaDaCorrida) {
-        return res.status(403).json({ mensagem: "Você não tem permissão para cancelar esta corrida." });
-      }
-
       const { motivoCancelamento } = req.body;
 
-      const sucesso = await Corrida.cancelarCorrida(idCorrida, motivoCancelamento ?? null);
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Corrida não pode ser cancelada." });
+      const resultado = await CorridaService.cancelar(idCorrida, usuario, motivoCancelamento);
+      if (!resultado.sucesso) {
+        return res.status(resultado.statusHttp || 400).json({ mensagem: resultado.mensagem });
       }
 
-      return res.status(200).json({ mensagem: "Corrida cancelada." });
+      return res.status(200).json({ mensagem: resultado.mensagem });
     } catch (error) {
       next(error);
     }
@@ -209,16 +119,11 @@ class CorridaController {
   static async cancelarAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
-      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+      const sucesso = await CorridaService.cancelarAtual(idPassageiro);
 
-      if (!corrida) {
+      if (!sucesso) {
         return res.status(404).json({ mensagem: "Nenhuma corrida pendente encontrada." });
       }
-
-      await database.query(
-        `CALL sp_cancelar_corrida($1, $2)`,
-        [corrida.idCorrida, "Cancelada pelo passageiro"],
-      );
 
       return res.status(200).json({ mensagem: "Corrida cancelada com sucesso." });
     } catch (error: any) {
@@ -232,16 +137,12 @@ class CorridaController {
   static async historico(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const usuario = (req as any).usuario;
-
-      if (usuario.tipo === "passageiro") {
-        const corridas = await Corrida.historicoPorPassageiro(usuario.id);
-        return res.status(200).json(corridas ?? []);
-      } else if (usuario.tipo === "motorista") {
-        const corridas = await Corrida.historicoPorMotorista(usuario.id);
-        return res.status(200).json(corridas ?? []);
-      } else {
+      if (usuario.tipo !== "passageiro" && usuario.tipo !== "motorista") {
         return res.status(403).json({ mensagem: "Você não tem permissão para acessar essa área." });
       }
+
+      const corridas = await CorridaService.historico(usuario);
+      return res.status(200).json(corridas);
     } catch (error) {
       next(error);
     }
@@ -250,7 +151,7 @@ class CorridaController {
   static async relatorio(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
-      const dados = await Corrida.relatorioMotorista(idMotorista);
+      const dados = await CorridaService.relatorioMotorista(idMotorista);
 
       if (!dados) {
         return res.status(500).json({ mensagem: "Erro ao gerar relatório." });
@@ -265,30 +166,21 @@ class CorridaController {
   static async buscarPorId(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
+      const usuario = (req as any).usuario;
 
-      if (isNaN(idCorrida)) {
-        return res.status(400).json({ mensagem: "ID inválido." });
-      }
-
-      const corrida = await Corrida.buscarPorId(idCorrida);
-
+      const corrida = await CorridaService.buscarPorId(idCorrida, usuario);
       if (!corrida) {
         return res.status(404).json({ mensagem: "Corrida não encontrada." });
       }
 
-      const usuario = (req as any).usuario;
-      const ehPassageiroDaCorrida =
-        usuario.tipo === "passageiro" && corrida.passageiro?.id === usuario.id;
-      const ehMotoristaDaCorrida =
-        usuario.tipo === "motorista" && corrida.motorista?.id === usuario.id;
-      const ehAdmin = usuario.tipo === "admin";
-
-      if (!ehPassageiroDaCorrida && !ehMotoristaDaCorrida && !ehAdmin) {
-        return res.status(403).json({ mensagem: "Você não tem permissão para acessar esta corrida." });
-      }
-
       return res.status(200).json(corrida);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 403) {
+        return res.status(403).json({ mensagem: error.message });
+      }
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }
@@ -296,7 +188,7 @@ class CorridaController {
   static async corridaAtual(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario.id;
-      const corrida = await Corrida.corridaAtualPassageiro(idPassageiro);
+      const corrida = await CorridaService.corridaAtualPassageiro(idPassageiro);
 
       if (!corrida) {
         return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
@@ -311,7 +203,7 @@ class CorridaController {
   static async corridaAtualMotorista(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
-      const corrida = await Corrida.corridaAtualMotorista(idMotorista);
+      const corrida = await CorridaService.corridaAtualMotorista(idMotorista);
 
       if (!corrida) {
         return res.status(200).json({ mensagem: "Nenhuma corrida ativa no momento." });
@@ -326,7 +218,7 @@ class CorridaController {
   static async resumoDiaMotorista(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = (req as any).usuario.id;
-      const resumo = await Corrida.resumoDiaMotorista(idMotorista);
+      const resumo = await CorridaService.resumoDiaMotorista(idMotorista);
 
       if (!resumo) {
         return res.status(500).json({ mensagem: "Erro ao buscar resumo do dia." });
@@ -341,17 +233,17 @@ class CorridaController {
   static async remover(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idCorrida = parseInt(req.params.id as string, 10);
-      if (isNaN(idCorrida)) {
-        return res.status(400).json({ mensagem: "ID da corrida inválido." });
-      }
+      const sucesso = await CorridaService.remover(idCorrida);
 
-      const sucesso = await Corrida.deletarCorrida(idCorrida);
       if (!sucesso) {
         return res.status(404).json({ mensagem: "Corrida não encontrada ou não pôde ser excluída." });
       }
 
       return res.status(200).json({ mensagem: "Corrida excluída com sucesso." });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message) {
+        return res.status(400).json({ mensagem: error.message });
+      }
       next(error);
     }
   }

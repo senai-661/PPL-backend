@@ -1,46 +1,48 @@
-import type { CorridaAgendamentoDTO } from "../interface/CorridaAgendamentoDTO.js";
+export class CorridaAgendamento {
+  private idAgendamento: number;
+  private idPassageiro: number;
+  private origemCorrida: string;
+  private destinoCorrida: string;
+  private tipoCorrida: string;
+  private dataAgendada: Date;
+  private statusAgendamento: string;
+  private preco: number;
 
-export class CorridaModel {
-  constructor(private db: any) {}
-
-  public async criarAgendamento(data: CorridaAgendamentoDTO) {
-    const query = `
-      INSERT INTO corridas_agendadas 
-      (id_passageiro, origem_corrida, destino_corrida, tipo_corrida, data_agendada, status_agendamento, preco)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *;
-    `;
-
-    const values = [
-      data.idPassageiro,
-      data.origemCorrida,
-      data.destinoCorrida,
-      data.tipoCorrida || 'NORMAL',
-      data.dataAgendada,
-      data.statusAgendamento || 'PENDENTE',
-      data.preco || 28,
-    ];
-
-    const result = await this.db.pool.query(query, values);
-    return result.rows[0];
+  constructor(
+    idAgendamento: number = 0,
+    idPassageiro: number,
+    origemCorrida: string,
+    destinoCorrida: string,
+    tipoCorrida: string,
+    dataAgendada: Date,
+    statusAgendamento: string,
+    preco: number,
+  ) {
+    this.idAgendamento = idAgendamento;
+    this.idPassageiro = idPassageiro;
+    this.origemCorrida = origemCorrida;
+    this.destinoCorrida = destinoCorrida;
+    this.tipoCorrida = tipoCorrida;
+    this.dataAgendada = dataAgendada;
+    this.statusAgendamento = statusAgendamento;
+    this.preco = preco;
   }
 
-  public async listarAgendamentosPorPassageiro(idPassageiro: number) {
-    const query = `
-      SELECT * FROM corridas_agendadas 
-      WHERE id_passageiro = $1 
-      ORDER BY data_agendada DESC;
-    `;
-    const result = await this.db.pool.query(query, [idPassageiro]);
-    return result.rows;
-  }
+  public getIdAgendamento(): number { return this.idAgendamento; }
+  public getIdPassageiro(): number { return this.idPassageiro; }
+  public getOrigemCorrida(): string { return this.origemCorrida; }
+  public getDestinoCorrida(): string { return this.destinoCorrida; }
+  public getTipoCorrida(): string { return this.tipoCorrida; }
+  public getDataAgendada(): Date { return this.dataAgendada; }
+  public getStatusAgendamento(): string { return this.statusAgendamento; }
+  public getPreco(): number { return this.preco; }
 
-  public async listarTodosAgendamentos() {
-    const query = `
-      SELECT * FROM corridas_agendadas 
-      ORDER BY data_agendada ASC;
-    `;
-    const result = await this.db.pool.query(query);
-    return result.rows;
-  }
+  public setIdAgendamento(v: number): void { this.idAgendamento = v; }
+  public setIdPassageiro(v: number): void { this.idPassageiro = v; }
+  public setOrigemCorrida(v: string): void { this.origemCorrida = v; }
+  public setDestinoCorrida(v: string): void { this.destinoCorrida = v; }
+  public setTipoCorrida(v: string): void { this.tipoCorrida = v; }
+  public setDataAgendada(v: Date): void { this.dataAgendada = v; }
+  public setStatusAgendamento(v: string): void { this.statusAgendamento = v; }
+  public setPreco(v: number): void { this.preco = v; }
 }

@@ -9,21 +9,10 @@ import { AvaliacaoController } from "./controller/AvaliacaoController.js";
 import { VeiculoController } from "./controller/VeiculoController.js";
 import { AdminController } from "./controller/AdminController.js";
 import { EnderecoController } from "./controller/EnderecoController.js";
+import { CorridaAgendamentoController } from "./controller/CorridaAgendamentoController.js";
 import { AuthMiddleware } from "./middlewares/AuthMiddleware.js";
 
-// ✅ ADICIONADO (AGENDAMENTO)
-import { CorridaAgendamentoController } from "./controller/CorridaAgendamentoController.js";
-import { DatabaseModel } from "./model/DatabaseModel.js";
-import { CorridaModel } from "./model/CorridaAgendamento.js";
-
 const router = Router();
-
-// ============================================
-// INSTÂNCIAS (ADICIONADO SEM MEXER NO RESTO)
-// ============================================
-const db = new DatabaseModel();
-const corridaModel = new CorridaModel(db);
-const corridaAgendamentoController = new CorridaAgendamentoController(corridaModel);
 
 // ============================================
 // ROTA INICIAL
@@ -84,12 +73,12 @@ router.get(
   MotoristaController.listar
 );
 
-// 🔥 NOVA ROTA
 router.get(
   "/api/motoristas/:id",
   AuthMiddleware.verificarToken,
   MotoristaController.buscarPorId
 );
+
 router.get(
   "/api/motorista/relatorio",
   AuthMiddleware.verificarToken,
@@ -145,7 +134,6 @@ router.delete(
   PassageiroController.remover
 );
 
-
 // ============================================
 // CORRIDAS
 // ============================================
@@ -167,6 +155,7 @@ router.delete(
   AuthMiddleware.somentePassageiro,
   CorridaController.cancelarAtual
 );
+
 router.get(
   "/api/corridas/:id",
   AuthMiddleware.verificarToken,
@@ -181,22 +170,21 @@ router.post(
 );
 
 // ============================================
-// ✅ CORRIDAS AGENDADAS
+// CORRIDAS AGENDADAS
 // ============================================
 router.post(
   "/api/corridas-agendadas",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somentePassageiro,
-  (req: Request, res: Response) =>
-    corridaAgendamentoController.criar(req, res)
+  CorridaAgendamentoController.criar
 );
 
 router.get(
   "/api/corridas-agendadas",
   AuthMiddleware.verificarToken,
-  (req: Request, res: Response) =>
-    corridaAgendamentoController.listar(req, res)
+  CorridaAgendamentoController.listar
 );
+
 router.patch(
   "/api/corridas/:id/aceitar",
   AuthMiddleware.verificarToken,
@@ -328,30 +316,35 @@ router.get(
   AuthMiddleware.somenteAdmin,
   AdminController.dashboard
 );
+
 router.patch(
   "/api/admin/passageiros/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarPassageiro,
 );
+
 router.delete(
   "/api/admin/passageiros/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.removerPassageiro,
 );
+
 router.patch(
   "/api/admin/motoristas/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.atualizarMotorista,
 );
+
 router.delete(
   "/api/admin/motoristas/:id",
   AuthMiddleware.verificarToken,
   AuthMiddleware.somenteAdmin,
   AdminController.removerMotorista,
 );
+
 router.delete(
   "/api/admin/corridas/:id",
   AuthMiddleware.verificarToken,
@@ -392,7 +385,6 @@ router.delete(
   AuthMiddleware.verificarToken,
   EnderecoController.remover
 );
-
 
 // autocomplete público
 router.get(
