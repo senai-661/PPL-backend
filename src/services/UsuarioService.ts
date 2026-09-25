@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { UsuarioRepository } from "../repositories/UsuarioRepository.js";
 import { AuthService } from "./AuthService.js";
 import { PassageiroRepository } from "../repositories/PassageiroRepository.js";
-import { Motorista } from "../models/Motorista.js";
+import { MotoristaRepository } from "../repositories/MotoristaRepository.js";
 
 export interface ServiceResult<T = any> {
   statusCode: number;
@@ -140,7 +140,7 @@ export class UsuarioService {
     if (tipo === "passageiro") {
       idGerado = await PassageiroRepository.cadastrarPassageiro(dados, endereco);
     } else {
-      idGerado = await Motorista.cadastrarMotorista(dados, endereco);
+      idGerado = await MotoristaRepository.cadastrarMotorista(dados, endereco);
     }
 
     if (!idGerado) {

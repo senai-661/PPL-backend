@@ -3,6 +3,7 @@ import { Admin } from "../models/Admin.js";
 import { Passageiro } from "../models/Passageiro.js";
 import { PassageiroRepository } from "../repositories/PassageiroRepository.js";
 import { Motorista } from "../models/Motorista.js";
+import { MotoristaRepository } from "../repositories/MotoristaRepository.js";
 import bcrypt from "bcrypt";
 
 export class AdminController {
@@ -76,7 +77,7 @@ export class AdminController {
         return res.status(400).json({ mensagem: "ID do motorista inválido." });
       }
 
-      const motorista = await Motorista.buscarPorId(idMotorista);
+      const motorista = await MotoristaRepository.buscarPorId(idMotorista);
       if (!motorista) {
         return res.status(404).json({ mensagem: "Motorista não encontrado." });
       }
@@ -88,7 +89,7 @@ export class AdminController {
         dados.senha = await bcrypt.hash(dados.senha, salt);
       }
 
-      const sucesso = await Motorista.editarPerfil(idMotorista, dados);
+      const sucesso = await MotoristaRepository.editarPerfil(idMotorista, dados);
       if (!sucesso) {
         return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
       }
@@ -124,7 +125,7 @@ export class AdminController {
         return res.status(400).json({ mensagem: "ID do motorista inválido." });
       }
 
-      const sucesso = await Motorista.deletarMotorista(idMotorista);
+      const sucesso = await MotoristaRepository.deletarMotorista(idMotorista);
       if (!sucesso) {
         return res.status(404).json({ mensagem: "Motorista não encontrado ou não pôde ser excluído." });
       }
