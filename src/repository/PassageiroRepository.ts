@@ -71,6 +71,22 @@ export class PassageiroRepository {
     }
   }
 
+  static async buscarEndereco(idPassageiro: number): Promise<any | null> {
+    try {
+      const res = await database.query(
+        `SELECT rua, numero, bairro, cidade, estado, cep, complemento
+         FROM endereco 
+         WHERE id_passageiro = $1
+         LIMIT 1;`,
+        [idPassageiro]
+      );
+      return res.rows.length > 0 ? res.rows[0] : null;
+    } catch (error) {
+      console.error(`Erro ao buscar endereco do passageiro: ${error}`);
+      return null;
+    }
+  }
+
   static async listarPassageiros(): Promise<Array<Passageiro> | null> {
     try {
       const res = await database.query(
