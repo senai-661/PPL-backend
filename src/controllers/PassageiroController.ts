@@ -1,8 +1,8 @@
-import { Passageiro } from "../model/Passageiro.js";
-import { Corrida } from "../model/Corrida.js";
+import { Passageiro } from "../models/Passageiro.js";
+import { Corrida } from "../models/Corrida.js";
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
-import { DatabaseModel } from "../model/DatabaseModel.js";
+import { DatabaseModel } from "../models/DatabaseModel.js";
 
 const database = new DatabaseModel().pool;
 

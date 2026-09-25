@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { CorridaModel } from "../model/CorridaAgendamento.js";
+import { CorridaModel } from "../models/CorridaAgendamento.js";
 
 export class CorridaAgendamentoController {
   constructor(private model: CorridaModel) {}

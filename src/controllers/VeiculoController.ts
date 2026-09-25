@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { Veiculo } from "../model/Veiculo.js";
+import { Veiculo } from "../models/Veiculo.js";
 
 class VeiculoController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {

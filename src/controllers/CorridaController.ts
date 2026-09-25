@@ -1,7 +1,7 @@
-import { Corrida } from "../model/Corrida.js";
+import { Corrida } from "../models/Corrida.js";
 import { calcularPreco } from "../services/CalcularPreco.js";
 import type { Request, Response, NextFunction } from "express";
-import { DatabaseModel } from "../model/DatabaseModel.js";
+import { DatabaseModel } from "../models/DatabaseModel.js";
 
 const database = new DatabaseModel().pool;
 

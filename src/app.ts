@@ -1,5 +1,5 @@
 import { server } from "./server.js";
-import { DatabaseModel } from "./model/DatabaseModel.js";
+import { DatabaseModel } from "./models/DatabaseModel.js";
 
 const port = 1285;
 

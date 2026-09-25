@@ -1,20 +1,20 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 
-import { UsuarioController } from "./controller/UsuarioController.js";
-import { PassageiroController } from "./controller/PassageiroController.js";
-import { CorridaController } from "./controller/CorridaController.js";
-import { MotoristaController } from "./controller/MotoristaController.js";
-import { AvaliacaoController } from "./controller/AvaliacaoController.js";
-import { VeiculoController } from "./controller/VeiculoController.js";
-import { AdminController } from "./controller/AdminController.js";
-import { EnderecoController } from "./controller/EnderecoController.js";
+import { UsuarioController } from "./controllers/UsuarioController.js";
+import { PassageiroController } from "./controllers/PassageiroController.js";
+import { CorridaController } from "./controllers/CorridaController.js";
+import { MotoristaController } from "./controllers/MotoristaController.js";
+import { AvaliacaoController } from "./controllers/AvaliacaoController.js";
+import { VeiculoController } from "./controllers/VeiculoController.js";
+import { AdminController } from "./controllers/AdminController.js";
+import { EnderecoController } from "./controllers/EnderecoController.js";
 import { AuthMiddleware } from "./middlewares/AuthMiddleware.js";
 
 // ✅ ADICIONADO (AGENDAMENTO)
-import { CorridaAgendamentoController } from "./controller/CorridaAgendamentoController.js";
-import { DatabaseModel } from "./model/DatabaseModel.js";
-import { CorridaModel } from "./model/CorridaAgendamento.js";
+import { CorridaAgendamentoController } from "./controllers/CorridaAgendamentoController.js";
+import { DatabaseModel } from "./models/DatabaseModel.js";
+import { CorridaModel } from "./models/CorridaAgendamento.js";
 
 const router = Router();
 

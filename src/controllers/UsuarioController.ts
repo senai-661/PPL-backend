@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { Usuario } from "../model/Usuario.js";
-import { Passageiro } from "../model/Passageiro.js";
-import { Motorista } from "../model/Motorista.js";
+import { Usuario } from "../models/Usuario.js";
+import { Passageiro } from "../models/Passageiro.js";
+import { Motorista } from "../models/Motorista.js";
 import { EnderecoController } from "./EnderecoController.js";
 import { AuthService } from "../services/AuthService.js";
 import bcrypt from "bcrypt";
