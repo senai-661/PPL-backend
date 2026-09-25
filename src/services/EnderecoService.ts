@@ -1,4 +1,7 @@
 import axios from "axios";
+import type { EnderecoDTO } from "../interface/EnderecoDTO.js";
+import { Endereco } from "../models/Endereco.js";
+import { EnderecoRepository } from "../repositories/EnderecoRepository.js";
 
 interface NominatimAddress {
   road?: string;
@@ -131,5 +134,89 @@ export class EnderecoService {
       console.error("Erro ao buscar coordenadas:", error);
       return null;
     }
+  }
+
+  static async listarTodos(): Promise<any[] | null> {
+    return await EnderecoRepository.listarTodos();
+  }
+
+  static async buscarPorId(idEndereco: number): Promise<any | null> {
+    return await EnderecoRepository.buscarPorId(idEndereco);
+  }
+
+  static async criar(dados: {
+    rua: string;
+    numero: string;
+    bairro: string;
+    cidade: string;
+    estado: string;
+    cep: string;
+    complemento?: string | null;
+    idMotorista?: number | null;
+    idPassageiro?: number | null;
+  }): Promise<{ sucesso: boolean; erro?: string }> {
+    const { rua, numero, bairro, cidade, estado, cep, complemento, idMotorista, idPassageiro } = dados;
+
+    if (!rua || !numero || !bairro || !cidade || !estado || !cep) {
+      return { sucesso: false, erro: "Campos obrigatórios de endereço faltando." };
+    }
+
+    const enderecoDTO: EnderecoDTO = {
+      rua,
+      numero,
+      bairro,
+      cidade,
+      estado,
+      cep,
+      complemento: complemento || null,
+      id_motorista: idMotorista || null,
+      id_passageiro: idPassageiro || null,
+    };
+
+    const novoEndereco = new Endereco(enderecoDTO);
+    const sucesso = await EnderecoRepository.cadastro(novoEndereco);
+
+    if (!sucesso) {
+      return { sucesso: false, erro: "Erro ao cadastrar endereço." };
+    }
+
+    return { sucesso: true };
+  }
+
+  static async cadastrarParaUsuario(
+    idUsuario: number,
+    tipo: "motorista" | "passageiro",
+    dados: any
+  ): Promise<boolean> {
+    try {
+      const enderecoDTO: EnderecoDTO = {
+        rua: dados.rua,
+        numero: dados.numero,
+        bairro: dados.bairro,
+        cidade: dados.cidade,
+        estado: dados.estado,
+        cep: dados.cep,
+        complemento: dados.complemento,
+        id_motorista: tipo === "motorista" ? idUsuario : null,
+        id_passageiro: tipo === "passageiro" ? idUsuario : null,
+      };
+
+      const novoEndereco = new Endereco(enderecoDTO);
+      return await EnderecoRepository.cadastro(novoEndereco);
+    } catch (error) {
+      console.error("Falha no cadastro de endereço:", error);
+      return false;
+    }
+  }
+
+  static async atualizar(
+    idEndereco: number,
+    dados: Partial<EnderecoDTO>
+  ): Promise<boolean> {
+    return await EnderecoRepository.atualizar(idEndereco, dados);
+  }
+
+  static async remover(idEndereco: number): Promise<boolean> {
+    return await EnderecoRepository.deletar(idEndereco);
   }
 }
