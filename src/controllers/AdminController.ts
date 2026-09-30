@@ -1,28 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
-import { Admin } from "../models/Admin.js";
-import { Passageiro } from "../models/Passageiro.js";
-import { PassageiroRepository } from "../repositories/PassageiroRepository.js";
-import { Motorista } from "../models/Motorista.js";
-import { MotoristaRepository } from "../repositories/MotoristaRepository.js";
-import bcrypt from "bcrypt";
+import { AdminService } from "../services/AdminService.js";
 
 export class AdminController {
   static async listar(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const admins = await Admin.listarAdmins();
-
-      if (!admins || admins.length === 0) {
-        return res.status(200).json([]);
-      }
-
-      const dadosTratados = admins.map((a) => ({
-        id: a.getIdAdmin(),
-        nome: a.getNome(),
-        sobrenome: a.getSobrenome(),
-        email: a.getEmail(),
-      }));
-
-      return res.status(200).json(dadosTratados);
+      const resultado = await AdminService.listar();
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
@@ -30,11 +13,8 @@ export class AdminController {
 
   static async dashboard(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const dados = await Admin.dashboard();
-      if (!dados) {
-        return res.status(500).json({ mensagem: "Erro ao buscar dados do dashboard." });
-      }
-      return res.status(200).json(dados);
+      const resultado = await AdminService.dashboard();
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
@@ -42,29 +22,9 @@ export class AdminController {
 
   static async atualizarPassageiro(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const idPassageiro = parseInt(req.params.id as string);
-      if (isNaN(idPassageiro)) {
-        return res.status(400).json({ mensagem: "ID do passageiro inválido." });
-      }
-
-      const passageiro = await PassageiroRepository.buscarPorId(idPassageiro);
-      if (!passageiro) {
-        return res.status(404).json({ mensagem: "Passageiro não encontrado." });
-      }
-
-      const dados = req.body;
-
-      if (dados.senha) {
-        const salt = await bcrypt.genSalt(10);
-        dados.senha = await bcrypt.hash(dados.senha, salt);
-      }
-
-      const sucesso = await PassageiroRepository.editarPerfil(idPassageiro, dados);
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
-      }
-
-      return res.status(200).json({ mensagem: "Passageiro atualizado com sucesso!" });
+      const idPassageiro = parseInt(req.params.id as string, 10);
+      const resultado = await AdminService.atualizarPassageiro(idPassageiro, req.body);
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
@@ -72,29 +32,9 @@ export class AdminController {
 
   static async atualizarMotorista(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
-      const idMotorista = parseInt(req.params.id as string);
-      if (isNaN(idMotorista)) {
-        return res.status(400).json({ mensagem: "ID do motorista inválido." });
-      }
-
-      const motorista = await MotoristaRepository.buscarPorId(idMotorista);
-      if (!motorista) {
-        return res.status(404).json({ mensagem: "Motorista não encontrado." });
-      }
-
-      const dados = req.body;
-
-      if (dados.senha) {
-        const salt = await bcrypt.genSalt(10);
-        dados.senha = await bcrypt.hash(dados.senha, salt);
-      }
-
-      const sucesso = await MotoristaRepository.editarPerfil(idMotorista, dados);
-      if (!sucesso) {
-        return res.status(400).json({ mensagem: "Nenhum campo válido para atualizar." });
-      }
-
-      return res.status(200).json({ mensagem: "Motorista atualizado com sucesso!" });
+      const idMotorista = parseInt(req.params.id as string, 10);
+      const resultado = await AdminService.atualizarMotorista(idMotorista, req.body);
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
@@ -103,16 +43,8 @@ export class AdminController {
   static async removerPassageiro(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = parseInt(req.params.id as string, 10);
-      if (isNaN(idPassageiro)) {
-        return res.status(400).json({ mensagem: "ID do passageiro inválido." });
-      }
-
-      const sucesso = await PassageiroRepository.deletarPassageiro(idPassageiro);
-      if (!sucesso) {
-        return res.status(404).json({ mensagem: "Passageiro não encontrado ou não pôde ser excluído." });
-      }
-
-      return res.status(200).json({ mensagem: "Passageiro excluído com sucesso!" });
+      const resultado = await AdminService.removerPassageiro(idPassageiro);
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
@@ -121,16 +53,8 @@ export class AdminController {
   static async removerMotorista(req: Request, res: Response, next: NextFunction): Promise<Response | void> {
     try {
       const idMotorista = parseInt(req.params.id as string, 10);
-      if (isNaN(idMotorista)) {
-        return res.status(400).json({ mensagem: "ID do motorista inválido." });
-      }
-
-      const sucesso = await MotoristaRepository.deletarMotorista(idMotorista);
-      if (!sucesso) {
-        return res.status(404).json({ mensagem: "Motorista não encontrado ou não pôde ser excluído." });
-      }
-
-      return res.status(200).json({ mensagem: "Motorista excluído com sucesso!" });
+      const resultado = await AdminService.removerMotorista(idMotorista);
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       next(error);
     }
