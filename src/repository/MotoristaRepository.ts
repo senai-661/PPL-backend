@@ -1,0 +1,191 @@
+import { DatabaseModel } from "../model/DatabaseModel.js";
+import { Motorista } from "../model/Motorista.js";
+import type { MotoristaDTO } from "../interface/MotoristaDTO.js";
+
+const database = new DatabaseModel().pool;
+
+export class MotoristaRepository {
+  static async cadastrarMotorista(motorista: MotoristaDTO, endereco?: any): Promise<number | null> {
+    try {
+      const res = await database.query(
+        `SELECT sp_cadastrar_motorista(
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19
+         ) AS id;`,
+        [
+          motorista.nome,
+          motorista.sobrenome,
+          motorista.email,
+          motorista.senha,
+          motorista.cpf,
+          motorista.cnh,
+          motorista.celular,
+          motorista.dataNascimento,
+          motorista.antecedentesCriminais,
+          motorista.especializacao ?? 'Nenhuma',
+          endereco?.rua ?? null,
+          endereco?.numero ?? null,
+          endereco?.bairro ?? null,
+          endereco?.cidade ?? null,
+          endereco?.estado ?? null,
+          endereco?.cep ?? null,
+          endereco?.complemento ?? null,
+          null,
+          null,
+        ]
+      );
+      return res.rows[0]?.id ?? null;
+    } catch (error) {
+      console.error(`Erro ao cadastrar motorista: ${error}`);
+      throw error;
+    }
+  }
+
+  static async buscarPorEmail(email: string): Promise<Motorista | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM vw_motoristas_detalhados WHERE email = $1;`,
+        [email]
+      );
+      if (res.rows.length === 0) return null;
+      const r = res.rows[0];
+      return new Motorista(
+        r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
+        r.id_motorista, r.cpf, r.cnh, r.celular,
+        r.data_nascimento, r.antecedentes_criminais, r.especializacao,
+        r.disponivel,
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar motorista: ${error}`);
+      return null;
+    }
+  }
+
+  static async buscarPorId(idMotorista: number): Promise<Motorista | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM vw_motoristas_detalhados WHERE id_motorista = $1;`,
+        [idMotorista]
+      );
+      if (res.rows.length === 0) return null;
+      const r = res.rows[0];
+      return new Motorista(
+        r.id_usuario, r.nome, r.sobrenome, r.email, r.senha, r.criado_em,
+        r.id_motorista, r.cpf, r.cnh, r.celular,
+        r.data_nascimento, r.antecedentes_criminais, r.especializacao,
+        r.disponivel,
+      );
+    } catch (error) {
+      console.error(`Erro ao buscar motorista por id: ${error}`);
+      return null;
+    }
+  }
+
+  static async listarMotoristas(): Promise<Array<any> | null> {
+    try {
+      const res = await database.query(
+        `SELECT * FROM vw_motoristas_detalhados;`
+      );
+      return res.rows.map((r) => ({
+        idMotorista: r.id_motorista,
+        nome: r.nome,
+        sobrenome: r.sobrenome,
+        email: r.email,
+        cpf: r.cpf,
+        cnh: r.cnh,
+        celular: r.celular,
+        dataNascimento: r.data_nascimento,
+        especializacao: r.especializacao,
+        disponivel: r.disponivel,
+        placa: r.placa,
+        tipoVeiculo: r.tipo_veiculo,
+        modeloVeiculo: r.modelo_veiculo,
+      }));
+    } catch (error) {
+      console.error(`Erro ao listar motoristas: ${error}`);
+      return null;
+    }
+  }
+
+  static async editarPerfil(
+    idMotorista: number,
+    dados: Partial<MotoristaDTO>
+  ): Promise<boolean> {
+    try {
+      const temCamposU = dados.nome || dados.sobrenome || dados.email || dados.senha;
+      const temCamposM = dados.cpf || dados.cnh || dados.celular || dados.dataNascimento || dados.antecedentesCriminais || dados.especializacao || (dados as any).disponivel !== undefined;
+
+      if (!temCamposU && !temCamposM) {
+        return false;
+      }
+
+      if (temCamposU) {
+        const camposU: string[] = [];
+        const valoresU: any[] = [];
+        let i = 1;
+        if (dados.nome)      { camposU.push(`nome = $${i++}`);      valoresU.push(dados.nome.toUpperCase()); }
+        if (dados.sobrenome) { camposU.push(`sobrenome = $${i++}`); valoresU.push(dados.sobrenome.toUpperCase()); }
+        if (dados.email)     { camposU.push(`email = $${i++}`);     valoresU.push(dados.email); }
+        if (dados.senha)     { camposU.push(`senha = $${i++}`);     valoresU.push(dados.senha); }
+        valoresU.push(idMotorista);
+        await database.query(
+          `UPDATE usuario SET ${camposU.join(", ")}
+           WHERE id_usuario = (SELECT id_usuario FROM motorista WHERE id_motorista = $${i});`,
+          valoresU
+        );
+      }
+
+      if (temCamposM) {
+        const camposM: string[] = [];
+        const valoresM: any[] = [];
+        let j = 1;
+        if (dados.cpf)                   { camposM.push(`cpf = $${j++}`);                   valoresM.push(dados.cpf); }
+        if (dados.cnh)                   { camposM.push(`cnh = $${j++}`);                   valoresM.push(dados.cnh); }
+        if (dados.celular)               { camposM.push(`celular = $${j++}`);               valoresM.push(dados.celular); }
+        if (dados.dataNascimento)        { camposM.push(`data_nascimento = $${j++}`);        valoresM.push(dados.dataNascimento); }
+        if (dados.antecedentesCriminais) { camposM.push(`antecedentes_criminais = $${j++}`); valoresM.push(dados.antecedentesCriminais.toUpperCase()); }
+        if (dados.especializacao)        { camposM.push(`especializacao = $${j++}`);        valoresM.push(dados.especializacao.toUpperCase()); }
+        if ((dados as any).disponivel !== undefined) { camposM.push(`disponivel = $${j++}`); valoresM.push((dados as any).disponivel); }
+
+        valoresM.push(idMotorista);
+        await database.query(
+          `UPDATE motorista SET ${camposM.join(", ")} WHERE id_motorista = $${j};`,
+          valoresM
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`Erro ao editar perfil do motorista: ${error}`);
+      return false;
+    }
+  }
+
+  static async alterarDisponibilidade(
+    idMotorista: number,
+    disponivel: boolean
+  ): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `UPDATE motorista SET disponivel = $1 WHERE id_motorista = $2 RETURNING id_motorista;`,
+        [disponivel, idMotorista]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao alterar disponibilidade: ${error}`);
+      return false;
+    }
+  }
+
+  static async deletarMotorista(idMotorista: number): Promise<boolean> {
+    try {
+      const res = await database.query(
+        `DELETE FROM usuario WHERE id_usuario = (SELECT id_usuario FROM motorista WHERE id_motorista = $1);`,
+        [idMotorista]
+      );
+      return res.rowCount !== null && res.rowCount > 0;
+    } catch (error) {
+      console.error(`Erro ao deletar motorista: ${error}`);
+      return false;
+    }
+  }
+}

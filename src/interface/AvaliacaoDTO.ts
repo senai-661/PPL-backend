@@ -1,6 +1,6 @@
 export interface AvaliacaoDTO {
-  idAvaliacao?: number;
+  idAvaliacao?: number | undefined;
   idCorrida: number;
   nota: number;
-  comentario?: string;
+  comentario?: string | null | undefined;
 }

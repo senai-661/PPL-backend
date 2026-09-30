@@ -1,10 +1,8 @@
-import type { Request, Response } from "express";
-import { CorridaModel } from "../model/CorridaAgendamento.js";
+import type { Request, Response, NextFunction } from "express";
+import { CorridaAgendamentoService } from "../services/CorridaAgendamentoService.js";
 
 export class CorridaAgendamentoController {
-  constructor(private model: CorridaModel) {}
-
-  public async criar(req: Request, res: Response) {
+  public static async criar(req: Request, res: Response, next?: NextFunction): Promise<Response | void> {
     try {
       const idPassageiro = (req as any).usuario?.id;
 
@@ -26,7 +24,7 @@ export class CorridaAgendamentoController {
         });
       }
 
-      const result = await this.model.criarAgendamento({
+      const result = await CorridaAgendamentoService.criarAgendamento({
         idPassageiro,
         origemCorrida,
         destinoCorrida,
@@ -40,13 +38,16 @@ export class CorridaAgendamentoController {
         mensagem: "Corrida agendada com sucesso!",
         agendamento: result
       });
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      if (error.status) {
+        return res.status(error.status).json({ error: error.message });
+      }
+      console.error("Erro ao agendar corrida:", error);
       return res.status(500).json({ error: "Erro ao agendar corrida" });
     }
   }
 
-  public async listar(req: Request, res: Response) {
+  public static async listar(req: Request, res: Response, next?: NextFunction): Promise<Response | void> {
     try {
       const usuario = (req as any).usuario;
 
@@ -54,16 +55,13 @@ export class CorridaAgendamentoController {
         return res.status(401).json({ error: "Usuário não autenticado" });
       }
 
-      let agendamentos;
-      if (usuario.tipo === "passageiro") {
-        agendamentos = await this.model.listarAgendamentosPorPassageiro(usuario.id);
-      } else {
-        agendamentos = await this.model.listarTodosAgendamentos();
-      }
-
+      const agendamentos = await CorridaAgendamentoService.listarAgendamentos(usuario);
       return res.status(200).json(agendamentos);
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      if (error.status) {
+        return res.status(error.status).json({ error: error.message });
+      }
+      console.error("Erro ao listar agendamentos:", error);
       return res.status(500).json({ error: "Erro ao listar agendamentos" });
     }
   }
