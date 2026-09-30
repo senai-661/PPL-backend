@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
-import { CorridaModel } from "../models/CorridaAgendamento.js";
+import { CorridaAgendamentoService } from "../services/CorridaAgendamentoService.js";
 
 export class CorridaAgendamentoController {
-  constructor(private model: CorridaModel) {}
+  constructor(_model?: any) {}
 
   public async criar(req: Request, res: Response) {
     try {
@@ -17,29 +17,18 @@ export class CorridaAgendamentoController {
         destinoCorrida,
         tipoCorrida,
         dataAgendada,
-        preco
+        preco,
       } = req.body;
 
-      if (!origemCorrida || !destinoCorrida || !dataAgendada) {
-        return res.status(400).json({ 
-          error: "Origem, destino e data agendada são obrigatórios" 
-        });
-      }
-
-      const result = await this.model.criarAgendamento({
-        idPassageiro,
+      const resultado = await CorridaAgendamentoService.criar(idPassageiro, {
         origemCorrida,
         destinoCorrida,
-        tipoCorrida: tipoCorrida || 'NORMAL',
+        tipoCorrida,
         dataAgendada,
-        statusAgendamento: 'PENDENTE',
-        preco: preco || 28,
+        preco,
       });
 
-      return res.status(201).json({
-        mensagem: "Corrida agendada com sucesso!",
-        agendamento: result
-      });
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       console.log(error);
       return res.status(500).json({ error: "Erro ao agendar corrida" });
@@ -54,14 +43,8 @@ export class CorridaAgendamentoController {
         return res.status(401).json({ error: "Usuário não autenticado" });
       }
 
-      let agendamentos;
-      if (usuario.tipo === "passageiro") {
-        agendamentos = await this.model.listarAgendamentosPorPassageiro(usuario.id);
-      } else {
-        agendamentos = await this.model.listarTodosAgendamentos();
-      }
-
-      return res.status(200).json(agendamentos);
+      const resultado = await CorridaAgendamentoService.listar(usuario);
+      return res.status(resultado.statusCode).json(resultado.data);
     } catch (error) {
       console.log(error);
       return res.status(500).json({ error: "Erro ao listar agendamentos" });
