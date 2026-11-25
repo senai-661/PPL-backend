@@ -31,6 +31,32 @@ interface NominatimResponseItem {
   name?: string;
 }
 
+interface PhotonFeature {
+  properties: {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    district?: string;
+    locality?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+    countrycode?: string;
+    osm_key?: string;
+    osm_value?: string;
+    type?: string;
+  };
+  geometry: {
+    coordinates: [number, number];
+  };
+}
+
+interface PhotonResponse {
+  features: PhotonFeature[];
+}
+
 export interface EnderecoSugestao {
   display_name: string;
   titulo: string;
@@ -43,6 +69,7 @@ export interface EnderecoSugestao {
 
 export class EnderecoService {
   private static readonly NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+  private static readonly PHOTON_URL = "https://photon.komoot.io/api/";
 
   private static construirTitulo(item: NominatimResponseItem): string {
     const address = item.address;
@@ -78,14 +105,56 @@ export class EnderecoService {
     return Array.from(new Set(partes)).join(" - ");
   }
 
+  private static async buscarNoPhoton(query: string, limit: number): Promise<EnderecoSugestao[]> {
+    const response = await axios.get<PhotonResponse>(EnderecoService.PHOTON_URL, {
+      params: { q: query, limit, countrycode: "BR" },
+      headers: { Accept: "application/json" },
+      timeout: 8000,
+    });
+
+    return response.data.features
+      .filter((feature) => feature.properties.countrycode?.toUpperCase() === "BR")
+      .map((feature) => {
+        const properties = feature.properties;
+        const address: NominatimAddress = {
+          ...(properties.street ? { road: properties.street } : {}),
+          ...(properties.housenumber ? { house_number: properties.housenumber } : {}),
+          ...(properties.district ? { suburb: properties.district } : {}),
+          ...(properties.city ? { city: properties.city } : {}),
+          ...(properties.town ? { town: properties.town } : {}),
+          ...(properties.village ? { village: properties.village } : {}),
+          ...(properties.state ? { state: properties.state } : {}),
+        };
+        const titulo = [properties.name ?? properties.street, properties.housenumber]
+          .filter(Boolean)
+          .join(", ");
+        const displayName = [
+          titulo || properties.name,
+          properties.district,
+          properties.locality ?? properties.city ?? properties.town ?? properties.village,
+          properties.state,
+          properties.country,
+        ].filter(Boolean).join(", ");
+
+        return {
+          display_name: displayName,
+          titulo: titulo || properties.name || displayName,
+          subtitulo: EnderecoService.construirSubtitulo(address),
+          categoria: properties.type ?? properties.osm_value ?? properties.osm_key ?? "endereco",
+          lat: feature.geometry.coordinates[1],
+          lon: feature.geometry.coordinates[0],
+          address,
+        };
+      });
+  }
+
   static async buscarSugestoes(query: string, limit: number = 5): Promise<EnderecoSugestao[]> {
+    const termo = query.trim();
+    if (termo.length < 2) {
+      return [];
+    }
+
     try {
-      const termo = query.trim();
-
-      if (termo.length < 2) {
-        return [];
-      }
-
       const response = await axios.get<NominatimResponseItem[]>(EnderecoService.NOMINATIM_URL, {
         params: {
           q: termo,
@@ -102,7 +171,7 @@ export class EnderecoService {
         timeout: 8000,
       });
 
-      return response.data.map((item) => ({
+      const sugestoes = response.data.map((item) => ({
         display_name: item.display_name,
         titulo: EnderecoService.construirTitulo(item),
         subtitulo: EnderecoService.construirSubtitulo(item.address),
@@ -111,8 +180,20 @@ export class EnderecoService {
         lon: Number.parseFloat(item.lon),
         ...(item.address ? { address: item.address } : {}),
       }));
+
+      if (sugestoes.length > 0) {
+        return sugestoes;
+      }
+
+      console.warn("Nominatim não encontrou endereços; usando Photon como alternativa.");
     } catch (error) {
-      console.error("Erro na busca de sugestoes de endereco:", error);
+      console.warn("Nominatim indisponível; tentando Photon:", error);
+    }
+
+    try {
+      return await EnderecoService.buscarNoPhoton(termo, limit);
+    } catch (error) {
+      console.error("Erro ao buscar sugestões no Nominatim e no Photon:", error);
       return [];
     }
   }
